@@ -18,7 +18,7 @@ import MeetingEffortCard from "@/components/admin/MeetingEffortCard";
 const NEON = "hsl(211 96% 60%)";
 const GREEN = "hsl(152 60% 50%)";
 
-const DISCOVERY_SOURCES = ["booking_form", "round_robin"];
+const DISCOVERY_SOURCES = ["booking_form", "round_robin", "external_booking"];
 const CLOSING_SOURCES = ["closing_meeting"];
 
 type MeetingKind = "discovery" | "closing";

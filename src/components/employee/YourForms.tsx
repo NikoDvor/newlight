@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
 import { FormLeadPickerCard } from "@/components/employee/FormLeadPicker";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
+import LogExternalMeetingDialog from "@/components/employee/LogExternalMeetingDialog";
 import { ClipboardCheck, ScrollText, Users, type LucideIcon } from "lucide-react";
 
 type LinkedForm = {
@@ -33,6 +34,7 @@ type FormItem = LinkedForm | ActionForm;
 
 export function YourForms() {
   const [cal, setCal] = useState<BdrCalendar | null>(null);
+  const [logOpen, setLogOpen] = useState(false);
   const origin = typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com";
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export function YourForms() {
       name: "Close Prep",
       badge: "Meeting 2",
       pickerKind: "close-prep",
-      hint: "Opens your hot leads — tap Close Prep on the one you just met with.",
+      hint: "Pick the lead you just met with (any stage — Cold leads can skip Form 1).",
     },
     {
       kind: "action",
@@ -96,6 +98,13 @@ export function YourForms() {
                     <Icon className="h-3 w-3" />
                     <span className="truncate">{f.hint}</span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setLogOpen(true)}
+                    className="mt-1.5 text-[11px] text-primary hover:underline"
+                  >
+                    Booked a first meeting elsewhere? Log it
+                  </button>
                   {!f.active && (
                     <span className="absolute top-3 right-3 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-0.5 border border-amber-500/30">
                       Paused
@@ -116,6 +125,7 @@ export function YourForms() {
           );
         })}
       </div>
+      <LogExternalMeetingDialog open={logOpen} lead={null} onClose={() => setLogOpen(false)} />
     </Card>
   );
 }

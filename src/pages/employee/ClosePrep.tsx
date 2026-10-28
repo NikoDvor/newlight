@@ -9,11 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar } from "@/lib/bdrCalendar";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
-
-// Same module bundle Form 1 submits (see BDRBookingPublic) — used when Form 1 was skipped.
-const INCLUDED_MODULE_KEYS = ["paid_ads", "seo", "website_management", "tracking_attribution", "crm_automation", "lifecycle_nurture", "reputation_reviews"];
-const SALES_TOOL_KEYS = ["sales_meeting_intelligence", "sales_call_tracking", "sales_followups", "sales_tasks", "sales_contacts", "sales_companies", "sales_deals", "sales_pipeline", "sales_appointments", "sales_approvals"];
-const TEAM_SIZES = ["1-2", "3-5", "6-10", "10+"];
+import { TEAM_SIZES, form1Modules } from "@/lib/form1Modules";
+import AttendeesEditor, { AwayToggle } from "@/components/employee/AttendeesEditor";
+import { cleanDrafts, type AttendeeDraft } from "@/lib/meetingAttendees";
 
 interface Lead {
   id: string;
@@ -48,6 +46,10 @@ export default function ClosePrep() {
   const [kpiTarget, setKpiTarget] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
+  // Away from our Zoom: any date/time (not limited to your availability), no Zoom, no client messages.
+  const [away, setAway] = useState(false);
+  const [awayWhen, setAwayWhen] = useState("");
+  const [attendees, setAttendees] = useState<AttendeeDraft[]>([]);
 
   // Skip-Form-1 path: client details the booking form would normally have collected.
   const [skippedDiscovery, setSkippedDiscovery] = useState(false);
@@ -111,8 +113,9 @@ export default function ClosePrep() {
   const cdValid = !skippedDiscovery || (
     !!cdName.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cdEmail.trim()) && !!cdPhone.trim()
   );
+  const meetingStart = away ? (awayWhen ? new Date(awayWhen).toISOString() : "") : selectedSlot;
   const canSubmit =
-    !!lead && !!selectedSlot && !!initialFee.trim() && cdValid &&
+    !!lead && !!meetingStart && !!initialFee.trim() && cdValid &&
     (pricingModel === "retainer"
       ? !!recurringFee.trim()
       : (!!commissionRate.trim() && !!commissionRateOngoing.trim()));
@@ -131,8 +134,10 @@ export default function ClosePrep() {
         commission_rate_ongoing: pricingModel === "commission" ? Number(commissionRateOngoing) : null,
         retainer_kpi: kpiTarget || null,
         closing_notes: notes || null,
-        meeting_starts_at: selectedSlot,
+        meeting_starts_at: meetingStart,
         duration_minutes: 60,
+        away,
+        attendees: cleanDrafts(attendees),
         client_details: skippedDiscovery ? {
           full_name: cdName.trim(),
           email: cdEmail.trim(),
@@ -140,11 +145,7 @@ export default function ClosePrep() {
           has_sales_team: cdSalesTeam === "" ? null : cdSalesTeam === "yes",
           sales_team_size: cdSalesTeam === "yes" ? (cdTeamSize || null) : null,
           compliance_restrictions: cdCompliance || null,
-          modules_of_interest: Array.from(new Set([
-            ...INCLUDED_MODULE_KEYS,
-            ...(cdSalesTeam === "yes" ? SALES_TOOL_KEYS : []),
-            ...(cdCompliance === "yes" ? ["financial_compliance"] : []),
-          ])),
+          modules_of_interest: form1Modules(cdSalesTeam, cdCompliance),
         } : undefined,
       },
     });
@@ -160,7 +161,7 @@ export default function ClosePrep() {
     }
     setShareToken((data as any)?.envelope_share_token || null);
     setDone(true);
-    toast({ title: "Close prep complete", description: "Closing meeting scheduled and notifications sent." });
+    toast({ title: "Close prep complete", description: away ? "Closing meeting scheduled (away from our Zoom — nothing sent to the client)." : "Closing meeting scheduled and notifications sent." });
   };
 
   const sendPaySignEmail = async () => {
@@ -410,7 +411,13 @@ export default function ClosePrep() {
           <h2 className="text-sm font-semibold text-white">Schedule Closing Meeting</h2>
           <p className="text-xs text-white/50 mt-0.5">On your own calendar. 1-hour block.</p>
         </div>
-        {slots.length === 0 ? (
+        <AwayToggle value={away} onChange={setAway} />
+        {away ? (
+          <div>
+            <Label className="text-xs text-white/60">Date &amp; time <span className="text-red-500">*</span></Label>
+            <Input type="datetime-local" value={awayWhen} onChange={e => setAwayWhen(e.target.value)} className="bg-white/5 border-white/10 text-white mt-1" />
+          </div>
+        ) : slots.length === 0 ? (
           <div className="text-sm text-white/60 p-3 rounded-md bg-white/5 border border-white/10">
             No availability configured on your calendar yet. Set your availability first, then come back.
             <div className="mt-2">
@@ -431,6 +438,7 @@ export default function ClosePrep() {
             ))}
           </select>
         )}
+        <AttendeesEditor leadId={lead.id} value={attendees} onChange={setAttendees} away={away} />
       </section>
 
       <Button

@@ -66,6 +66,7 @@ const ReferralProgram = lazy(() => import("./pages/ReferralProgram"));
 const AIVisibility = lazy(() => import("./pages/AIVisibility"));
 const Auth = lazy(() => import("./pages/Auth"));
 const PaySign = lazy(() => import("./pages/PaySign"));
+const MeetingTextsOptIn = lazy(() => import("./pages/MeetingTextsOptIn"));
 const Activation = lazy(() => import("./pages/Activation"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
@@ -278,6 +279,7 @@ const App = () => {
               <Route path="/site/:clientSlug" element={<PublicSite />} />
               
               <Route path="/pay-sign/:token" element={<PaySign />} />
+              <Route path="/meeting-texts/:token" element={<MeetingTextsOptIn />} />
               <Route path="/sign/:token" element={<PaySign />} />
               <Route path="/activation" element={<Activation />} />
               <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />

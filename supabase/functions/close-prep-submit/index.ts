@@ -5,6 +5,7 @@
 // - Fires universal + rep-focused notifications (SMS + email).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { createZoomMeeting } from "../_shared/zoom.ts";
+import { attendeeEmail, type MeetingAttendee } from "../_shared/meetingAttendees.ts";
 import { esc, fmtMoney, buildServiceAgreementHtml } from "../_shared/service-agreement-html.ts";
 
 // Short, distinct receipt/terms-summary document (separate from the full 16-section agreement).
@@ -123,7 +124,18 @@ Deno.serve(async (req) => {
       meeting_starts_at,
       duration_minutes,
       client_details,
+      away,
+      attendees: attendeesIn,
     } = body || {};
+    // "Meeting away from our Zoom": no Zoom link, no client/attendee emails or texts.
+    const isAway = away === true;
+    const attendeeInput: Array<{ name: string; email: string | null; phone: string | null }> = Array.isArray(attendeesIn)
+      ? attendeesIn.slice(0, 10).map((a: any) => ({
+          name: typeof a?.name === "string" ? a.name.trim().slice(0, 120) : "",
+          email: typeof a?.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email.trim()) ? a.email.trim().toLowerCase().slice(0, 200) : null,
+          phone: typeof a?.phone === "string" && a.phone.replace(/\D/g, "").length >= 10 ? a.phone.trim().slice(0, 40) : null,
+        })).filter((a: any) => a.name && (a.email || a.phone))
+      : [];
 
     if (!lead_id || !meeting_starts_at) {
       return new Response(JSON.stringify({ error: "Missing required fields (lead_id, meeting_starts_at)" }), {
@@ -199,6 +211,16 @@ Deno.serve(async (req) => {
       (lead as any).phone = cdPhone;
     }
 
+    // 1c. Does this lead still need a client account? Form 1 bookings (booking_form /
+    //     round_robin) create it at booking time. Skipped-Form-1 leads and first
+    //     meetings booked elsewhere (away from our Zoom) get it here at Form 2.
+    const { count: form1Count } = await supabase
+      .from("bdr_calendar_events")
+      .select("id", { count: "exact", head: true })
+      .eq("lead_id", lead.id)
+      .in("source", ["booking_form", "round_robin"]);
+    const needsAccount = !(lead as any).provisioned_client_id && (form1Count ?? 0) === 0;
+
     // 2. Ensure calendar (reps may own several booking links — take the oldest)
     let { data: cal } = await supabase
       .from("bdr_calendars")
@@ -271,17 +293,28 @@ Deno.serve(async (req) => {
         ends_at: end.toISOString(),
         lead_id: lead.id,
         source: "closing_meeting",
+        is_external: isAway,
         notes: closing_notes || null,
-        metadata: { business_name: lead.business_name, phone: lead.phone, email: lead.email },
+        metadata: { business_name: lead.business_name, phone: lead.phone, email: lead.email, customer_name: lead.owner_name || null },
       })
       .select("id")
       .single();
     if (evtErr) throw evtErr;
 
-    // 4b. Zoom for the closing meeting — never blocks the booking.
+    // 4a. Extra attendees on the closing meeting.
+    let attendeeRows: MeetingAttendee[] = [];
+    if (attendeeInput.length) {
+      const { data: insAtt, error: attErr } = await supabase.from("bdr_meeting_attendees")
+        .insert(attendeeInput.map((a) => ({ ...a, event_id: evt.id, lead_id: lead.id, created_by: userId })) as any)
+        .select("id, name, email, phone, sms_consent, optin_token");
+      if (attErr) console.error("[close-prep-submit] attendees insert failed:", attErr.message);
+      attendeeRows = (insAtt || []) as MeetingAttendee[];
+    }
+
+    // 4b. Zoom for the closing meeting — never blocks the booking. None when away.
     let zoomJoinUrl: string | null = null;
     let zoomStartUrl: string | null = null;
-    try {
+    if (!isAway) try {
       const zoom = await createZoomMeeting({
         topic: `NewLight Closing Meeting — ${lead.business_name}`,
         startTime: start.toISOString(),
@@ -458,7 +491,7 @@ Deno.serve(async (req) => {
 
     // 6c. Skip path: create the client's account + login (what Form 1 would have done).
     let credentials: { tempPassword?: string | null; magicLink?: string | null } | null = null;
-    if (skippedDiscovery && !(lead as any).provisioned_client_id && lead.email) {
+    if (needsAccount && lead.email) {
       try {
         const provResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/provision-from-booking`, {
           method: "POST",
@@ -534,6 +567,8 @@ Deno.serve(async (req) => {
       zoomStartUrl,
       credentials,
       clientEmail: lead.email || null,
+      isAway,
+      attendees: attendeeRows,
     }).catch((e) => console.error("[close-prep notifications] uncaught:", e));
     // deno-lint-ignore no-explicit-any
     const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil?.bind((globalThis as any).EdgeRuntime);
@@ -574,8 +609,10 @@ async function sendClosePrepNotifications(supabase: any, args: {
   zoomStartUrl?: string | null;
   credentials?: { tempPassword?: string | null; magicLink?: string | null } | null;
   clientEmail?: string | null;
+  isAway?: boolean;
+  attendees?: MeetingAttendee[];
 }) {
-  const { zoomJoinUrl = null, zoomStartUrl = null } = args;
+  const { zoomJoinUrl = null, zoomStartUrl = null, isAway = false, attendees = [] } = args;
   const { userId, userEmail, lead, when, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, pricing_model, closing_notes, paySignUrl } = args;
   const whenLbl = fmtWhen(when);
   const who = lead.owner_name ? `${lead.owner_name} (${lead.business_name})` : lead.business_name;
@@ -636,14 +673,57 @@ async function sendClosePrepNotifications(supabase: any, args: {
       ``,
       zoomJoinUrl ? `Zoom join link: ${zoomJoinUrl}` : "",
       zoomStartUrl ? `Zoom host start link: ${zoomStartUrl}` : "",
+      isAway ? `Away from our Zoom: no Zoom link, and the client gets no confirmation or reminders for this meeting.` : "",
+      attendees.length ? `Extra attendees: ${attendees.map((a) => a.name).join(", ")}${isAway ? "" : " (emailed the confirmation)"}` : "",
       ``,
       `Send this link to the client during the closing meeting so they can pay + e-sign in one flow:`,
       paySignUrl,
       ``,
       `— NewLight`,
     ].filter(Boolean).join("\n");
-    const html = closePrepHtml({ heading: `Closing meeting prep — ${lead.business_name}`, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl, zoomJoinUrl, zoomStartUrl });
+    const html = closePrepHtml({ heading: `Closing meeting prep — ${lead.business_name}`, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl, zoomJoinUrl, zoomStartUrl, away: isAway });
     await sendEmail(repEmail, subj, html, text);
+  }
+
+  // Away from our Zoom: no meeting confirmation. If the client's account was just
+  // created (first meeting booked elsewhere / Form 1 skipped), still send the login.
+  if (isAway) {
+    if (lead.email && (args.credentials?.tempPassword || args.credentials?.magicLink)) {
+      try {
+        const signer = repName || "The NewLight Team";
+        const creds = args.credentials!;
+        const text = [
+          `Hi ${lead.owner_name || "there"},`,
+          ``,
+          creds.tempPassword
+            ? `Your NewLight workspace is ready.\nLogin: https://newlight-app.com/auth\nEmail: ${lead.email}\nTemporary password: ${creds.tempPassword}\n(You'll be asked to change it on first login.)`
+            : `Your NewLight workspace is ready. Sign in (link expires shortly): ${creds.magicLink}`,
+          ``,
+          `— ${signer}`,
+          repEmail ? `Email: ${repEmail}` : "",
+        ].filter(Boolean).join("\n");
+        const html = workspaceReadyHtml({ ownerName: lead.owner_name || null, signer, repEmail: repEmail || null, credentials: creds, clientEmail: lead.email });
+        await sendEmail(lead.email, "Your NewLight workspace is ready", html, text);
+      } catch (e) {
+        console.error("[close-prep] workspace email failed:", e);
+      }
+    }
+    return;
+  }
+
+  // Extra attendees — same confirmation + Zoom link (texts only after they opt in).
+  for (const a of attendees) {
+    if (!a.email) continue;
+    try {
+      const { html, text } = attendeeEmail({
+        attendee: a,
+        line: `Your NewLight Closing meeting with ${lead.business_name} is confirmed for ${whenLbl} (Pacific Time).`,
+        zoom: zoomJoinUrl,
+      });
+      await sendEmail(a.email, `Your meeting is confirmed — ${whenLbl}`, html, text);
+    } catch (e) {
+      console.error("[close-prep] attendee email failed:", e);
+    }
   }
 
   // Direct client-facing email — meeting confirmation ONLY (no pricing/payment/signing content)
@@ -683,6 +763,31 @@ async function sendClosePrepNotifications(supabase: any, args: {
       console.error("[close-prep] client email failed:", e);
     }
   }
+}
+
+function workspaceReadyHtml(args: {
+  ownerName: string | null;
+  signer: string;
+  repEmail: string | null;
+  credentials: { tempPassword?: string | null; magicLink?: string | null };
+  clientEmail: string;
+}): string {
+  const { ownerName, signer, repEmail, credentials, clientEmail } = args;
+  const inner = credentials.tempPassword
+    ? `<p style="margin:0 0 4px;font-size:14px;"><strong>Email:</strong> ${esc(clientEmail)}</p>
+       <p style="margin:0 0 12px;font-size:14px;"><strong>Temporary password:</strong> <code>${esc(credentials.tempPassword)}</code></p>
+       <a href="https://newlight-app.com/auth" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:10px 20px;border-radius:8px;text-decoration:none;">Log in to NewLight</a>
+       <p style="margin:10px 0 0;font-size:12px;color:#64748B;">You'll be asked to change your password on first login.</p>`
+    : `<a href="${esc(credentials.magicLink || "")}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:10px 20px;border-radius:8px;text-decoration:none;">Sign in to NewLight</a>
+       <p style="margin:10px 0 0;font-size:12px;color:#64748B;">This sign-in link expires shortly.</p>`;
+  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your NewLight workspace is ready</h1>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Hi ${esc(ownerName || "there")},</p>
+    <div style="margin:20px 0;padding:16px;background:#F1F5F9;border-radius:10px;border:1px solid #E2E8F0;">${inner}</div>
+    <p style="font-size:14px;line-height:1.6;margin:20px 0 0;">— ${esc(signer)}${repEmail ? `<br><span style="color:#6b7280;font-size:13px;">${esc(repEmail)}</span>` : ""}</p>
+  </div>
+</body></html>`;
 }
 
 function clientMeetingConfirmHtml(args: {
@@ -735,6 +840,7 @@ function closePrepHtml(args: {
   paySignUrl?: string;
   zoomJoinUrl?: string | null;
   zoomStartUrl?: string | null;
+  away?: boolean;
 }): string {
   const { heading, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl, zoomJoinUrl, zoomStartUrl } = args;
   const rows: string[] = [
@@ -746,6 +852,7 @@ function closePrepHtml(args: {
   if (lead.phone) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;">${lead.phone}</td></tr>`);
   if (lead.email) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;">${lead.email}</td></tr>`);
   if (zoomJoinUrl) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Zoom join</td><td style="padding:6px 0;"><a href="${zoomJoinUrl}">${zoomJoinUrl}</a></td></tr>`);
+  if (args.away) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Meeting</td><td style="padding:6px 0;"><strong>Away from our Zoom</strong> — no link; the client gets no confirmation or reminders.</td></tr>`);
   if (zoomStartUrl) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Zoom host start</td><td style="padding:6px 0;"><a href="${zoomStartUrl}">Start meeting as host</a></td></tr>`);
   const notesBlock = closing_notes
     ? `<div style="margin-top:16px;padding:12px 14px;background:#f9fafb;border-radius:8px;font-size:13px;color:#374151;white-space:pre-wrap;">${closing_notes.replace(/</g, "&lt;")}</div>`

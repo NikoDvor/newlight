@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar, BdrCalendar } from "@/lib/bdrCalendar";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, type OutcomeLead } from "@/components/employee/MeetingOutcomeSheet";
+import MeetingSetupPanel from "@/components/employee/MeetingSetupPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   MonthGrid,
@@ -39,6 +40,8 @@ interface Event {
   notes: string | null;
   meeting_kind?: string | null;
   attempt_number?: number | null;
+  is_external?: boolean | null;
+  attendance?: string | null;
 }
 
 const SOURCE_TONE: Record<string, string> = {
@@ -52,6 +55,10 @@ const SOURCE_LABEL: Record<string, string> = {
   manual: "Manual",
   booking_form: "Booking",
   sdr_mirror: "SDR",
+  external_booking: "Booked elsewhere",
+  extra_meeting: "Extra meeting",
+  closing_meeting: "Closing",
+  onboarding_meeting: "Onboarding",
 };
 
 function startOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth(), 1); }
@@ -104,7 +111,7 @@ export default function BDRCalendar({ calendarId }: { calendarId?: string } = {}
       const [{ data: eventRows }, { data: allCals }] = await Promise.all([
         (supabase as any)
           .from("bdr_calendar_events")
-          .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes, meeting_kind, attempt_number")
+          .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes, meeting_kind, attempt_number, is_external, attendance")
           .eq("user_id", cal.user_id)
           .order("starts_at", { ascending: true }),
         (supabase as any)
@@ -133,7 +140,7 @@ export default function BDRCalendar({ calendarId }: { calendarId?: string } = {}
     if (!calendar) return;
     const { data } = await (supabase as any)
       .from("bdr_calendar_events")
-      .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes, meeting_kind, attempt_number")
+      .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes, meeting_kind, attempt_number, is_external, attendance")
       .eq("user_id", calendar.user_id)
       .order("starts_at", { ascending: true });
     setEvents(data || []);
@@ -789,17 +796,26 @@ function EventDetailDialog({ event, onClose, onDeleted }: { event: Event | null;
   }
   return (
     <Dialog open={!!event} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white">
+      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white max-h-[88dvh] overflow-y-auto">
         <DialogHeader><DialogTitle>{event.title}</DialogTitle></DialogHeader>
         <div className="space-y-2 text-sm">
           <div className="text-white/70">{start.toLocaleString()} – {fmtTime(end)}</div>
           <div className="flex items-center gap-2 text-xs">
-            <span className="px-2 py-0.5 rounded" style={{ background: `${SOURCE_TONE[event.source] || "#888"}22`, color: SOURCE_TONE[event.source] || "#fff" }}>{event.source}</span>
+            <span className="px-2 py-0.5 rounded" style={{ background: `${SOURCE_TONE[event.source] || "#888"}22`, color: SOURCE_TONE[event.source] || "#fff" }}>{SOURCE_LABEL[event.source] || event.source}</span>
+            {event.is_external && <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">Away from our Zoom</span>}
             {event.outcome && <span className="text-white/60">Outcome: {event.outcome}</span>}
             {event.stage && <span className="text-white/60">Stage: {event.stage}</span>}
           </div>
           {event.description && <p className="text-white/70 whitespace-pre-wrap">{event.description}</p>}
           {event.notes && event.notes !== event.description && <p className="text-white/60 text-xs whitespace-pre-wrap">{event.notes}</p>}
+          {tracked && !["rescheduled", "cancelled"].includes(event.attendance || "") && (
+            <MeetingSetupPanel
+              eventId={event.id}
+              leadId={event.lead_id!}
+              startsAt={event.starts_at}
+              initialAway={!!event.is_external}
+            />
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} className="text-white/70"><X className="h-4 w-4 mr-1" />Close</Button>

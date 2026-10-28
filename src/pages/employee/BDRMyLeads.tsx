@@ -24,6 +24,7 @@ import { JourneyCompact } from "@/components/employee/LeadMeetingJourney";
 import { buildLeadJourney, type LeadJourney } from "@/lib/leadJourney";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
 import ScheduleExtraMeetingDialog from "@/components/employee/ScheduleExtraMeetingDialog";
+import LogExternalMeetingDialog from "@/components/employee/LogExternalMeetingDialog";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
 
@@ -32,7 +33,7 @@ interface OutcomeEntry { label: string; note?: string; timestamp: string; meetin
 
 /** Map a meeting source string to the pipeline meeting kind it represents. */
 function meetingKindFromSource(source?: string | null): "discovery" | "closing" | null {
-  if (source === "booking_form") return "discovery";
+  if (source === "booking_form" || source === "round_robin" || source === "external_booking") return "discovery";
   if (source === "closing_meeting") return "closing";
   // dialer entries and onboarding meetings are not discovery/closing meetings
   if (source === "dialer" || source === "onboarding_meeting") return null;
@@ -222,6 +223,7 @@ export default function BDRMyLeads() {
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [rescheduleLead, setRescheduleLead] = useState<BdrLead | null>(null);
   const [extraMeetingLead, setExtraMeetingLead] = useState<BdrLead | null>(null);
+  const [externalLead, setExternalLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
@@ -1387,6 +1389,17 @@ export default function BDRMyLeads() {
                             Pay &amp; Sign
                           </Button>
                         )}
+                        {!selectMode && !lead.crm_deal_id && !latestMeetingByLead[lead.id]?.meeting_kind && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7"
+                            onClick={(e) => { e.stopPropagation(); setExternalLead(lead); }}
+                            title="First meeting booked in person, by phone, or on their calendar — counts as Form 1"
+                          >
+                            Booked elsewhere
+                          </Button>
+                        )}
                         {!selectMode && (
                           <Button
                             size="sm"
@@ -1465,6 +1478,18 @@ export default function BDRMyLeads() {
         } : null}
         onClose={() => setExtraMeetingLead(null)}
         onScheduled={() => fetchLeads()}
+      />
+      <LogExternalMeetingDialog
+        open={!!externalLead}
+        lead={externalLead ? {
+          id: externalLead.id,
+          business_name: externalLead.business_name,
+          owner_name: externalLead.owner_name,
+          email: (externalLead as any).email ?? null,
+          phone: externalLead.owner_direct_phone || externalLead.phone || externalLead.front_desk_phone,
+        } : null}
+        onClose={() => setExternalLead(null)}
+        onLogged={() => fetchLeads()}
       />
       <RescheduleModal
         lead={rescheduleLead}

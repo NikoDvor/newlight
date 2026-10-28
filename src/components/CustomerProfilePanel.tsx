@@ -10,6 +10,8 @@ import { toast } from "@/hooks/use-toast";
 import { Calendar, Clock, Mail, Phone, Building2, User, CheckCircle2, XCircle, RotateCcw, Loader2, Plus, Copy } from "lucide-react";
 import { getLeadPhones } from "@/lib/leadFlags";
 import LeadMeetingJourney from "@/components/employee/LeadMeetingJourney";
+import MeetingSetupPanel from "@/components/employee/MeetingSetupPanel";
+import { fetchLeadAttendeeSuggestions, type AttendeeDraft } from "@/lib/meetingAttendees";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, kindAttemptLabel, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
 
 type Attendance = "pending" | "attended" | "no_show" | "rescheduled";
@@ -43,6 +45,7 @@ interface EventRow {
   source: string;
   meeting_kind: string | null;
   attempt_number: number | null;
+  is_external?: boolean | null;
 }
 
 const STAGES = [
@@ -104,6 +107,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
   const [copiedId, setCopiedId] = useState(false);
   const [outcomes, setOutcomes] = useState<Record<string, OutcomeRow>>({});
   const [outcomeEvent, setOutcomeEvent] = useState<EventRow | null>(null);
+  const [otherPeople, setOtherPeople] = useState<AttendeeDraft[]>([]);
 
   const copyLeadId = async () => {
     if (!lead) return;
@@ -127,7 +131,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
     }
     const { data: ev } = await (supabase as any)
       .from("bdr_calendar_events")
-      .select("id, calendar_id, title, starts_at, ends_at, attendance, outcome, notes, source, meeting_kind, attempt_number")
+      .select("id, calendar_id, title, starts_at, ends_at, attendance, outcome, notes, source, meeting_kind, attempt_number, is_external")
       .eq("lead_id", leadId)
       .order("starts_at", { ascending: false });
     setEvents((ev || []) as EventRow[]);
@@ -136,6 +140,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
     const om: Record<string, OutcomeRow> = {};
     (outs || []).forEach((o: OutcomeRow) => { if (o.meeting_kind !== "pay_sign") om[o.event_id] = o; });
     setOutcomes(om);
+    setOtherPeople(await fetchLeadAttendeeSuggestions(leadId));
     setLoading(false);
   };
 
@@ -237,6 +242,16 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
                 </div>
               ))}
               {lead.email && <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-white/50" /><a href={`mailto:${lead.email}`} className="text-sm hover:underline truncate">{lead.email}</a></div>}
+              {otherPeople.length > 0 && (
+                <div className="pt-1">
+                  <div className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Also joins meetings</div>
+                  {otherPeople.map((a) => (
+                    <div key={(a.email || a.phone || a.name)} className="text-xs text-white/75">
+                      {a.name}<span className="text-white/45">{[a.email, a.phone].filter(Boolean).length ? ` · ${[a.email, a.phone].filter(Boolean).join(" · ")}` : ""}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Pipeline stage */}
@@ -271,6 +286,10 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
                       <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/10 shrink-0">{countdown}</span>
                     )}
                   </div>
+                  {next.is_external && <div className="mt-1.5 text-[11px] text-amber-300">Away from our Zoom — the client gets no emails or texts for this one.</div>}
+                  {OUTCOME_KINDS.includes((next.meeting_kind || "") as any) && !["rescheduled", "cancelled"].includes(next.attendance || "") && (
+                    <MeetingSetupPanel eventId={next.id} leadId={lead.id} startsAt={next.starts_at} initialAway={!!next.is_external} onChanged={load} />
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">

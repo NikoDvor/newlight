@@ -3,6 +3,9 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import AttendeesEditor, { AwayToggle } from "@/components/employee/AttendeesEditor";
+import { insertAttendees, type AttendeeDraft } from "@/lib/meetingAttendees";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
@@ -14,6 +17,7 @@ import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots"
  * (not a reschedule). It gets its own Zoom link + client notice, shows up as
  * "meeting #N" in the journey, and must be closed with an outcome like any
  * other meeting. It never changes the lead's stage — only the forms do.
+ * "Away from our Zoom" = no Zoom link and nothing sent to the client/attendees.
  */
 export const EXTRA_MEETING_TYPES = [
   { key: "discovery_followup", label: "Discovery follow-up", kind: "discovery", hint: "Another strategy call before Form 2" },
@@ -40,12 +44,15 @@ export default function ScheduleExtraMeetingDialog({
   const [slot, setSlot] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [away, setAway] = useState(false);
+  const [awayWhen, setAwayWhen] = useState("");
+  const [attendees, setAttendees] = useState<AttendeeDraft[]>([]);
   const [availability, setAvailability] = useState<any>(null);
   const [calTimezone, setCalTimezone] = useState("America/Los_Angeles");
 
   useEffect(() => {
     if (!open) return;
-    setType(""); setSlot(""); setNotes(""); setSaving(false);
+    setType(""); setSlot(""); setNotes(""); setSaving(false); setAway(false); setAwayWhen(""); setAttendees([]);
     (async () => {
       const cal = await ensureBdrCalendar();
       setAvailability(cal?.availability || null);
@@ -60,14 +67,15 @@ export default function ScheduleExtraMeetingDialog({
     }).map((d) => ({ date: d, label: d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) }));
   }, [availability, calTimezone]);
 
+  const startIso = away ? (awayWhen ? new Date(awayWhen).toISOString() : "") : slot;
   const submit = async () => {
-    if (!lead || !type || !slot) return;
+    if (!lead || !type || !startIso) return;
     const def = EXTRA_MEETING_TYPES.find((t) => t.key === type)!;
     setSaving(true);
     try {
       const cal = await ensureBdrCalendar();
       if (!cal) throw new Error("No calendar found");
-      const start = new Date(slot);
+      const start = new Date(startIso);
       const end = new Date(start.getTime() + 60 * 60_000);
       const { data: created, error } = await (supabase as any).from("bdr_calendar_events").insert({
         user_id: (cal as any).user_id,
@@ -83,6 +91,7 @@ export default function ScheduleExtraMeetingDialog({
         meeting_kind: def.kind,
         is_extra: true,
         extra_type: def.key,
+        is_external: away,
         attendance: "pending",
         metadata: {
           customer_name: lead.owner_name || null,
@@ -93,6 +102,11 @@ export default function ScheduleExtraMeetingDialog({
         },
       }).select("id").single();
       if (error) throw error;
+
+      if (attendees.length) {
+        try { await insertAttendees(created.id, lead.id, attendees); }
+        catch (e: any) { toast({ title: "Meeting scheduled, but attendees didn't save", description: e?.message, variant: "destructive" }); }
+      }
 
       // Zoom link + client/rep notice (fire-and-forget; never blocks scheduling).
       supabase.functions
@@ -112,12 +126,12 @@ export default function ScheduleExtraMeetingDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o && !saving) onClose(); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[88dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Schedule another meeting</DialogTitle>
           <DialogDescription>
-            {lead?.business_name} — an extra meeting (not a reschedule). It gets its own Zoom link, the client is notified,
-            and you'll log its outcome afterwards. The lead's stage doesn't change.
+            {lead?.business_name} — an extra meeting (not a reschedule). It gets its own Zoom link, the client is notified
+            (unless it's away from our Zoom), and you'll log its outcome afterwards. The lead's stage doesn't change.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -138,8 +152,11 @@ export default function ScheduleExtraMeetingDialog({
             </div>
           </div>
           <div className="space-y-1.5">
+            <AwayToggle value={away} onChange={setAway} className="mb-2" />
             <Label className="text-xs">Time (1-hour block)</Label>
-            {slots.length === 0 ? (
+            {away ? (
+              <Input type="datetime-local" value={awayWhen} onChange={(e) => setAwayWhen(e.target.value)} />
+            ) : slots.length === 0 ? (
               <p className="text-xs text-muted-foreground">{availability ? "No open times in the next 14 days." : "No availability configured on your calendar yet."}</p>
             ) : (
               <select value={slot} onChange={(e) => setSlot(e.target.value)} className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm">
@@ -152,7 +169,8 @@ export default function ScheduleExtraMeetingDialog({
             <Label className="text-xs">Notes (optional)</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="What's this meeting for?" />
           </div>
-          <Button className="w-full" disabled={!type || !slot || saving} onClick={submit}>
+          <AttendeesEditor leadId={lead?.id || null} value={attendees} onChange={setAttendees} away={away} />
+          <Button className="w-full" disabled={!type || !startIso || saving} onClick={submit}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Schedule meeting
           </Button>

@@ -1,11 +1,17 @@
 // Notifies a client about a meeting and gives it its own Zoom link.
 //   mode "moved" (default): a rescheduled (NEW) meeting row — "your meeting has moved".
 //   mode "scheduled": an extra meeting added to an existing lead — "your meeting is scheduled".
+//   mode "attendees": only the extra attendees (optionally one: attendee_id) — reuses the current Zoom link.
+// Extra attendees (bdr_meeting_attendees) get the same notice on every mode.
+// Meetings away from our Zoom (is_external) get no Zoom link and no client/attendee notice.
 // Every call creates a fresh Zoom meeting for the event's new time and saves it on the event,
 // so the client, the rep's calendar and the reminders all share one current link.
 // (The booking-confirmation DB trigger no longer fires for rescheduled copies.)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { createZoomMeeting } from "../_shared/zoom.ts";
+import { attendeeEmail, loadAttendees } from "../_shared/meetingAttendees.ts";
+
+type Mode = "moved" | "scheduled" | "attendees";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,7 +69,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     // Lightweight deploy check (no data touched).
-    if (new URL(req.url).searchParams.get("ping") === "1") return json({ ok: true, version: "2026-10-28-zoom-per-meeting" });
+    if (new URL(req.url).searchParams.get("ping") === "1") return json({ ok: true, version: "2026-10-28-away-attendees" });
     const authHeader = req.headers.get("Authorization") || "";
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
     const userClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
@@ -75,12 +81,13 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const eventId = typeof body?.event_id === "string" ? body.event_id : "";
-    const mode: "moved" | "scheduled" = body?.mode === "scheduled" ? "scheduled" : "moved";
+    const mode: Mode = body?.mode === "scheduled" ? "scheduled" : body?.mode === "attendees" ? "attendees" : "moved";
+    const onlyAttendeeId = typeof body?.attendee_id === "string" ? body.attendee_id : null;
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) return json({ error: "event_id is required" }, 400);
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: evt } = await admin.from("bdr_calendar_events")
-      .select("id, user_id, lead_id, source, meeting_kind, starts_at, ends_at, metadata, zoom_join_url, is_extra, extra_type")
+      .select("id, user_id, lead_id, source, meeting_kind, starts_at, ends_at, metadata, zoom_join_url, is_extra, extra_type, is_external")
       .eq("id", eventId).maybeSingle();
     if (!evt) return json({ error: "Meeting not found" }, 404);
 
@@ -91,6 +98,7 @@ Deno.serve(async (req) => {
     }
 
     if (!evt.lead_id) return json({ ok: true, skipped: "no_lead" });
+    const away = evt.is_external === true;
 
     const meta = (evt.metadata || {}) as Record<string, any>;
     let email: string = meta.email || "";
@@ -105,6 +113,30 @@ Deno.serve(async (req) => {
       if (!name) name = lead.owner_name || "";
     }
 
+    const kind = evt.meeting_kind || (evt.source === "closing_meeting" ? "closing" : evt.source === "onboarding_meeting" ? "onboarding" : "");
+    const kindLabel = kind === "closing" ? "Closing" : kind === "onboarding" ? "Onboarding" : kind === "check_in" ? "Check-in" : kind === "discovery" ? "Strategy" : "";
+    const meetingName = kindLabel ? `${kindLabel} meeting` : "meeting";
+    const when = formatDateTime(evt.starts_at);
+    const bizName = lead?.business_name || name || "Prospect";
+
+    const result: Record<string, unknown> = { ok: true, mode, away };
+
+    // Away from our Zoom: no Zoom link and nothing goes to the client or attendees.
+    // The salesman still gets their own notice (except for attendee-only sends).
+    if (away) {
+      if (mode !== "attendees") {
+        const { data: rep } = await admin.auth.admin.getUserById(evt.user_id);
+        const repEmail = rep?.user?.email;
+        if (repEmail) {
+          const verbRep = mode === "scheduled" ? "is scheduled for" : "has moved to";
+          const line = `${bizName} — ${meetingName} ${verbRep} ${when}. Away from our Zoom: no link, and the client was not notified.`;
+          result.rep_email = await sendEmail(repEmail, mode === "scheduled" ? "Meeting scheduled" : "Meeting rescheduled", `<p>${esc(line)}</p>`, line);
+        }
+      }
+      result.client = "skipped_away";
+      return json(result);
+    }
+
     let consent = meta.sms_consent === true;
     if (!consent) {
       const { data: others } = await admin.from("bdr_calendar_events")
@@ -112,57 +144,73 @@ Deno.serve(async (req) => {
       consent = (others || []).length > 0;
     }
 
-    const kind = evt.meeting_kind || (evt.source === "closing_meeting" ? "closing" : evt.source === "onboarding_meeting" ? "onboarding" : "");
-    const kindLabel = kind === "closing" ? "Closing" : kind === "onboarding" ? "Onboarding" : kind === "check_in" ? "Check-in" : kind === "discovery" ? "Strategy" : "";
-    const meetingName = kindLabel ? `${kindLabel} meeting` : "meeting";
-    const when = formatDateTime(evt.starts_at);
-
-    const result: Record<string, unknown> = { ok: true, mode };
-
-    // Fresh Zoom link for this meeting's (new) time. Never blocks the notice.
+    // Zoom: "moved"/"scheduled" always get a fresh link for the (new) time.
+    // "attendees" reuses the current link (creates one only if there is none).
     let zoom: string = evt.zoom_join_url || "";
-    try {
-      const durationMinutes = evt.ends_at
-        ? Math.max(15, Math.round((new Date(evt.ends_at).getTime() - new Date(evt.starts_at).getTime()) / 60000))
-        : 60;
-      const z = await createZoomMeeting({
-        topic: `NewLight ${meetingName} — ${lead?.business_name || name || "Client"}`,
-        startTime: new Date(evt.starts_at).toISOString(),
-        durationMinutes,
-      });
-      zoom = z.join_url;
-      const { error: zErr } = await admin.from("bdr_calendar_events")
-        .update({ zoom_meeting_id: String(z.id), zoom_join_url: z.join_url, zoom_start_url: z.start_url })
-        .eq("id", evt.id);
-      if (zErr) console.error("[meeting-reschedule-notice] zoom save failed:", zErr.message);
-      result.zoom = "created";
-    } catch (e) {
-      console.error("[meeting-reschedule-notice] zoom create failed:", (e as Error).message);
-      result.zoom = "failed_kept_previous";
+    if (mode !== "attendees" || !zoom) {
+      try {
+        const durationMinutes = evt.ends_at
+          ? Math.max(15, Math.round((new Date(evt.ends_at).getTime() - new Date(evt.starts_at).getTime()) / 60000))
+          : 60;
+        const z = await createZoomMeeting({
+          topic: `NewLight ${meetingName} — ${lead?.business_name || name || "Client"}`,
+          startTime: new Date(evt.starts_at).toISOString(),
+          durationMinutes,
+        });
+        zoom = z.join_url;
+        const { error: zErr } = await admin.from("bdr_calendar_events")
+          .update({ zoom_meeting_id: String(z.id), zoom_join_url: z.join_url, zoom_start_url: z.start_url })
+          .eq("id", evt.id);
+        if (zErr) console.error("[meeting-reschedule-notice] zoom save failed:", zErr.message);
+        result.zoom = "created";
+      } catch (e) {
+        console.error("[meeting-reschedule-notice] zoom create failed:", (e as Error).message);
+        result.zoom = "failed_kept_previous";
+      }
     }
 
-    const verb = mode === "scheduled" ? "is scheduled for" : "has moved to";
-    const subject = mode === "scheduled" ? "Your NewLight meeting is scheduled" : "Your NewLight meeting has moved";
+    const verb = mode === "moved" ? "has moved to" : "is scheduled for";
+    const subject = mode === "moved" ? "Your NewLight meeting has moved" : "Your NewLight meeting is scheduled";
 
-    if (email) {
-      const text = `Hi ${name || "there"},\n\nYour NewLight ${meetingName} ${verb} ${when}.${zoom ? `\n\nJoin on Zoom: ${zoom}` : ""}\n\n— NewLight`;
-      const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:520px;margin:0 auto;padding:24px;">
+    if (mode !== "attendees") {
+      if (email) {
+        const text = `Hi ${name || "there"},\n\nYour NewLight ${meetingName} ${verb} ${when}.${zoom ? `\n\nJoin on Zoom: ${zoom}` : ""}\n\n— NewLight`;
+        const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:520px;margin:0 auto;padding:24px;">
 <p>Hi ${esc(name || "there")},</p>
 <p>Your NewLight ${esc(meetingName)} ${esc(verb)} <strong>${esc(when)}</strong>.</p>
 ${zoom ? `<p>Join on Zoom: <a href="${esc(zoom)}">${esc(zoom)}</a></p>` : ""}
 <p>— NewLight</p></div>`;
-      result.email = await sendEmail(email, subject, html, text);
-    } else result.email = "no_email";
+        result.email = await sendEmail(email, subject, html, text);
+      } else result.email = "no_email";
 
-    if (phone && consent) {
-      result.sms = await sendSms(phone, `Your NewLight ${meetingName} ${verb} ${when}.${zoom ? ` Join: ${zoom}` : ""}`);
-    } else result.sms = phone ? "skipped_no_consent" : "no_phone";
+      if (phone && consent) {
+        result.sms = await sendSms(phone, `Your NewLight ${meetingName} ${verb} ${when}.${zoom ? ` Join: ${zoom}` : ""}`);
+      } else result.sms = phone ? "skipped_no_consent" : "no_phone";
+    }
 
-    const { data: rep } = await admin.auth.admin.getUserById(evt.user_id);
-    const repEmail = rep?.user?.email;
-    if (repEmail) {
-      const line = `${lead?.business_name || name || "Prospect"} — ${meetingName} ${verb} ${when}.${zoom ? ` Zoom: ${zoom}` : ""}`;
-      result.rep_email = await sendEmail(repEmail, mode === "scheduled" ? "Meeting scheduled" : "Meeting rescheduled", `<p>${esc(line)}</p>`, line);
+    // Extra attendees: same notice (email; text only if they opted in).
+    const attendees = (await loadAttendees(admin, evt.id)).filter((a) => !onlyAttendeeId || a.id === onlyAttendeeId);
+    const attLine = `Your NewLight ${meetingName}${lead?.business_name ? ` with ${lead.business_name}` : ""} ${verb} ${when}.`;
+    const sent: Array<Record<string, unknown>> = [];
+    for (const a of attendees) {
+      const r: Record<string, unknown> = { id: a.id };
+      if (a.email) {
+        const { html, text } = attendeeEmail({ attendee: a, line: attLine, zoom });
+        r.email = await sendEmail(a.email, subject, html, text);
+      }
+      if (a.phone && a.sms_consent) r.sms = await sendSms(a.phone, `${attLine}${zoom ? ` Join: ${zoom}` : ""}`);
+      sent.push(r);
+    }
+    result.attendees = sent;
+
+    if (mode !== "attendees") {
+      const { data: rep } = await admin.auth.admin.getUserById(evt.user_id);
+      const repEmail = rep?.user?.email;
+      if (repEmail) {
+        const extra = attendees.length ? ` ${attendees.length} extra attendee${attendees.length === 1 ? "" : "s"} notified.` : "";
+        const line = `${bizName} — ${meetingName} ${verb} ${when}.${zoom ? ` Zoom: ${zoom}` : ""}${extra}`;
+        result.rep_email = await sendEmail(repEmail, mode === "scheduled" ? "Meeting scheduled" : "Meeting rescheduled", `<p>${esc(line)}</p>`, line);
+      }
     }
 
     return json(result);

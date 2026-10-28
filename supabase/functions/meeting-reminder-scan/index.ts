@@ -2,7 +2,11 @@
 // upcoming bdr_calendar_events at 24h, 3h, and 15min before start_time.
 // Skips windows whose trigger time has already passed at booking time.
 // Idempotent via reminder_{24h,3h,15m}_sent_at columns.
+// Extra attendees (bdr_meeting_attendees) get the same email reminders (texts
+// only if they opted in). Meetings away from our Zoom (is_external) send the
+// client and attendees nothing — only the salesman's in-app reminder fires.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { attendeeEmail, loadAttendees } from "../_shared/meetingAttendees.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -97,7 +101,7 @@ Deno.serve(async (req) => {
   // Any upcoming event where at least one reminder is still unsent.
   const { data: events, error } = await supabase
     .from("bdr_calendar_events")
-    .select("id, user_id, client_id, starts_at, created_at, lead_id, metadata, zoom_join_url, reminder_24h_sent_at, reminder_3h_sent_at, reminder_15m_sent_at")
+    .select("id, user_id, client_id, starts_at, created_at, lead_id, metadata, zoom_join_url, is_external, reminder_24h_sent_at, reminder_3h_sent_at, reminder_15m_sent_at")
     .gt("starts_at", nowIso)
     .lt("starts_at", horizon)
     .or("reminder_24h_sent_at.is.null,reminder_3h_sent_at.is.null,reminder_15m_sent_at.is.null")
@@ -142,6 +146,7 @@ Deno.serve(async (req) => {
     }
 
     const zoomUrl = (evt.zoom_join_url as string) || "";
+    const away = (evt as any).is_external === true;
     const who = businessName ? `${customerName} (${businessName})` : customerName || "your client";
 
     for (const w of WINDOWS) {
@@ -176,7 +181,7 @@ Deno.serve(async (req) => {
 
       // ---- Send customer SMS ----
       let smsOk = false;
-      if (customerPhone && consentCache[evt.id as string] === undefined) {
+      if (!away && customerPhone && consentCache[evt.id as string] === undefined) {
         let ok = meta.sms_consent === true;
         if (!ok && evt.lead_id) {
           const { data: others } = await supabase.from("bdr_calendar_events")
@@ -187,10 +192,10 @@ Deno.serve(async (req) => {
         consentCache[evt.id as string] = ok;
       }
       const smsConsent = consentCache[evt.id as string] === true;
-      if (customerPhone && !smsConsent) {
+      if (!away && customerPhone && !smsConsent) {
         results.push({ event_id: evt.id, window: w.key, action: "sms_skipped_no_consent" });
       }
-      if (customerPhone && smsConsent) {
+      if (!away && customerPhone && smsConsent) {
         const smsBody = zoomUrl
           ? `Reminder: your NewLight meeting is in ${w.label}. Join: ${zoomUrl}`
           : `Reminder: your NewLight meeting is in ${w.label}. Check your email for the meeting link.`;
@@ -199,7 +204,7 @@ Deno.serve(async (req) => {
 
       // ---- Send customer email ----
       let emailOk = false;
-      if (customerEmail) {
+      if (!away && customerEmail) {
         const whenText = `${new Date(evt.starts_at as string).toLocaleString("en-US", {
           weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Los_Angeles",
         })} PT`;
@@ -215,12 +220,30 @@ Deno.serve(async (req) => {
         emailOk = await sendEmail(customerEmail, subject, html, text);
       }
 
+      // ---- Extra attendees (same reminder; text only if they opted in) ----
+      let attendeesSent = 0;
+      if (!away) {
+        const whenText = `${new Date(evt.starts_at as string).toLocaleString("en-US", {
+          weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Los_Angeles",
+        })} PT`;
+        const line = `Reminder: your NewLight meeting${businessName ? ` with ${businessName}` : ""} is in ${w.label} (${whenText}).`;
+        for (const a of await loadAttendees(supabase, evt.id as string)) {
+          if (a.email) {
+            const { html, text } = attendeeEmail({ attendee: a, line, zoom: zoomUrl || null });
+            if (await sendEmail(a.email, `Reminder: your NewLight meeting is in ${w.label}`, html, text)) attendeesSent++;
+          }
+          if (a.phone && a.sms_consent) {
+            await sendSms(a.phone, `${line}${zoomUrl ? ` Join: ${zoomUrl}` : ""}`);
+          }
+        }
+      }
+
 
       // ---- Insert BDR in-app notification ----
       let notifOk = false;
       if (evt.user_id && evt.client_id) {
         const title = `Meeting in ${w.label}`;
-        const zoomLine = zoomUrl ? `\nZoom: ${zoomUrl}` : "";
+        const zoomLine = away ? "\nAway from our Zoom — the client gets no reminders for this one." : zoomUrl ? `\nZoom: ${zoomUrl}` : "";
         const message = `Upcoming meeting with ${who} at ${new Date(evt.starts_at as string).toLocaleString("en-US", {
           weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Los_Angeles",
         })} PT.${zoomLine}`;
@@ -245,7 +268,7 @@ Deno.serve(async (req) => {
       results.push({
         event_id: evt.id, window: w.key,
         minutes_until: Math.round(minutesUntil),
-        sms: smsOk, email: emailOk, notification: notifOk,
+        sms: smsOk, email: emailOk, notification: notifOk, attendees: attendeesSent, away,
       });
     }
   }

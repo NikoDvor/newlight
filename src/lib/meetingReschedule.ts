@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { copyAttendees } from "@/lib/meetingAttendees";
 
 export interface RescheduleLead {
   id: string;
@@ -10,7 +11,8 @@ export interface RescheduleLead {
 /**
  * Reschedule = create a NEW meeting (copy of the old one at the new time),
  * mark the old one 'rescheduled', write the audit log and clear the
- * Unattended flag. Returns the new event id. Throws on any failure that
+ * Unattended flag. Away-from-Zoom, extra-meeting type and attendees carry over
+ * (all editable afterwards from the calendar). Returns the new event id. Throws on any failure that
  * would leave the two meetings inconsistent.
  */
 export async function rescheduleMeeting(args: {
@@ -24,7 +26,7 @@ export async function rescheduleMeeting(args: {
   const db = supabase as any;
 
   const { data: old, error: readErr } = await db.from("bdr_calendar_events")
-    .select("user_id, client_id, calendar_id, lead_id, title, description, source, metadata, zoom_meeting_id, zoom_join_url, zoom_start_url, meeting_kind, reschedule_count, starts_at")
+    .select("user_id, client_id, calendar_id, lead_id, title, description, source, metadata, zoom_meeting_id, zoom_join_url, zoom_start_url, meeting_kind, reschedule_count, starts_at, is_extra, extra_type, is_external")
     .eq("id", eventId).single();
   if (readErr || !old) throw new Error(readErr?.message || "Meeting not found");
 
@@ -35,7 +37,10 @@ export async function rescheduleMeeting(args: {
     .select("id").single();
   if (insErr || !created) throw new Error(insErr?.message || "Could not create new meeting");
 
-  // Notify the prospect + rep (fire-and-forget)
+  // Attendees come along (before the notice, so they get it too).
+  await copyAttendees(eventId, created.id);
+
+  // Notify the prospect + rep + attendees (fire-and-forget; away meetings: rep only)
   supabase.functions.invoke("meeting-reschedule-notice", { body: { event_id: created.id } })
     .then(({ error }) => { if (error) console.error("meeting-reschedule-notice failed", error); })
     .catch((e) => console.error("meeting-reschedule-notice failed", e));
