@@ -11,7 +11,7 @@ import { OUTCOME_KINDS, kindAttemptLabel } from "@/components/employee/MeetingOu
  */
 interface Row { id: string; lead_id: string; user_id: string; meeting_kind: string; attempt_number: number | null; starts_at: string; is_external: boolean; business_name?: string }
 
-export default function AdminPipelineMeetings({ repUserId }: { repUserId?: string }) {
+export default function AdminPipelineMeetings({ repUserId, since }: { repUserId?: string; since?: string | null }) {
   const [pending, setPending] = useState<Row[]>([]);
   const [upcoming, setUpcoming] = useState<Row[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -34,7 +34,7 @@ export default function AdminPipelineMeetings({ repUserId }: { repUserId?: strin
         return q;
       };
       const [{ data: past }, { data: next }] = await Promise.all([
-        base().lt("starts_at", now.toISOString()).order("starts_at", { ascending: false }).limit(300),
+        (since ? base().gte("starts_at", since) : base()).lt("starts_at", now.toISOString()).order("starts_at", { ascending: false }).limit(300),
         base().gte("starts_at", now.toISOString()).lt("starts_at", new Date(now.getTime() + 14 * 86400_000).toISOString())
           .order("starts_at", { ascending: true }).limit(300),
       ]);
@@ -61,7 +61,7 @@ export default function AdminPipelineMeetings({ repUserId }: { repUserId?: strin
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [repUserId]);
+  }, [repUserId, since]);
 
   const when = (iso: string) => new Date(iso).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const daysAgo = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400_000));

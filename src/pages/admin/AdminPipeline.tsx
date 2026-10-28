@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useParams } from "react-router-dom";
 import { NewLightHero } from "@/components/admin/NewLightHero";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,16 @@ import TodayStrip from "@/components/pipeline/TodayStrip";
 import AdminPipelineMeetings from "@/components/admin/AdminPipelineMeetings";
 import AdminBdrMeetingAnalytics from "@/pages/admin/AdminBdrMeetingAnalytics";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
+import { RANGE_OPTIONS, rangeStart, type RangeKey } from "@/components/insights/PipelineInsightsView";
+
+// One filter bar for every tab; remembered while you switch tabs.
+const FILTER_KEY = "nl_admin_pipeline_filter";
+function loadFilter(): { rep: string; range: RangeKey } {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(FILTER_KEY) || "{}");
+    return { rep: typeof v.rep === "string" ? v.rep : "", range: ["30", "90", "365", "all"].includes(v.range) ? v.range : "90" };
+  } catch { return { rep: "", range: "90" }; }
+}
 
 /**
  * Admin home: NewLight's sales pipeline (every salesman's leads, meetings,
@@ -28,7 +38,11 @@ const TABS = [
 export default function AdminPipeline() {
   const { tab = "overview" } = useParams<{ tab?: string }>();
   const [reps, setReps] = useState<{ user_id: string; full_name: string }[]>([]);
-  const [rep, setRep] = useState<string>("");
+  const [rep, setRep] = useState<string>(() => loadFilter().rep);
+  const [range, setRange] = useState<RangeKey>(() => loadFilter().range);
+  useEffect(() => {
+    try { sessionStorage.setItem(FILTER_KEY, JSON.stringify({ rep, range })); } catch { /* per-viewer convenience only */ }
+  }, [rep, range]);
 
   useEffect(() => {
     (async () => {
@@ -40,7 +54,8 @@ export default function AdminPipeline() {
     })();
   }, []);
 
-  const showRepFilter = tab !== "results";
+  const dateApplies = tab === "meetings" || tab === "results";
+  const since = useMemo(() => rangeStart(range), [range]);
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -57,26 +72,32 @@ export default function AdminPipeline() {
             </NavLink>
           ))}
         </div>
-        {showRepFilter && (
+        <div className="flex items-center gap-2">
           <select value={rep} onChange={(e) => setRep(e.target.value)}
             className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white">
             <option value="" className="bg-[hsl(215,35%,12%)]">All salesmen</option>
             {reps.map((r) => <option key={r.user_id} value={r.user_id} className="bg-[hsl(215,35%,12%)]">{r.full_name}</option>)}
           </select>
-        )}
+          <select value={range} onChange={(e) => setRange(e.target.value as RangeKey)} disabled={!dateApplies}
+            title={dateApplies ? undefined : "Dates don't apply here — this tab shows where things stand right now"}
+            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white disabled:opacity-40">
+            {RANGE_OPTIONS.map((o) => <option key={o.key} value={o.key} className="bg-[hsl(215,35%,12%)]">{o.label}</option>)}
+          </select>
+        </div>
       </div>
 
-      {showRepFilter && <TodayStrip scope="team" repUserId={rep || undefined} />}
+      {tab !== "results" && <TodayStrip scope="team" repUserId={rep || undefined} />}
 
       {tab === "overview" && (
         <>
+          {rep && <p className="text-[11px] text-white/45 -mb-2">The revenue panel below always shows the whole team.</p>}
           <PipelineRevenueOpportunity clientId={NEWLIGHT_INTERNAL_CLIENT_ID} variant="admin" source="bdr" />
           <RevenueByPeriod clientId={NEWLIGHT_INTERNAL_CLIENT_ID} />
         </>
       )}
       {tab === "board" && <PipelineBoard scope="team" repUserId={rep || undefined} />}
-      {tab === "meetings" && <AdminPipelineMeetings repUserId={rep || undefined} />}
-      {tab === "results" && <AdminBdrMeetingAnalytics />}
+      {tab === "meetings" && <AdminPipelineMeetings repUserId={rep || undefined} since={since} />}
+      {tab === "results" && <AdminBdrMeetingAnalytics embedded range={range} repUserId={rep} onRepChange={setRep} />}
     </div>
   );
 }

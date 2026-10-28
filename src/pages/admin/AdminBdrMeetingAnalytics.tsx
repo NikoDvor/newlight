@@ -297,9 +297,22 @@ function KindBlock({ title, stats, progressionLabel }: { title: string; stats: K
 }
 
 /* ─── page ─── */
-export default function AdminBdrMeetingAnalytics() {
-  const [range, setRange] = useState<RangeKey>("90");
-  const [repFilter, setRepFilter] = useState<string>("all");
+/**
+ * Standalone, or embedded in Admin → Pipeline → Results. When embedded the
+ * salesman + date range come from the Pipeline page's shared filter bar.
+ */
+export default function AdminBdrMeetingAnalytics(props: {
+  embedded?: boolean; range?: RangeKey; repUserId?: string; onRepChange?: (id: string) => void;
+} = {}) {
+  const [rangeState, setRange] = useState<RangeKey>("90");
+  const [repState, setRepState] = useState<string>("all");
+  const range = props.embedded && props.range ? props.range : rangeState;
+  const repFilter = props.embedded ? (props.repUserId || "all") : repState;
+  const setRepFilter = (v: string | ((prev: string) => string)) => {
+    const next = typeof v === "function" ? v(repFilter) : v;
+    if (props.embedded && props.onRepChange) props.onRepChange(next === "all" ? "" : next);
+    else setRepState(next);
+  };
   const [data, setData] = useState<Data>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<string>("discoveryShow");
@@ -529,6 +542,7 @@ export default function AdminBdrMeetingAnalytics() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {!props.embedded && <>
           <Link
             to="/admin/bdr-performance"
             className="text-xs font-medium text-[hsl(211,96%,60%)] hover:underline whitespace-nowrap"
@@ -548,6 +562,7 @@ export default function AdminBdrMeetingAnalytics() {
               {RANGE_OPTIONS.map(o => <SelectItem key={o.key} value={o.key} className="text-xs">{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          </>}
         </div>
       </div>
 
