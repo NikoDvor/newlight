@@ -4,6 +4,7 @@ import { Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LivingBackground } from "@/components/fx/LivingBackground";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getEmployeeRoute, getRoleBadge } from "@/lib/employeeRouting";
@@ -53,51 +54,6 @@ function EmployeeSidebar() {
   const location = useLocation();
   const { userRole, employeeProfile, user } = useWorkspace();
   const dashboardRoute = getEmployeeRoute(userRole, employeeProfile?.job_title) || "/employee/generic";
-  const [certStatus, setCertStatus] = useState<"locked" | "attempted" | "certified">("locked");
-  const [attemptCount, setAttemptCount] = useState(0);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    (async () => {
-      const { data: track } = await supabase.from("nl_training_tracks").select("id").eq("track_key", "salesmen").maybeSingle();
-      if (!track) return;
-      const [{ data: mods }, { data: progress }, { data: certs }] = await Promise.all([
-        supabase.from("nl_training_modules").select("id, module_number").eq("track_id", track.id),
-        supabase.from("nl_training_progress").select("module_id, status, chapter_id").eq("user_id", user.id).eq("track_id", track.id),
-        (supabase as any).from("nl_certifications").select("passed").eq("user_id", user.id),
-      ]);
-      const realMods = (mods || []).filter((m: any) => m.module_number >= 1 && m.module_number <= 8);
-      const completedIds = new Set<string>();
-      const needChapterCount = realMods.filter((mod: any) => {
-        const mp = (progress || []).filter((p: any) => p.module_id === mod.id);
-        if (mp.some((p: any) => !p.chapter_id && p.status === "completed")) { completedIds.add(mod.id); return false; }
-        return mp.some((p: any) => p.chapter_id && p.status === "completed");
-      });
-      if (needChapterCount.length > 0) {
-        // One request for all modules' chapters (was one count request per module).
-        const { data: chapters } = await supabase.from("nl_training_chapters").select("module_id").in("module_id", needChapterCount.map((m: any) => m.id));
-        const totals = new Map<string, number>();
-        (chapters || []).forEach((c: any) => totals.set(c.module_id, (totals.get(c.module_id) ?? 0) + 1));
-        for (const mod of needChapterCount) {
-          const done = (progress || []).filter((p: any) => p.module_id === mod.id && p.chapter_id && p.status === "completed").length;
-          const total = totals.get(mod.id) ?? 0;
-          if (total && done >= total) completedIds.add(mod.id);
-        }
-      }
-      const unlocked = realMods.length >= 8 && realMods.every((m: any) => completedIds.has(m.id));
-      const certRows = (certs?.data || certs || []) as any[];
-      setAttemptCount(certRows.length);
-      if (certRows.some((c: any) => c.passed)) setCertStatus("certified");
-      else if (unlocked) setCertStatus(certRows.length > 0 ? "attempted" : "attempted");
-      else setCertStatus("locked");
-      if (unlocked && certRows.some((c: any) => c.passed)) setCertStatus("certified");
-      else if (unlocked) setCertStatus("attempted");
-    })();
-  }, [user?.id]);
-
-  const certUrl = "/employee/certification/bdr";
-  const certActive = location.pathname === certUrl;
-
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarContent className="bg-background/95">
@@ -132,21 +88,6 @@ function EmployeeSidebar() {
                 })}
               </SidebarMenu>
             ))}
-              <SidebarMenu>
-              {/* BDR Certification */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={certActive} tooltip="BDR Certification">
-                  <NavLink to={certUrl} className="text-muted-foreground hover:text-foreground">
-                    {certStatus === "locked" ? <Lock className="h-4 w-4" /> : certStatus === "certified" ? <CheckCircle2 className="h-4 w-4 text-[hsl(142,72%,42%)]" /> : <Award className="h-4 w-4" />}
-                    <span className="flex items-center gap-2">
-                      BDR Certification
-                      {certStatus === "certified" && <Badge className="h-4 text-[9px] px-1.5 bg-[hsl(142,72%,42%)]/15 text-[hsl(142,72%,42%)] border-0">Certified</Badge>}
-                      {certStatus === "attempted" && attemptCount > 0 && !certStatus.includes("certified") && <Badge variant="secondary" className="h-4 text-[9px] px-1.5">{attemptCount}</Badge>}
-                    </span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -221,7 +162,7 @@ export function EmployeeLayout() {
             </div>
           </header>
           <main className="flex-1 min-w-0 overflow-auto nl-dark-bg relative">
-            <GlobalAtmosphere />
+            {location.pathname.startsWith("/employee/training") ? <LivingBackground /> : <GlobalAtmosphere />}
             <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1">
                 <PWAInstallBanner />
 

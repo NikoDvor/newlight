@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 import { MeetingsNeedingOutcomeCard } from "@/components/employee/MeetingOutcomeSheet";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import TodayStrip from "@/components/pipeline/TodayStrip";
+import WhyStrip from "@/components/pipeline/WhyStrip";
 
 /* ── Glass panel class shared across cards ── */
 const GLASS =
@@ -290,6 +291,9 @@ export function GenericPipelineDashboard({ section = "home" }: { section?: "home
       {section === "home" && <DashboardAtmosphere />}
 
       {section === "home" && <>
+      {/* Goal countdown + daily quote (Training Module 9) */}
+      <WhyStrip />
+
       {/* TODAY — the numbers to act on first */}
       <TodayStrip scope="mine" />
 

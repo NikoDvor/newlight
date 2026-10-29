@@ -38,9 +38,9 @@ export default function ClosePrep() {
   const [sendingLink, setSendingLink] = useState(false);
   const [linkSent, setLinkSent] = useState(false);
 
-  const [initialFee, setInitialFee] = useState("7997");
+  const [initialFee, setInitialFee] = useState("25000");
   const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
-  const [recurringFee, setRecurringFee] = useState("3000");
+  const [recurringFee, setRecurringFee] = useState("7000");
   const [commissionRate, setCommissionRate] = useState("25");
   const [commissionRateOngoing, setCommissionRateOngoing] = useState("10");
   const [kpiTarget, setKpiTarget] = useState("");

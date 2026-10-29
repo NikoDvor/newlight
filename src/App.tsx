@@ -198,7 +198,10 @@ const GenericEmployeeDashboard = lazy(() => import("./pages/employee/EmployeeDas
 const SDRDashboard = lazy(() => import("./pages/employee/EmployeeDashboards").then(m => ({ default: m.SDRDashboard })));
 const SupportEmployeeDashboard = lazy(() => import("./pages/employee/EmployeeDashboards").then(m => ({ default: m.SupportEmployeeDashboard })));
 const EmployeeTrainingCenter = lazy(() => import("./pages/employee/EmployeeTrainingCenter"));
-const BDRCertificationExam = lazy(() => import("./pages/employee/BDRCertificationExam"));
+const AcademyHub = lazy(() => import("./pages/employee/academy/AcademyHub"));
+const AcademyModule = lazy(() => import("./pages/employee/academy/AcademyModule"));
+const AcademyChapter = lazy(() => import("./pages/employee/academy/AcademyChapter"));
+const AcademyVault = lazy(() => import("./pages/employee/academy/AcademyVault"));
 const BDRMyLeads = lazy(() => import("./pages/employee/BDRMyLeads"));
 const BDRMyStats = lazy(() => import("./pages/employee/BDRMyStats"));
 const BDRDialer = lazy(() => import("./pages/employee/BDRDialer"));
@@ -396,12 +399,17 @@ const App = () => {
                 <Route path="account-manager" element={<AccountManagerDashboard />} />
                 <Route path="support" element={<SupportEmployeeDashboard />} />
                 <Route path="generic" element={<GenericEmployeeDashboard />} />
-                <Route path="training" element={<EmployeeTrainingCenter />} />
+                <Route path="training" element={<AcademyHub />} />
+                <Route path="training/m/:n" element={<AcademyModule />} />
+                <Route path="training/m/:n/c/:c" element={<AcademyChapter />} />
+                <Route path="training/vault" element={<AcademyVault />} />
+                <Route path="training/old" element={<EmployeeTrainingCenter />} />
                 <Route path="training/pipeline-guide" element={<PipelineGuide />} />
                 <Route path="training/bdr/certification" element={<AdminBDRCertification basePath="/employee/training" />} />
                 <Route path="training/bdr/flashcards" element={<AdminTrainingFlashcards />} />
+                <Route path="training/bdr" element={<Navigate to="/employee/training" replace />} />
                 <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
-                <Route path="certification/bdr" element={<BDRCertificationExam />} />
+                <Route path="certification/bdr" element={<Navigate to="/employee/training/m/10" replace />} />
                 <Route path="leads" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyLeads /></ClientFlagGate>} />
                 <Route path="my-stats" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyStats /></ClientFlagGate>} />
                 <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
