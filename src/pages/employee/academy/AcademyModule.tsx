@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, Clock, ChevronRight } from "lucide-react";
 import { useAcademy } from "@/hooks/useAcademy";
+import { useAcademyBase } from "@/hooks/useAcademyBase";
 import { chapterDone, moduleStats, FINAL_MODULE, WHY_MODULE, type Audience } from "@/lib/academy";
 import { AcademyStyles, AlivePanel, AudienceTag, GlowBar, Kicker } from "@/components/academy/ui";
 import WhyBuilder from "@/components/academy/WhyBuilder";
@@ -14,12 +15,13 @@ export default function AcademyModule() {
   const { n } = useParams<{ n: string }>();
   const num = Number(n);
   const { data, loading, refresh } = useAcademy();
+  const base = useAcademyBase();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | Audience>("all");
 
   if (loading || !data) return <div className="py-20 text-center text-sm text-white/40">Loading…</div>;
   const m = data.modules.find((x) => x.module_number === num);
-  if (!m) return <div className="py-20 text-center text-sm text-white/40">Module not found. <Link className="underline" to="/employee/training">Back</Link></div>;
+  if (!m) return <div className="py-20 text-center text-sm text-white/40">Module not found. <Link className="underline" to={base}>Back</Link></div>;
 
   const s = moduleStats(data, m);
   const all = data.chapters.filter((c) => c.module_id === m.id).sort((a, b) => a.chapter_number - b.chapter_number);
@@ -31,7 +33,7 @@ export default function AcademyModule() {
   return (
     <div className="mx-auto max-w-3xl pb-16">
       <AcademyStyles />
-      <Link to="/employee/training" className="inline-flex items-center gap-1 text-[12px] text-white/55 hover:text-white"><ArrowLeft className="h-3.5 w-3.5" />Training</Link>
+      <Link to={base} className="inline-flex items-center gap-1 text-[12px] text-white/55 hover:text-white"><ArrowLeft className="h-3.5 w-3.5" />Training</Link>
 
       <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="mt-4 flex items-start gap-4">
         <div className="font-mono text-5xl font-bold leading-none tabular-nums" style={{ color: "hsl(197,100%,60%)", textShadow: "0 0 24px hsla(197,100%,55%,.5)" }}>{pad(m.module_number)}</div>
@@ -64,7 +66,7 @@ export default function AcademyModule() {
         {chapters.map((c, i) => {
           const done = chapterDone(data.progress, c.id);
           return (
-            <motion.button key={c.id} type="button" onClick={() => navigate(`/employee/training/m/${num}/c/${c.chapter_number}`)}
+            <motion.button key={c.id} type="button" onClick={() => navigate(`${base}/m/${num}/c/${c.chapter_number}`)}
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
               className="group flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-[hsla(222,40%,8%,.82)] p-3.5 text-left transition-colors hover:border-[hsla(197,100%,55%,.45)]">
               <div className="w-1 self-stretch rounded-full" style={{ background: done ? "hsl(197,100%,58%)" : "hsla(0,0%,100%,.08)", boxShadow: done ? "0 0 8px hsl(197,100%,55%)" : undefined }} />
@@ -99,8 +101,8 @@ export default function AcademyModule() {
       )}
 
       <div className="mt-10 flex justify-between gap-3 text-[12px]">
-        {prev ? <Link to={`/employee/training/m/${prev.module_number}`} className="text-white/55 hover:text-white">← {pad(prev.module_number)} {prev.module_title}</Link> : <span />}
-        {next ? <Link to={`/employee/training/m/${next.module_number}`} className="text-right text-white/55 hover:text-white">{pad(next.module_number)} {next.module_title} →</Link> : <span />}
+        {prev ? <Link to={`${base}/m/${prev.module_number}`} className="text-white/55 hover:text-white">← {pad(prev.module_number)} {prev.module_title}</Link> : <span />}
+        {next ? <Link to={`${base}/m/${next.module_number}`} className="text-right text-white/55 hover:text-white">{pad(next.module_number)} {next.module_title} →</Link> : <span />}
       </div>
     </div>
   );

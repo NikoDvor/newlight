@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Flame, Award, ArrowRight, Check, BookOpen, Map, Mic, Clock } from "lucide-react";
+import { Flame, Award, ArrowRight, Check, BookOpen, Map, Mic, Clock, Users } from "lucide-react";
 import { useAcademy } from "@/hooks/useAcademy";
+import { useAcademyBase } from "@/hooks/useAcademyBase";
 import { badgesOf, moduleStats, nextUp, streakOf, xpOf, XP_PER_LEVEL, FINAL_MODULE, WHY_MODULE, type AcademyData } from "@/lib/academy";
 import { AcademyStyles, AlivePanel, GlowBar, Kicker, ACADEMY } from "@/components/academy/ui";
 
@@ -9,6 +10,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 export default function AcademyHub() {
   const { data, loading } = useAcademy();
+  const base = useAcademyBase();
   const navigate = useNavigate();
   if (loading || !data) return <div className="py-20 text-center text-sm text-white/40">{loading ? "Loading training…" : "Training isn't set up yet."}</div>;
 
@@ -54,7 +56,7 @@ export default function AcademyHub() {
 
       {/* Continue */}
       {up && (
-        <button type="button" onClick={() => navigate(up.chapter ? `/employee/training/m/${up.module.module_number}/c/${up.chapter.chapter_number}` : `/employee/training/m/${up.module.module_number}`)}
+        <button type="button" onClick={() => navigate(up.chapter ? `${base}/m/${up.module.module_number}/c/${up.chapter.chapter_number}` : `${base}/m/${up.module.module_number}`)}
           className="group mt-3 flex w-full items-center gap-4 rounded-2xl border border-[hsla(197,100%,55%,.45)] p-4 text-left transition-all hover:shadow-[0_0_30px_-10px_hsl(197,100%,55%)]"
           style={{ background: "linear-gradient(110deg, hsla(211,96%,45%,.28), hsla(197,100%,50%,.10) 60%, transparent)" }}>
           <div className="min-w-0 flex-1">
@@ -95,12 +97,17 @@ export default function AcademyHub() {
       {/* Resources */}
       <div className="mt-10"><Kicker>More</Kicker></div>
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <Link to="/employee/training/pipeline-guide" className={`flex items-center gap-3 p-3 ${ACADEMY.panelSoft} hover:bg-white/[0.06]`}>
+        <Link to={`${base}/pipeline-guide`} className={`flex items-center gap-3 p-3 ${ACADEMY.panelSoft} hover:bg-white/[0.06]`}>
           <Map className="h-4 w-4 text-[hsl(197,100%,60%)]" /><span className="text-[13px] font-medium text-white">Pipeline Guide</span>
         </Link>
-        <Link to="/employee/training/vault" className={`flex items-center gap-3 p-3 ${ACADEMY.panelSoft} hover:bg-white/[0.06]`}>
+        <Link to={`${base}/vault`} className={`flex items-center gap-3 p-3 ${ACADEMY.panelSoft} hover:bg-white/[0.06]`}>
           <Mic className="h-4 w-4 text-[hsl(197,100%,60%)]" /><span className="text-[13px] font-medium text-white">Recording Vault</span>
         </Link>
+        {base.startsWith("/admin") && (
+          <Link to={`${base}/team`} className={`flex items-center gap-3 p-3 ${ACADEMY.panelSoft} hover:bg-white/[0.06]`}>
+            <Users className="h-4 w-4 text-[hsl(197,100%,60%)]" /><span className="text-[13px] font-medium text-white">Team progress</span>
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -108,6 +115,7 @@ export default function AcademyHub() {
 
 function ModulePath({ data }: { data: AcademyData }) {
   const navigate = useNavigate();
+  const base = useAcademyBase();
   const stats = data.modules.map((m) => moduleStats(data, m));
   const doneCount = stats.filter((s) => s.complete).length;
   const fill = data.modules.length ? (doneCount / data.modules.length) * 100 : 0;
@@ -126,7 +134,7 @@ function ModulePath({ data }: { data: AcademyData }) {
           const hasBdr = chs.some((c) => c.audience === "bdr"), hasSdr = chs.some((c) => c.audience === "sdr");
           const special = m.module_number === WHY_MODULE ? "Builder" : m.module_number === FINAL_MODULE ? "Exam" : null;
           return (
-            <motion.button key={m.id} type="button" onClick={() => navigate(`/employee/training/m/${m.module_number}`)}
+            <motion.button key={m.id} type="button" onClick={() => navigate(`${base}/m/${m.module_number}`)}
               initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.04 * i }}
               className="group relative flex w-full items-stretch gap-3 text-left">
               {/* node on the rail: a short horizontal tick, lit when complete */}

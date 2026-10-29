@@ -88,12 +88,6 @@ const AdminPackages = lazy(() => import("./pages/admin/AdminPackages"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminMonitoring = lazy(() => import("./pages/admin/AdminMonitoring"));
 const AdminTeam = lazy(() => import("./pages/admin/AdminTeam"));
-const AdminTrainingCenter = lazy(() => import("./pages/admin/AdminTrainingCenter"));
-const AdminTrainingTrack = lazy(() => import("./pages/admin/AdminTrainingTrack"));
-const AdminTrainingFlashcards = lazy(() => import("./pages/admin/AdminTrainingFlashcards"));
-const AdminQuestionReassignment = lazy(() => import("./pages/admin/AdminQuestionReassignment"));
-const AdminTrainingHealth = lazy(() => import("./pages/admin/AdminTrainingHealth"));
-const AdminBDRCertification = lazy(() => import("./pages/admin/AdminBDRCertification"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminPipelineInsights = lazy(() => import("./pages/admin/AdminPipelineInsights"));
 const AdminGrowthAdvisor = lazy(() => import("./pages/admin/AdminGrowthAdvisor"));
@@ -197,11 +191,11 @@ const EmployeePlaceholder = lazy(() => import("./pages/employee/EmployeeDashboar
 const GenericEmployeeDashboard = lazy(() => import("./pages/employee/EmployeeDashboards").then(m => ({ default: m.GenericEmployeeDashboard })));
 const SDRDashboard = lazy(() => import("./pages/employee/EmployeeDashboards").then(m => ({ default: m.SDRDashboard })));
 const SupportEmployeeDashboard = lazy(() => import("./pages/employee/EmployeeDashboards").then(m => ({ default: m.SupportEmployeeDashboard })));
-const EmployeeTrainingCenter = lazy(() => import("./pages/employee/EmployeeTrainingCenter"));
 const AcademyHub = lazy(() => import("./pages/employee/academy/AcademyHub"));
 const AcademyModule = lazy(() => import("./pages/employee/academy/AcademyModule"));
 const AcademyChapter = lazy(() => import("./pages/employee/academy/AcademyChapter"));
 const AcademyVault = lazy(() => import("./pages/employee/academy/AcademyVault"));
+const AdminTeamTraining = lazy(() => import("./pages/admin/AdminTeamTraining"));
 const BDRMyLeads = lazy(() => import("./pages/employee/BDRMyLeads"));
 const BDRMyStats = lazy(() => import("./pages/employee/BDRMyStats"));
 const BDRDialer = lazy(() => import("./pages/employee/BDRDialer"));
@@ -301,15 +295,17 @@ const App = () => {
 
                 <Route path="monitoring" element={<AdminMonitoring />} />
                 <Route path="team" element={<AdminTeam />} />
-                <Route path="training-center" element={<AdminTrainingCenter />} />
+                <Route path="training-center" element={<AcademyHub />} />
+                <Route path="training-center/team" element={<AdminTeamTraining />} />
+                <Route path="training-center/m/:n" element={<AcademyModule />} />
+                <Route path="training-center/m/:n/c/:c" element={<AcademyChapter />} />
+                <Route path="training-center/vault" element={<AcademyVault />} />
                 <Route path="training-center/pipeline-guide" element={<PipelineGuide />} />
                 <Route path="sops" element={<PlaceholderPage title="Standard Operating Procedures" description="Standard operating procedures for your team." />} />
                 
-                <Route path="training-center/bdr/certification" element={<AdminBDRCertification />} />
-                <Route path="training-center/bdr/flashcards" element={<AdminTrainingFlashcards />} />
-                <Route path="training-center/question-reassignment" element={<AdminQuestionReassignment />} />
-                <Route path="training-health" element={<AdminTrainingHealth />} />
-                <Route path="training-center/:trackKey" element={<AdminTrainingTrack />} />
+                {/* old training screens retired Oct 29, 2026 */}
+                <Route path="training-health" element={<Navigate to="/admin/training-center/team" replace />} />
+                <Route path="training-center/*" element={<Navigate to="/admin/training-center" replace />} />
                 {/* old flow (Prospects / Demo Builds) retired Oct 28, 2026 */}
                 <Route path="prospects" element={<Navigate to="/admin" replace />} />
                 <Route path="provision" element={<AdminProvision />} />
@@ -403,12 +399,8 @@ const App = () => {
                 <Route path="training/m/:n" element={<AcademyModule />} />
                 <Route path="training/m/:n/c/:c" element={<AcademyChapter />} />
                 <Route path="training/vault" element={<AcademyVault />} />
-                <Route path="training/old" element={<EmployeeTrainingCenter />} />
                 <Route path="training/pipeline-guide" element={<PipelineGuide />} />
-                <Route path="training/bdr/certification" element={<AdminBDRCertification basePath="/employee/training" />} />
-                <Route path="training/bdr/flashcards" element={<AdminTrainingFlashcards />} />
-                <Route path="training/bdr" element={<Navigate to="/employee/training" replace />} />
-                <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
+                <Route path="training/*" element={<Navigate to="/employee/training" replace />} />
                 <Route path="certification/bdr" element={<Navigate to="/employee/training/m/10" replace />} />
                 <Route path="leads" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyLeads /></ClientFlagGate>} />
                 <Route path="my-stats" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyStats /></ClientFlagGate>} />
@@ -516,7 +508,7 @@ const App = () => {
                 <Route path="/staff-calendars" element={<PermissionGuard moduleKey="team"><AdminStaffCalendars /></PermissionGuard>} />
                 <Route path="/staff-calendars/:calendarId" element={<PermissionGuard moduleKey="team"><AdminStaffCalendarView /></PermissionGuard>} />
                 <Route path="/employee-performance" element={<PermissionGuard moduleKey="team"><AdminEmployeePerformance /></PermissionGuard>} />
-                <Route path="/training-center" element={<PermissionGuard moduleKey="training"><AdminTrainingCenter /></PermissionGuard>} />
+                <Route path="/training-center" element={<PermissionGuard moduleKey="training"><PlaceholderPage title="Training" description="Training for your team is coming soon." /></PermissionGuard>} />
                 <Route path="/revenue-expansion" element={<PermissionGuard moduleKey="intelligence"><AdminRevenueExpansion /></PermissionGuard>} />
                 <Route path="/audit-logs" element={<PermissionGuard moduleKey="intelligence"><AdminAuditLogs /></PermissionGuard>} />
                 <Route path="/team-management" element={<TeamManagement />} />

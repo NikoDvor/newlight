@@ -40,3 +40,7 @@ create unique index if not exists nl_my_why_one_current on public.nl_my_why(user
 alter table public.nl_my_why enable row level security;
 drop policy if exists "own why" on public.nl_my_why;
 create policy "own why" on public.nl_my_why for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Admins can see every salesman's final-test attempts (Team progress page). "Your Why" stays owner-only.
+drop policy if exists "Admins read all certifications" on public.nl_certifications;
+create policy "Admins read all certifications" on public.nl_certifications for select to authenticated using (private.is_admin_or_operator(auth.uid()));

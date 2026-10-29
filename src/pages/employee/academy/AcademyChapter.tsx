@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Sparkles, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAcademy } from "@/hooks/useAcademy";
+import { useAcademyBase } from "@/hooks/useAcademyBase";
 import { chapterDone, completeChapter, loadChapterContent, loadChapterQuiz, XP, type Question } from "@/lib/academy";
 import { toSlides, SlideBody } from "@/components/academy/ContentBlocks";
 import { QuizRunner, scoreOf } from "@/components/academy/QuizRunner";
@@ -15,6 +16,7 @@ export default function AcademyChapter() {
   const { n, c } = useParams<{ n: string; c: string }>();
   const navigate = useNavigate();
   const { data, loading, refresh, userId } = useAcademy();
+  const base = useAcademyBase();
   const [content, setContent] = useState<string | null>(null);
   const [slide, setSlide] = useState(0);
   const [dir, setDir] = useState(1);
@@ -72,7 +74,7 @@ export default function AcademyChapter() {
   };
 
   if (loading || !data) return <div className="py-20 text-center text-sm text-white/40">Loading…</div>;
-  if (!mod || !ch) return <div className="py-20 text-center text-sm text-white/40">Chapter not found. <Link className="underline" to="/employee/training">Back</Link></div>;
+  if (!mod || !ch) return <div className="py-20 text-center text-sm text-white/40">Chapter not found. <Link className="underline" to={base}>Back</Link></div>;
 
   const xpGained = XP.chapter + (result ? Math.round((result.pct / 100) * XP.quizMax) : 0);
 
@@ -82,7 +84,7 @@ export default function AcademyChapter() {
       {/* Top: back + segmented progress line */}
       <div className="sticky top-0 z-20 -mx-4 sm:mx-0 px-4 sm:px-0 pt-1 pb-3 bg-gradient-to-b from-[hsl(222,38%,5%)] via-[hsla(222,38%,5%,.92)] to-transparent">
         <div className="flex items-center justify-between gap-2">
-          <Link to={`/employee/training/m/${mod.module_number}`} className="inline-flex min-w-0 items-center gap-1 text-[12px] text-white/55 hover:text-white">
+          <Link to={`${base}/m/${mod.module_number}`} className="inline-flex min-w-0 items-center gap-1 text-[12px] text-white/55 hover:text-white">
             <ArrowLeft className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{String(mod.module_number).padStart(2, "0")} · {mod.module_title}</span>
           </Link>
           <AudienceTag audience={ch.audience} />
@@ -155,9 +157,9 @@ export default function AcademyChapter() {
           <div className="mx-auto mt-6 h-px w-40" style={{ background: "linear-gradient(90deg, transparent, hsl(197,100%,60%), transparent)" }} />
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-2">
             {nextCh ? (
-              <Button onClick={() => navigate(`/employee/training/m/${mod.module_number}/c/${nextCh.chapter_number}`)}>Next chapter<ArrowRight className="ml-1 h-4 w-4" /></Button>
+              <Button onClick={() => navigate(`${base}/m/${mod.module_number}/c/${nextCh.chapter_number}`)}>Next chapter<ArrowRight className="ml-1 h-4 w-4" /></Button>
             ) : (
-              <Button onClick={() => navigate(`/employee/training/m/${mod.module_number}`)}>Back to module</Button>
+              <Button onClick={() => navigate(`${base}/m/${mod.module_number}`)}>Back to module</Button>
             )}
             {result && result.pct < 100 && (
               <Button variant="ghost" onClick={() => { setPhase("quiz"); loadChapterQuiz(ch.id).then(setQuestions); }}><RotateCcw className="mr-1 h-4 w-4" />Retake quiz</Button>

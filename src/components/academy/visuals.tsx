@@ -530,6 +530,110 @@ function OfferCompare() {
   );
 }
 
+// ─── Objection handling ────────────────────────────────────────────────────
+
+const CORES: { key: string; name: string; ack: string; play: string; hear: string[] }[] = [
+  { key: "ni", name: "Not interested", ack: "\"Totally fair — you're not interested. I didn't expect you to be in the first 30 seconds.\"", play: "Ask: timing, cost, or happy with how clients come in now?", hear: ["We're good.", "No thanks.", "We're all set.", "Not looking for anything.", "We don't need marketing.", "I'm busy."] },
+  { key: "val", name: "Don't see the value", ack: "\"I hear you — you don't see the value yet.\"", play: "Let them define value. Show the gap from their numbers.", hear: ["What would this even do for us?", "We're doing fine.", "Our clients don't come from online.", "Sounds like every other agency."] },
+  { key: "think", name: "Need to think", ack: "\"Of course — you need to think about it.\"", play: "Timing, investment, or something that doesn't feel right? Book the follow-up now.", hear: ["Let me sleep on it.", "Call me next quarter.", "Maybe after tax season.", "Let's revisit in the new year."] },
+  { key: "who", name: "Need to talk to someone", ack: "\"That makes sense — you need to run it by them.\"", play: "Get them on the next Zoom. Add them as an attendee.", hear: ["I need to talk to my partner.", "I'm not the decision maker.", "Our managing partner handles that."] },
+  { key: "cost", name: "Too expensive", ack: "\"I hear you — it's a real investment.\"", play: "Compare to doing nothing. Lead with the 90-day guarantee.", hear: ["That's a lot of money.", "It's not in the budget.", "Your competitor is cheaper.", "Can you do it for less?"] },
+  { key: "trust", name: "Don't trust it'll work", ack: "\"You're not sure we can make this happen — I'm glad you said that.\"", play: "Deliver the offer. Show the system. Never promise numbers.", hear: ["Everyone says that.", "Can you guarantee results?", "Sounds too good to be true.", "I've heard this pitch before."] },
+  { key: "cov", name: "Already covered", ack: "\"Got it — you've already got that covered.\"", play: "How's it going? What's it not doing that you wish it were?", hear: ["We already have someone.", "We handle it in-house.", "We tried an agency — didn't work.", "My nephew does our website."] },
+  { key: "comp", name: "Compliance", ack: "\"That makes sense — compliance has to sign off.\"", play: "Normal. Find the review process. BD-tied → offer flat monthly.", hear: ["Our compliance would never approve that.", "Our broker-dealer controls our marketing.", "We can't advertise."] },
+  { key: "info", name: "Send me info", ack: "\"Happy to — I'll send something over.\"", play: "What should it answer? Book 15 minutes to go over it.", hear: ["Just send me an email.", "We'll reach out if we're interested.", "Do you have a website?"] },
+];
+
+function Temperature() {
+  const [v, setV] = useState(4);
+  const zone = v <= 3 ? { t: "Autopilot. Break the pattern before you handle anything.", c: "hsl(0,85%,62%)" }
+    : v <= 6 ? { t: "Real concern. \"What would get you to a 10?\" — handle that one thing.", c: "hsl(42,100%,60%)" }
+    : v <= 9 ? { t: "They're close. Stop handling — close.", c: "hsl(197,100%,58%)" }
+    : { t: "Close now.", c: "hsl(152,70%,52%)" };
+  return (
+    <Frame caption="Slide to what the prospect says.">
+      <div className="flex items-end justify-between mb-3">
+        <div className="text-4xl font-bold tabular-nums" style={{ color: zone.c }}>{v}</div>
+        <div className="text-[11px] text-white/45">1 = want you gone · 10 = ready</div>
+      </div>
+      <div className="relative h-2 rounded-full mb-4" style={{ background: "linear-gradient(90deg, hsl(0,85%,55%), hsl(42,100%,55%), hsl(197,100%,55%), hsl(152,70%,50%))" }} />
+      <Slider value={[v]} min={1} max={10} step={1} onValueChange={(x) => setV(x[0])} />
+      <motion.p key={zone.t} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-4 text-[13px] text-white/85 border-l-2 pl-3" style={{ borderColor: zone.c }}>{zone.t}</motion.p>
+    </Frame>
+  );
+}
+
+function ObjectionFunnel() {
+  const all = useMemo(() => CORES.flatMap((c) => c.hear.map((h) => ({ h, c }))), []);
+  const [i, setI] = useState(() => Math.floor(Math.random() * all.length));
+  const [guess, setGuess] = useState<string | null>(null);
+  const cur = all[i];
+  const next = () => { setI((i + 1 + Math.floor(Math.random() * (all.length - 1))) % all.length); setGuess(null); };
+  return (
+    <Frame caption="Tap the core objection under their words.">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/45">They say</div>
+      <AnimatePresence mode="wait">
+        <motion.div key={i} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+          className="mt-1 text-[18px] font-semibold text-white">"{cur.h}"</motion.div>
+      </AnimatePresence>
+      {/* the funnel: lines converging into one */}
+      <svg viewBox="0 0 300 40" className="my-2 h-8 w-full" preserveAspectRatio="none" aria-hidden>
+        {[20, 80, 150, 220, 280].map((x) => <path key={x} d={`M${x} 0 C ${x} 22, 150 18, 150 40`} fill="none" stroke="hsla(197,100%,60%,.4)" strokeWidth="1" vectorEffect="non-scaling-stroke" className="nl-academy-flow" />)}
+      </svg>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        {CORES.map((c) => {
+          const right = guess && c.key === cur.c.key, wrong = guess === c.key && c.key !== cur.c.key;
+          return (
+            <button key={c.key} type="button" disabled={!!guess} onClick={() => setGuess(c.key)}
+              className="rounded-lg border px-2 py-2 text-[11.5px] font-semibold leading-tight transition-all"
+              style={{ borderColor: right ? "hsl(152,70%,50%)" : wrong ? "hsl(0,85%,60%)" : "hsla(211,96%,60%,.18)", background: right ? "hsla(152,70%,45%,.14)" : wrong ? "hsla(0,85%,55%,.1)" : "transparent", color: right || wrong ? "white" : "hsla(0,0%,100%,.7)" }}>
+              {c.name}
+            </button>
+          );
+        })}
+      </div>
+      {guess && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-3 rounded-lg border-l-2 border-[hsl(197,100%,58%)] bg-white/[0.03] px-3 py-2">
+          <div className="text-[11px] uppercase tracking-wider text-white/45">{guess === cur.c.key ? "Right — say it back:" : `It's "${cur.c.name}" — say it back:`}</div>
+          <div className="mt-1 text-[13.5px] italic text-white">{cur.c.ack}</div>
+          <div className="mt-1 text-[12px] text-white/60">Then: {cur.c.play}</div>
+          <button type="button" onClick={next} className="mt-2 text-[12px] font-semibold text-[hsl(197,100%,65%)]">Next one →</button>
+        </motion.div>
+      )}
+    </Frame>
+  );
+}
+
+function ObjectionDeck() {
+  const [i, setI] = useState(0);
+  const [flip, setFlip] = useState(false);
+  const c = CORES[i];
+  const go = (d: number) => { setFlip(false); setI((i + d + CORES.length) % CORES.length); };
+  return (
+    <Frame caption={`Card ${i + 1} of ${CORES.length}. Tap to flip.`}>
+      <button type="button" onClick={() => setFlip(!flip)} className="block w-full [perspective:1000px]">
+        <motion.div animate={{ rotateY: flip ? 180 : 0 }} transition={{ duration: 0.5 }} className="relative h-56 w-full [transform-style:preserve-3d]">
+          <div className="absolute inset-0 flex flex-col justify-center rounded-xl border border-[hsla(197,100%,55%,.35)] bg-[hsla(211,96%,45%,.08)] p-4 text-left [backface-visibility:hidden]">
+            <div className="text-[10px] uppercase tracking-[0.25em] text-[hsl(197,100%,62%)]">Core objection</div>
+            <div className="mt-1 text-xl font-bold text-white">{c.name}</div>
+            <div className="mt-3 space-y-1">{c.hear.slice(0, 4).map((h) => <div key={h} className="text-[12px] text-white/55 border-l border-white/15 pl-2">"{h}"</div>)}</div>
+          </div>
+          <div className="absolute inset-0 flex flex-col justify-center rounded-xl border border-[hsla(262,85%,74%,.35)] bg-[hsla(262,85%,74%,.07)] p-4 text-left [backface-visibility:hidden] [transform:rotateY(180deg)]">
+            <div className="text-[10px] uppercase tracking-[0.25em] text-[hsl(262,85%,78%)]">Say it back</div>
+            <div className="mt-1 text-[14px] italic text-white">{c.ack}</div>
+            <div className="mt-3 text-[10px] uppercase tracking-[0.25em] text-[hsl(262,85%,78%)]">Then</div>
+            <div className="mt-1 text-[13px] text-white/80">{c.play}</div>
+          </div>
+        </motion.div>
+      </button>
+      <div className="mt-3 flex justify-between">
+        <button type="button" onClick={() => go(-1)} className="text-[12px] text-white/60">← Prev</button>
+        <button type="button" onClick={() => go(1)} className="text-[12px] font-semibold text-[hsl(197,100%,65%)]">Next →</button>
+      </div>
+    </Frame>
+  );
+}
+
 export const VISUALS: Record<string, ComponentType> = {
   "cert-path": CertPath,
   "job-flow": JobFlow,
@@ -548,6 +652,9 @@ export const VISUALS: Record<string, ComponentType> = {
   "leak-fix": LeakFix,
   "offer-timeline": OfferTimeline,
   "offer-compare": OfferCompare,
+  temperature: Temperature,
+  "objection-funnel": ObjectionFunnel,
+  "objection-deck": ObjectionDeck,
 };
 
 export function Visual({ name }: { name: string }) {

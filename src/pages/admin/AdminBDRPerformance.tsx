@@ -562,7 +562,7 @@ function BdrDetailSheet({ uid, leads, objections, profiles, onClose }: { uid: st
               {OBJECTION_CATEGORIES.filter(cat => objCounts[cat.key]).map(cat => (
                 <div key={cat.key} className="flex items-center justify-between rounded-lg px-3 py-2 mb-1" style={cardStyle}>
                   <span className="text-xs text-foreground">{cat.key.replace("_", " ")} ({objCounts[cat.key]})</span>
-                  <button onClick={() => navigate("/admin/training-center/bdr")} className="text-[10px] font-medium flex items-center gap-1 px-2 py-0.5 rounded-md"
+                  <button onClick={() => navigate("/admin/training-center/team")} className="text-[10px] font-medium flex items-center gap-1 px-2 py-0.5 rounded-md"
                     style={{ color: "hsl(211,96%,56%)", background: "hsla(211,96%,56%,.08)" }}>
                     <BookOpen className="h-3 w-3" /> Ch {cat.chapter}
                   </button>
