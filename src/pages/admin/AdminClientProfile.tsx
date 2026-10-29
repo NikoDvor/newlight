@@ -14,6 +14,7 @@ import ClientTeamLeadsTab from "@/components/admin/ClientTeamLeadsTab";
 import {
   Loader2, ExternalLink, Copy, FileText, Smartphone, ArrowLeft, Building2,
   Zap, ClipboardList, CreditCard, Wrench, CheckCircle2, ChevronRight,
+  Film,
 } from "lucide-react";
 
 const cardStyle = { background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.12)" };
@@ -210,6 +211,7 @@ export default function AdminClientProfile() {
     { label: "Lifecycle & Setup", icon: ClipboardList, to: `/admin/clients/${clientId}/lifecycle` },
     { label: "Close Center", icon: CreditCard, to: `/admin/clients/${clientId}/close` },
     { label: "Implementation", icon: Wrench, to: `/admin/clients/${clientId}/implementation` },
+    { label: "Meeting Recordings", icon: Film, to: `/admin/clients/${clientId}/recordings` },
     { label: "Handoff Checklist", icon: CheckCircle2, to: `/admin/clients/${clientId}/handoff` },
   ];
 

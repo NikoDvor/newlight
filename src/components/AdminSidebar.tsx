@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useState } from "react";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
-import { Building2 } from "lucide-react";
+import { Building2, Film } from "lucide-react";
 
 interface NavItem { title: string; description: string; url: string; icon: any }
 interface NavGroup {
@@ -39,6 +39,7 @@ const adminGroups: NavGroup[] = [
       { title: "Board", description: "Every lead by stage — Cold, Warm, Hot, Won.", url: "/admin/pipeline/board", icon: GitBranch },
       { title: "Meetings", description: "Meetings needing an outcome, and what's coming up.", url: "/admin/pipeline/meetings", icon: Calendar },
       { title: "Sales Team Results", description: "Close rates, losses, meeting effort and discovery numbers — team and per salesman.", url: "/admin/pipeline/results", icon: BarChart3 },
+      { title: "Recordings", description: "Every salesman's recorded meetings — watch, listen, read the transcript.", url: "/admin/recordings", icon: Film },
     ],
   },
   {

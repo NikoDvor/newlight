@@ -8,6 +8,9 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 import { fetchMeetingTranscript } from "../_shared/zoom.ts";
+import { saveZoomRecording } from "../_shared/zoomRecordings.ts";
+
+declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,6 +84,21 @@ Deno.serve(async (req) => {
     .single();
 
   console.log(`[zoom-webhook] event=${eventType} meeting=${zoomMeetingId} logged=${logRow?.id}`);
+
+  // 3. Recording finished → copy video, audio and transcript into the app (background, so Zoom gets 200 fast).
+  if (eventType === "recording.completed") {
+    const job = saveZoomRecording(supabase, payload)
+      .then(async (id) => {
+        console.log(`[zoom-webhook] recording saved ${id} for meeting ${zoomMeetingId}`);
+        if (logRow?.id) await supabase.from("zoom_webhook_events").update({ processed_at: new Date().toISOString() }).eq("id", logRow.id);
+      })
+      .catch(async (e) => {
+        const msg = (e as Error).message;
+        console.error("[zoom-webhook] recording save error:", msg);
+        if (logRow?.id) await supabase.from("zoom_webhook_events").update({ processed_at: new Date().toISOString(), error: msg }).eq("id", logRow.id);
+      });
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(job); else await job;
+  }
 
   // 3. On transcript completed, fetch and store transcript text.
   if (eventType === "recording.transcript_completed" && zoomMeetingId) {

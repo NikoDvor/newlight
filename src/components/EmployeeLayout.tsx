@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, Navigate, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints, GraduationCap, Lock, LogOut, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
+import { Film, Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints, GraduationCap, Lock, LogOut, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,7 @@ const navGroups: { label?: string; items: { title: string; url: string; icon: an
   },
   {
     label: "Results",
-    items: [{ title: "My Stats", url: "/employee/my-stats", icon: Target }],
+    items: [{ title: "My Stats", url: "/employee/my-stats", icon: Target }, { title: "My Recordings", url: "/employee/recordings", icon: Film }],
   },
   {
     label: "Learn",

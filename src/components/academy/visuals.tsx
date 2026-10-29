@@ -209,8 +209,8 @@ const APP_ITEMS = [
   { t: "Dialer", d: "Where you call. Tap a row for every decision maker. Mark Dialed when done." },
   { t: "Lead Sourcing", d: "Pull leads from your territories." },
   { t: "My Stats", d: "Your numbers and close rates vs the team average." },
+  { t: "My Recordings", d: "Every meeting you've had — video, audio and transcript. Upload meetings that weren't on our Zoom." },
   { t: "Training Center", d: "This. Ten modules, quizzes, your Why and certification." },
-  { t: "My Profile", d: "Your details." },
 ];
 function AppMap() {
   const [i, setI] = useState(0);

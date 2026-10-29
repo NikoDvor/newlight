@@ -196,6 +196,10 @@ const AcademyModule = lazy(() => import("./pages/employee/academy/AcademyModule"
 const AcademyChapter = lazy(() => import("./pages/employee/academy/AcademyChapter"));
 const AcademyVault = lazy(() => import("./pages/employee/academy/AcademyVault"));
 const AdminTeamTraining = lazy(() => import("./pages/admin/AdminTeamTraining"));
+const EmployeeRecordings = lazy(() => import("./pages/recordings/RecordingsPages").then(m => ({ default: m.EmployeeRecordings })));
+const AdminRecordings = lazy(() => import("./pages/recordings/RecordingsPages").then(m => ({ default: m.AdminRecordings })));
+const AdminClientRecordings = lazy(() => import("./pages/recordings/RecordingsPages").then(m => ({ default: m.AdminClientRecordings })));
+const ClientRecordings = lazy(() => import("./pages/recordings/RecordingsPages").then(m => ({ default: m.ClientRecordings })));
 const BDRMyLeads = lazy(() => import("./pages/employee/BDRMyLeads"));
 const BDRMyStats = lazy(() => import("./pages/employee/BDRMyStats"));
 const BDRDialer = lazy(() => import("./pages/employee/BDRDialer"));
@@ -291,6 +295,8 @@ const App = () => {
                 <Route path="clients" element={<AdminClients />} />
                 <Route path="clients/acquisition-analytics" element={<AdminClientAcquisitionAnalytics />} />
                 <Route path="clients/:clientId" element={<AdminClientProfile />} />
+                <Route path="clients/:clientId/recordings" element={<AdminClientRecordings />} />
+                <Route path="recordings" element={<AdminRecordings />} />
                 <Route path="channel-tracking" element={<AdminChannelTracking />} />
 
                 <Route path="monitoring" element={<AdminMonitoring />} />
@@ -396,6 +402,7 @@ const App = () => {
                 <Route path="support" element={<SupportEmployeeDashboard />} />
                 <Route path="generic" element={<GenericEmployeeDashboard />} />
                 <Route path="training" element={<AcademyHub />} />
+                <Route path="recordings" element={<EmployeeRecordings />} />
                 <Route path="training/m/:n" element={<AcademyModule />} />
                 <Route path="training/m/:n/c/:c" element={<AcademyChapter />} />
                 <Route path="training/vault" element={<AcademyVault />} />
@@ -501,6 +508,7 @@ const App = () => {
                 <Route path="/onboarding-pipeline" element={<PermissionGuard moduleKey="crm"><OnboardingPipelineSetup /></PermissionGuard>} />
                 <Route path="/close-and-send/:dealId" element={<PermissionGuard moduleKey="crm"><ClientCloseAndSend /></PermissionGuard>} />
                 <Route path="/documents" element={<ClientDocuments />} />
+                <Route path="/recordings" element={<ClientRecordings />} />
                 
                 <Route path="/help-desk" element={<PermissionGuard moduleKey="support"><HelpDesk /></PermissionGuard>} />
                 <Route path="/knowledge-base" element={<PermissionGuard moduleKey="support"><KnowledgeBase /></PermissionGuard>} />
