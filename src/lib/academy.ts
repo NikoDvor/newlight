@@ -15,7 +15,7 @@ export const FINAL_MODULE = 10;
 export const WHY_MODULE = 9;
 export const PASS_PCT = 80;
 export const FINAL_QUESTION_COUNT = 50;
-export const CHAPTER_QUIZ_COUNT = 9;
+export const CHAPTER_QUIZ_COUNT = 6;
 
 export type Audience = "all" | "bdr" | "sdr";
 

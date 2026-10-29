@@ -634,6 +634,220 @@ function ObjectionDeck() {
   );
 }
 
+// ─── Sales craft (Module 5) + closing (Module 8) ──────────────────────────
+
+/** Tap a tone → the same line rendered with its delivery shape (a line that rises, stays flat, or drops). */
+function Tones() {
+  const tones = [
+    { k: "Confident", use: "Opener, value, objections", d: "M0 20 L100 20 L200 22", note: "Level. Ends flat or slightly down." },
+    { k: "Curious", use: "Discovery questions", d: "M0 22 C 60 18, 140 14, 200 12", note: "Warm, leaning in." },
+    { k: "Just between us", use: "The reveal", d: "M0 18 C 70 24, 130 24, 200 24", note: "Quieter, slower." },
+    { k: "Pitch voice", use: "Never", d: "M0 26 C 50 6, 120 30, 200 4", note: "Fast, high, rising — guards go up.", bad: true },
+  ];
+  const [i, setI] = useState(0);
+  const t = tones[i];
+  return (
+    <Frame caption="The line shows how your voice should move.">
+      <div className="grid grid-cols-2 gap-1.5">
+        {tones.map((x, k) => (
+          <button key={x.k} type="button" onClick={() => setI(k)} className="rounded-lg border px-2 py-1.5 text-[12px] font-semibold"
+            style={{ borderColor: i === k ? (x.bad ? "hsl(0,85%,60%)" : ACADEMY.electric) : "hsla(211,96%,60%,.15)", color: i === k ? "white" : "hsla(0,0%,100%,.6)" }}>{x.k}</button>
+        ))}
+      </div>
+      <svg viewBox="0 0 200 32" className="mt-4 h-14 w-full" preserveAspectRatio="none" aria-hidden>
+        <motion.path key={t.k} d={t.d} fill="none" stroke={t.bad ? "hsl(0,85%,62%)" : "hsl(197,100%,60%)"} strokeWidth="2" vectorEffect="non-scaling-stroke"
+          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.9 }} style={{ filter: "drop-shadow(0 0 4px currentColor)" }} />
+      </svg>
+      <p className="mt-2 text-[13px] text-white/85">{t.note}</p>
+      <p className="text-[11px] text-white/45">Use for: {t.use}</p>
+    </Frame>
+  );
+}
+
+/** Hold the silence: a bar that fills over 3 seconds. */
+function Silence() {
+  const [run, setRun] = useState(0);
+  return (
+    <Frame caption="Ask your question out loud, tap, and don't speak until the bar fills.">
+      <button type="button" onClick={() => setRun((r) => r + 1)} className="w-full rounded-lg border border-[hsla(197,100%,55%,.35)] py-2 text-[13px] font-semibold text-white">
+        {run ? "Again" : "Start the 3-second silence"}
+      </button>
+      <div className="mt-3 h-2 rounded-full bg-white/[0.05] overflow-hidden">
+        {run > 0 && <motion.div key={run} className="h-full rounded-full" style={{ background: "linear-gradient(90deg, hsl(211,96%,52%), hsl(197,100%,60%))" }}
+          initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 3, ease: "linear" }} />}
+      </div>
+    </Frame>
+  );
+}
+
+const OWNERS = [
+  { k: "Analytical", sign: "Asks for numbers, details, how it works.", do: "Be precise. Slow down. Show their numbers." },
+  { k: "Driver", sign: "Short answers, busy, wants the point.", do: "Lead with the outcome in one line." },
+  { k: "Relational", sign: "Chats, asks about you, tells stories.", do: "Let them talk. Connect, then move." },
+  { k: "Skeptical", sign: "\"Everyone says that.\" Burned before.", do: "Be straight. Promise less, show more." },
+];
+function OwnerTypes() {
+  const [i, setI] = useState(0);
+  return (
+    <Frame caption="Tap a type.">
+      <div className="grid grid-cols-4 gap-1.5">
+        {OWNERS.map((o, k) => (
+          <button key={o.k} type="button" onClick={() => setI(k)} className="rounded-lg border py-2 text-[11px] font-semibold"
+            style={{ borderColor: i === k ? ACADEMY.electric : "hsla(211,96%,60%,.15)", color: i === k ? "white" : "hsla(0,0%,100%,.6)" }}>{o.k}</button>
+        ))}
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-3 space-y-1.5">
+          <div className="text-[12px] text-white/55">You'll notice: <span className="text-white/85">{OWNERS[i].sign}</span></div>
+          <div className="border-l-2 pl-3 text-[13px] text-white" style={{ borderColor: ACADEMY.electric }}>{OWNERS[i].do}</div>
+        </motion.div>
+      </AnimatePresence>
+    </Frame>
+  );
+}
+
+/** Mining: each question goes one level deeper — a line that descends. */
+function Mining() {
+  const steps = [
+    { q: "\"Most of our clients come from referrals.\"", who: "They say" },
+    { q: "\"Say more about that — how many came in last year?\"", who: "Open it" },
+    { q: "\"And what's an average client worth to you?\"", who: "Put a number on it" },
+    { q: "\"If that stays the same for three more years, where does that leave you?\"", who: "Make it real" },
+    { q: "\"If we closed that gap, what would that mean for you?\"", who: "Connect to the future" },
+  ];
+  const [n, setN] = useState(1);
+  return (
+    <Frame caption="Tap to dig one level deeper.">
+      <div className="relative pl-5">
+        <div className="absolute left-1.5 top-1 bottom-1 w-px bg-white/10" />
+        <motion.div className="absolute left-1.5 top-1 w-px" style={{ background: "hsl(197,100%,60%)", boxShadow: "0 0 8px hsl(197,100%,55%)" }} animate={{ height: `${(n / steps.length) * 100}%` }} />
+        {steps.slice(0, n).map((s, k) => (
+          <motion.div key={k} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} className="mb-2.5" style={{ marginLeft: k * 6 }}>
+            <div className="text-[10px] uppercase tracking-wider text-[hsl(197,100%,62%)]">{s.who}</div>
+            <div className="text-[13px] text-white">{s.q}</div>
+          </motion.div>
+        ))}
+      </div>
+      {n < steps.length
+        ? <button type="button" onClick={() => setN(n + 1)} className="mt-1 text-[12px] font-semibold text-[hsl(197,100%,65%)]">Dig deeper ↓</button>
+        : <button type="button" onClick={() => setN(1)} className="mt-1 text-[12px] text-white/55">Start over</button>}
+    </Frame>
+  );
+}
+
+const ASSUME = [
+  { bad: "Would you be interested in a meeting?", good: "The next step is a 15-minute Zoom — mornings or afternoons?" },
+  { bad: "Is there any chance you'd look at this?", good: "When we look at your numbers Thursday…" },
+  { bad: "If you wanted to, maybe we could…", good: "Once your calendar starts filling up…" },
+  { bad: "Do you think you might want to start?", good: "Let's get you started — Tuesday or Wednesday for the kickoff?" },
+];
+function Assumptive() {
+  const [i, setI] = useState(0);
+  const [fixed, setFixed] = useState(false);
+  const r = ASSUME[i];
+  return (
+    <Frame caption="Tap to rewrite it the assumptive way.">
+      <button type="button" onClick={() => setFixed(!fixed)} className="block w-full text-left">
+        <AnimatePresence mode="wait">
+          <motion.div key={String(fixed) + i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+            className="rounded-lg border px-3 py-3 text-[14px]"
+            style={{ borderColor: fixed ? "hsl(152,70%,50%)" : "hsla(0,85%,60%,.6)", color: "white", textDecoration: fixed ? "none" : "line-through", textDecorationColor: "hsla(0,85%,60%,.7)" }}>
+            "{fixed ? r.good : r.bad}"
+          </motion.div>
+        </AnimatePresence>
+      </button>
+      <button type="button" onClick={() => { setI((i + 1) % ASSUME.length); setFixed(false); }} className="mt-2 text-[12px] font-semibold text-[hsl(197,100%,65%)]">Next line →</button>
+    </Frame>
+  );
+}
+
+function Preclose() {
+  return (
+    <Frame>
+      <FlowSteps steps={[
+        { title: "Check", sub: "\"Does that make sense?\"" },
+        { title: "Temperature", sub: "\"What stood out most?\"" },
+        { title: "Hesitation", sub: "\"Biggest hesitation?\"" },
+        { title: "Trial close", sub: "\"If it made sense, would you want it?\"", tone: "won" },
+      ]} />
+    </Frame>
+  );
+}
+
+function BreakEven() {
+  const [setup, setSetup] = useState(25000);
+  const [value, setValue] = useState(6000);
+  const n = Math.ceil(setup / Math.max(1, value));
+  return (
+    <Frame caption="Practice the break-even question. Their numbers, their math.">
+      <div className="space-y-3">
+        <div>
+          <div className="flex justify-between text-[11px] text-white/60 mb-1"><span>Setup</span><span className="font-semibold text-white">{money(setup)}</span></div>
+          <Slider value={[setup]} min={10000} max={50000} step={500} onValueChange={(v) => setSetup(v[0])} />
+        </div>
+        <div>
+          <div className="flex justify-between text-[11px] text-white/60 mb-1"><span>Their average client value (per year)</span><span className="font-semibold text-white">{money(value)}</span></div>
+          <Slider value={[value]} min={1000} max={30000} step={500} onValueChange={(v) => setValue(v[0])} />
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-2">
+        {Array.from({ length: Math.min(n, 12) }).map((_, k) => (
+          <motion.div key={k + "-" + n} className="h-6 flex-1 rounded-sm" style={{ background: "linear-gradient(180deg, hsl(197,100%,60%), hsl(211,96%,48%))", maxWidth: 28 }}
+            initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ delay: k * 0.04 }} />
+        ))}
+      </div>
+      <p className="mt-3 text-[13px] text-white">About <b>{n}</b> new client{n === 1 ? "" : "s"} pays for the setup. Everything after that is return.</p>
+    </Frame>
+  );
+}
+
+function FullStack() {
+  const [tab, setTab] = useState<"call" | "meeting">("call");
+  const call = ["Breathe", "Opener", "Read & match", "Interrupt", "Rapport", "Mine", "Trial close", "Ask + silence", "Book with Form 1"];
+  const meet = ["Setup + numbers open", "Rapport", "Discovery numbers", "Mine the gap", "Show the app", "Pre-close", "Real urgency", "Offer + guarantee", "Close + Form 2"];
+  const list = tab === "call" ? call : meet;
+  return (
+    <Frame>
+      <div className="inline-flex rounded-lg border border-white/10 p-0.5 mb-3">
+        {(["call", "meeting"] as const).map((t) => (
+          <button key={t} type="button" onClick={() => setTab(t)} className={`rounded-md px-3 py-1 text-[11px] font-semibold ${tab === t ? "bg-white/10 text-white" : "text-white/50"}`}>
+            {t === "call" ? "The call · BDR" : "The meeting · SDR"}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-1">
+        {list.map((s, k) => (
+          <Fragment key={s}>
+            <motion.span key={tab + s} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: k * 0.05 }}
+              className="rounded-md border border-[hsla(211,96%,60%,.2)] px-2 py-1 text-[11.5px] text-white">{s}</motion.span>
+            {k < list.length - 1 && <span className="h-px w-3 bg-[hsla(197,100%,60%,.5)]" />}
+          </Fragment>
+        ))}
+      </div>
+    </Frame>
+  );
+}
+
+function OptionClose() {
+  const [pick, setPick] = useState<string | null>(null);
+  return (
+    <Frame caption="Either answer moves forward.">
+      <div className="text-[14px] italic text-white">"I've got Tuesday at 10 or Thursday at 2 — which works?"</div>
+      <svg viewBox="0 0 200 30" className="my-2 h-8 w-full" preserveAspectRatio="none" aria-hidden>
+        <path d="M100 0 C100 15, 40 15, 40 30" fill="none" stroke="hsla(197,100%,60%,.5)" strokeWidth="1" vectorEffect="non-scaling-stroke" className="nl-academy-flow" />
+        <path d="M100 0 C100 15, 160 15, 160 30" fill="none" stroke="hsla(197,100%,60%,.5)" strokeWidth="1" vectorEffect="non-scaling-stroke" className="nl-academy-flow" />
+      </svg>
+      <div className="grid grid-cols-2 gap-2">
+        {["Tuesday 10", "Thursday 2"].map((t) => (
+          <button key={t} type="button" onClick={() => setPick(t)} className="rounded-lg border py-2 text-[12px] font-semibold"
+            style={{ borderColor: pick === t ? "hsl(152,70%,50%)" : "hsla(211,96%,60%,.2)", color: "white" }}>{t}</button>
+        ))}
+      </div>
+      {pick && <p className="mt-3 text-[13px] text-[hsl(152,70%,62%)]">Booked. Now send your Form 1 link while you're still on the call.</p>}
+    </Frame>
+  );
+}
+
 export const VISUALS: Record<string, ComponentType> = {
   "cert-path": CertPath,
   "job-flow": JobFlow,
@@ -655,6 +869,15 @@ export const VISUALS: Record<string, ComponentType> = {
   temperature: Temperature,
   "objection-funnel": ObjectionFunnel,
   "objection-deck": ObjectionDeck,
+  tones: Tones,
+  silence: Silence,
+  "owner-types": OwnerTypes,
+  mining: Mining,
+  assumptive: Assumptive,
+  preclose: Preclose,
+  "break-even": BreakEven,
+  "full-stack": FullStack,
+  "option-close": OptionClose,
 };
 
 export function Visual({ name }: { name: string }) {
