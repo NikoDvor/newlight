@@ -9306,6 +9306,106 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_meeting_recordings: {
+        Row: {
+          audio_path: string | null
+          client_id: string
+          created_at: string
+          duration_minutes: number | null
+          error: string | null
+          event_id: string | null
+          id: string
+          lead_id: string | null
+          meeting_kind: string | null
+          notes: string | null
+          owner_user_id: string | null
+          size_bytes: number | null
+          source: string
+          started_at: string | null
+          status: string
+          title: string | null
+          transcript: string | null
+          updated_at: string
+          video_path: string | null
+          zoom_meeting_id: string | null
+          zoom_share_password: string | null
+          zoom_share_url: string | null
+          zoom_uuid: string | null
+        }
+        Insert: {
+          audio_path?: string | null
+          client_id: string
+          created_at?: string
+          duration_minutes?: number | null
+          error?: string | null
+          event_id?: string | null
+          id?: string
+          lead_id?: string | null
+          meeting_kind?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          size_bytes?: number | null
+          source?: string
+          started_at?: string | null
+          status?: string
+          title?: string | null
+          transcript?: string | null
+          updated_at?: string
+          video_path?: string | null
+          zoom_meeting_id?: string | null
+          zoom_share_password?: string | null
+          zoom_share_url?: string | null
+          zoom_uuid?: string | null
+        }
+        Update: {
+          audio_path?: string | null
+          client_id?: string
+          created_at?: string
+          duration_minutes?: number | null
+          error?: string | null
+          event_id?: string | null
+          id?: string
+          lead_id?: string | null
+          meeting_kind?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          size_bytes?: number | null
+          source?: string
+          started_at?: string | null
+          status?: string
+          title?: string | null
+          transcript?: string | null
+          updated_at?: string
+          video_path?: string | null
+          zoom_meeting_id?: string | null
+          zoom_share_password?: string | null
+          zoom_share_url?: string | null
+          zoom_uuid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_meeting_recordings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_meeting_recordings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "bdr_calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_meeting_recordings_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_module_completion: {
         Row: {
           completed_at: string
@@ -9383,6 +9483,48 @@ export type Database = {
           started_at?: string
           user_id?: string
           weak_chapters?: Json | null
+        }
+        Relationships: []
+      }
+      nl_my_why: {
+        Row: {
+          created_at: string
+          deadline: string
+          dream_life: string | null
+          favorite_quotes: Json
+          goal: string
+          goal_amount: number | null
+          id: string
+          is_current: boolean
+          quotes: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline: string
+          dream_life?: string | null
+          favorite_quotes?: Json
+          goal: string
+          goal_amount?: number | null
+          id?: string
+          is_current?: boolean
+          quotes?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string
+          dream_life?: string | null
+          favorite_quotes?: Json
+          goal?: string
+          goal_amount?: number | null
+          id?: string
+          is_current?: boolean
+          quotes?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -9540,6 +9682,39 @@ export type Database = {
           },
         ]
       }
+      nl_training_activity_days: {
+        Row: {
+          created_at: string
+          day: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261029: {
+        Row: {
+          kind: string | null
+          row: Json | null
+        }
+        Insert: {
+          kind?: string | null
+          row?: Json | null
+        }
+        Update: {
+          kind?: string | null
+          row?: Json | null
+        }
+        Relationships: []
+      }
       nl_training_certifications: {
         Row: {
           certificate_number: string | null
@@ -9662,29 +9837,35 @@ export type Database = {
       }
       nl_training_chapters: {
         Row: {
+          audience: string
           chapter_description: string | null
           chapter_number: number
           chapter_title: string
           content: string | null
           created_at: string
+          est_minutes: number | null
           id: string
           module_id: string
         }
         Insert: {
+          audience?: string
           chapter_description?: string | null
           chapter_number: number
           chapter_title: string
           content?: string | null
           created_at?: string
+          est_minutes?: number | null
           id?: string
           module_id: string
         }
         Update: {
+          audience?: string
           chapter_description?: string | null
           chapter_number?: number
           chapter_title?: string
           content?: string | null
           created_at?: string
+          est_minutes?: number | null
           id?: string
           module_id?: string
         }
@@ -9874,29 +10055,35 @@ export type Database = {
       nl_training_modules: {
         Row: {
           created_at: string
+          has_quiz: boolean
           id: string
           is_locked: boolean
           module_description: string | null
           module_number: number
           module_title: string
+          tagline: string | null
           track_id: string
         }
         Insert: {
           created_at?: string
+          has_quiz?: boolean
           id?: string
           is_locked?: boolean
           module_description?: string | null
           module_number: number
           module_title: string
+          tagline?: string | null
           track_id: string
         }
         Update: {
           created_at?: string
+          has_quiz?: boolean
           id?: string
           is_locked?: boolean
           module_description?: string | null
           module_number?: number
           module_title?: string
+          tagline?: string | null
           track_id?: string
         }
         Relationships: [
