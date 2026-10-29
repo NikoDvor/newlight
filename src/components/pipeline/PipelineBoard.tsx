@@ -195,7 +195,7 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
   const flaggedIn = (st: StageKey) => (cols[st]?.rows || []).filter((r) => flags[r.id]).length;
 
   return (
-    <div className="space-y-3">
+    <div data-tour="board" className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />

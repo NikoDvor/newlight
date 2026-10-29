@@ -96,7 +96,7 @@ export default function TodayStrip({ scope, repUserId }: { scope: "team" | "mine
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+    <div data-tour="today" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
       {tiles.map((t) => {
         const n = v[t.k];
         const hot = t.alert && (n ?? 0) > 0;

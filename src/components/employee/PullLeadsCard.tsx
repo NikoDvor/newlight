@@ -54,7 +54,7 @@ export function PullLeadsCard() {
   const selAvail = selT ? avail[`${selT.state}|${selT.city || ""}`] : undefined;
 
   return (
-    <Card>
+    <Card data-tour="pull">
       <CardHeader><CardTitle className="text-base">Pull leads</CardTitle></CardHeader>
       <CardContent>
         {terrs === null ? null : terrs.length === 0 ? (

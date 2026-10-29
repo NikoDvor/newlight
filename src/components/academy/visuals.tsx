@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Slider } from "@/components/ui/slider";
 import { computeDiscovery, EMPTY_INPUTS } from "@/lib/discoveryNumbers";
 import { ACADEMY } from "./ui";
@@ -848,6 +849,21 @@ function OptionClose() {
   );
 }
 
+/** Launches the live tour on the real screens (salesman app only). */
+function StartTour() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const onEmployee = pathname.startsWith("/employee");
+  return (
+    <Frame caption={onEmployee ? "Takes about 3 minutes. You can stop anytime." : "The live tour runs in the salesman app."}>
+      <div className="text-[15px] font-semibold text-white">Take the live tour</div>
+      <p className="mt-1 text-[13px] text-white/65">We'll walk through every real screen — one frame at a time — and light up each part as we explain it.</p>
+      <button type="button" disabled={!onEmployee} onClick={() => navigate("/employee/generic?tour=app")}
+        className="mt-3 w-full rounded-lg bg-[hsl(197,100%,50%)] py-2.5 text-[13px] font-semibold text-[hsl(222,50%,6%)] disabled:opacity-40">Start the tour</button>
+    </Frame>
+  );
+}
+
 export const VISUALS: Record<string, ComponentType> = {
   "cert-path": CertPath,
   "job-flow": JobFlow,
@@ -878,6 +894,7 @@ export const VISUALS: Record<string, ComponentType> = {
   "break-even": BreakEven,
   "full-stack": FullStack,
   "option-close": OptionClose,
+  "start-tour": StartTour,
 };
 
 export function Visual({ name }: { name: string }) {

@@ -19,7 +19,7 @@ export default function WhyStrip() {
 
   const left = why ? daysLeft(why.deadline) : null;
   return (
-    <div className="relative flex flex-col items-center gap-1.5 sm:block sm:h-8">
+    <div data-tour="why" className="relative flex flex-col items-center gap-1.5 sm:block sm:h-8">
       <div className="flex justify-center">
         {why ? (
           <Link to={`/employee/training/m/${WHY_MODULE}`} title={why.goal}

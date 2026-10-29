@@ -5,6 +5,7 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LivingBackground } from "@/components/fx/LivingBackground";
+import AppTour from "@/components/tour/AppTour";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getEmployeeRoute, getRoleBadge } from "@/lib/employeeRouting";
@@ -163,6 +164,7 @@ export function EmployeeLayout() {
           </header>
           <main className="flex-1 min-w-0 overflow-auto nl-dark-bg relative">
             {location.pathname.startsWith("/employee/training") ? <LivingBackground /> : <GlobalAtmosphere />}
+            <AppTour />
             <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1">
                 <PWAInstallBanner />
 
