@@ -179,37 +179,24 @@ function KpiFunnel() {
   );
 }
 
-function CommissionCalc() {
-  const [fee, setFee] = useState(25000);
-  const [booked, setBooked] = useState(true);
-  const [closed, setClosed] = useState(true);
-  const b = booked ? fee * 0.15 : 0;
-  const c = closed ? fee * 0.2 : 0;
-  const Toggle = ({ on, set, label, color }: { on: boolean; set: (v: boolean) => void; label: string; color: string }) => (
-    <button type="button" onClick={() => set(!on)}
-      className="flex-1 rounded-lg border px-3 py-2 text-left text-[12px] transition-colors"
-      style={{ borderColor: on ? color : "hsla(0,0%,100%,.1)", background: on ? "hsla(0,0%,100%,.05)" : "transparent", color: on ? "white" : "hsla(0,0%,100%,.5)" }}>
-      <div className="h-[2px] w-5 mb-1.5 rounded-full" style={{ background: on ? color : "hsla(0,0%,100%,.2)" }} />
-      {label}
-    </button>
-  );
+/** Static picture of the split — no calculator (pay is entered and processed by the admin). */
+function CommissionSplit() {
+  const rows = [
+    { l: "BDR · booked it", p: 15, c: ACADEMY.electric },
+    { l: "SDR · closed it", p: 20, c: ACADEMY.sdr },
+  ];
   return (
-    <Frame caption="Example only. Commission is on the setup fee, paid through payroll.">
-      <div className="flex items-center justify-between text-[12px] text-white/60 mb-2">
-        <span>Setup fee</span><span className="font-semibold text-white tabular-nums">{money(fee)}</span>
-      </div>
-      <Slider value={[fee]} min={10000} max={50000} step={500} onValueChange={(v) => setFee(v[0])} />
-      <div className="mt-4 flex gap-2">
-        <Toggle on={booked} set={setBooked} label="I booked it · 15%" color={ACADEMY.electric} />
-        <Toggle on={closed} set={setClosed} label="I closed it · 20%" color={ACADEMY.sdr} />
-      </div>
-      <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-white/[0.05]">
-        <motion.div animate={{ width: `${(b / (fee * 0.35)) * 100}%` }} style={{ background: ACADEMY.electric }} />
-        <motion.div animate={{ width: `${(c / (fee * 0.35)) * 100}%` }} style={{ background: ACADEMY.sdr }} />
-      </div>
-      <div className="mt-3 flex items-baseline justify-between">
-        <span className="text-[12px] text-white/60">You earn</span>
-        <motion.span key={b + c} initial={{ opacity: 0.4, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tabular-nums text-white">{money(b + c)}</motion.span>
+    <Frame caption="Percent of the setup fee only.">
+      <div className="space-y-3">
+        {rows.map((r, i) => (
+          <div key={r.l}>
+            <div className="flex justify-between text-[12px] mb-1"><span className="text-white/70">{r.l}</span><span className="font-bold text-white tabular-nums">{r.p}%</span></div>
+            <div className="h-2.5 rounded-full bg-white/[0.05] overflow-hidden">
+              <motion.div className="h-full rounded-full" style={{ background: r.c, boxShadow: `0 0 10px ${r.c}` }}
+                initial={{ width: 0 }} whileInView={{ width: `${(r.p / 20) * 100}%` }} viewport={{ once: true }} transition={{ duration: 0.9, delay: i * 0.15 }} />
+            </div>
+          </div>
+        ))}
       </div>
     </Frame>
   );
@@ -548,7 +535,8 @@ export const VISUALS: Record<string, ComponentType> = {
   "job-flow": JobFlow,
   "daily-mix": DailyMix,
   "kpi-funnel": KpiFunnel,
-  "commission-calc": CommissionCalc,
+  "commission-split": CommissionSplit,
+  "commission-calc": CommissionSplit,
   "app-map": AppMap,
   "lead-flow": LeadFlow,
   recycle: Recycle,
