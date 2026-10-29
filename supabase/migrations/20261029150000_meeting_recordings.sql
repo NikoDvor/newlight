@@ -46,7 +46,7 @@ create policy "recordings select" on public.nl_meeting_recordings for select to 
   using (owner_user_id = auth.uid() or private.can_view_recordings_of(auth.uid(), client_id));
 drop policy if exists "recordings insert own upload" on public.nl_meeting_recordings;
 create policy "recordings insert own upload" on public.nl_meeting_recordings for insert to authenticated
-  with check (owner_user_id = auth.uid() and source = 'upload' and public.user_has_client_access(auth.uid(), client_id));
+  with check (owner_user_id = auth.uid() and source = 'upload' and private.user_has_client_access(auth.uid(), client_id));
 drop policy if exists "recordings update" on public.nl_meeting_recordings;
 create policy "recordings update" on public.nl_meeting_recordings for update to authenticated
   using (owner_user_id = auth.uid() or private.can_view_recordings_of(auth.uid(), client_id))
@@ -71,7 +71,7 @@ drop policy if exists "meeting recordings upload own" on storage.objects;
 create policy "meeting recordings upload own" on storage.objects for insert to authenticated with check (
   bucket_id = 'meeting-recordings'
   and (storage.foldername(name))[2] = auth.uid()::text
-  and public.user_has_client_access(auth.uid(), ((storage.foldername(name))[1])::uuid)
+  and private.user_has_client_access(auth.uid(), ((storage.foldername(name))[1])::uuid)
 );
 drop policy if exists "meeting recordings delete" on storage.objects;
 create policy "meeting recordings delete" on storage.objects for delete to authenticated using (
