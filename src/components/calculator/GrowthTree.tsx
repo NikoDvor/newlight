@@ -52,14 +52,14 @@ export default function GrowthTree({ calc }: { calc: Calc }) {
           <Node i={3} color={C.sky} label="Clients needed" value={proj.clientsNeeded} format={(n) => numFmt(Math.ceil(n))} sub={`gap ÷ ${moneyShort(m.ticket)} avg client`}
             delta={<Delta now={proj.clientsNeeded} before={bp.clientsNeeded} format={(n) => numFmt(Math.ceil(n))} higherIsBetter={false} />}>
             <Lever label="Avg client value" display={money(m.ticket)} value={m.ticket} min={0} max={ticketMax} step={250} color={C.sky}
-              before={b.ticket} now={m.ticket} fmt={money}
+              before={b.ticket} now={m.ticket} fmt={money} brings={proj.modelRevenue} broughtBefore={bp.modelRevenue}
               onChange={(v) => setM({ ticket: v })} input={<MiniInput label="Average client value" prefix="$" value={m.ticket} onChange={(v) => setM({ ticket: v })} />} />
           </Node>
           <VLine color={C.green} />
           <Node i={4} color={C.green} label="Your pace delivers" value={proj.modelRevenue} format={money} sub={`${numFmt(proj.modelClients, 1)} new clients / yr`}
             delta={<Delta now={proj.modelRevenue} before={bp.modelRevenue} format={money} />}>
             <Lever label="Leads per year" display={numFmt(m.leads)} value={m.leads} min={0} max={leadsMax} step={1} color={C.green}
-              before={b.leads} now={m.leads} fmt={(n) => numFmt(n)}
+              before={b.leads} now={m.leads} fmt={(n) => numFmt(n)} brings={proj.modelRevenue} broughtBefore={bp.modelRevenue}
               onChange={(v) => setM({ leads: v })} input={<MiniInput label="Leads per year" value={m.leads} width="w-20" onChange={(v) => setM({ leads: v })} />} />
           </Node>
         </div>
@@ -72,7 +72,7 @@ export default function GrowthTree({ calc }: { calc: Calc }) {
             delta={<Delta now={proj.leadsNeeded} before={bp.leadsNeeded} format={(n) => numFmt(Math.ceil(n))} higherIsBetter={false} />}>
             <Lever label="Close rate" display={`${pct(m.closeRate)}${m.closeRate > 0 ? ` · 1 in ${numFmt(1 / m.closeRate, 1)}` : ""}`}
               value={Math.round(m.closeRate * 1000) / 10} min={0} max={100} step={0.5} color={C.blue}
-              before={b.closeRate * 100} now={m.closeRate * 100} fmt={(n) => `${numFmt(n, 1)} pts`}
+              before={b.closeRate * 100} now={m.closeRate * 100} fmt={(n) => `${numFmt(n, 1)} pts`} brings={proj.modelRevenue} broughtBefore={bp.modelRevenue}
               onChange={(v) => setM({ closeRate: v / 100 })}
               input={<MiniInput label="Close rate percent" value={Math.round(m.closeRate * 1000) / 10} width="w-20" onChange={(v) => setM({ closeRate: Math.min(1, Math.max(0, v / 100)) })} />} />
           </Node>
@@ -120,7 +120,7 @@ function Edit({ label, value, onChange, prefix }: { label: string; value: number
 
 function Lever({ label, display, value, min, max, step, onChange, input, color, before, now, fmt }: {
   label: string; display: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; input: ReactNode; color: string;
-  before?: number; now?: number; fmt?: (n: number) => string;
+  before?: number; now?: number; fmt?: (n: number) => string; brings?: number; broughtBefore?: number;
 }) {
   return (
     <div className="mt-2.5">
@@ -133,6 +133,14 @@ function Lever({ label, display, value, min, max, step, onChange, input, color, 
         {before != null && now != null && fmt ? <Delta now={now} before={before} format={fmt} /> : <span />}
         <p className="text-right text-[10.5px] tabular-nums text-white/45">{display}</p>
       </div>
+      {brings != null && (
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg bg-[hsla(152,62%,55%,.07)] px-2.5 py-1.5">
+          <span className="text-[11px] font-semibold text-white/60">Brings in</span>
+          <span className="flex items-center gap-1.5">
+            <CountUp value={brings} format={(n) => `${money(n)}/yr`} className="text-[14px] font-black tabular-nums text-[hsl(152,62%,68%)]" />
+          </span>
+        </div>
+      )}
     </div>
   );
 }

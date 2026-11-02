@@ -37,7 +37,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
   ];
 
   return (
-    <div className="mx-auto w-full max-w-5xl pb-16">
+    <div className="mx-auto w-full max-w-5xl pb-40">
       {/* top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={onBack} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-sm text-white/60 hover:text-white">
@@ -162,6 +162,31 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
       <AnimatePresence>{showValue && <ValuePanel calc={calc} />}</AnimatePresence>
 
       <p className="mt-6 text-center text-[11px] text-white/35">An illustration from the numbers you shared, per year. Not a guarantee of results.</p>
+
+      {/* live revenue bar — updates while you slide */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[hsla(152,62%,55%,.3)] bg-[hsla(222,46%,5%,.94)] px-3 py-2.5 shadow-[0_-12px_40px_-12px_hsla(152,62%,50%,.45)] backdrop-blur-md sm:px-6">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[hsl(152,62%,62%)]">This plan brings in</p>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <CountUp value={proj.modelRevenue} format={(n) => `${money(n)}/yr`} className="text-[22px] font-black tabular-nums leading-tight text-white sm:text-[28px]" />
+              <Delta now={proj.modelRevenue} before={result.newRevenue} format={money} />
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+                <motion.div className="h-full rounded-full" animate={{ width: `${Math.min(1, proj.gapClosedShare ?? 0) * 100}%` }} transition={{ duration: 0.35 }}
+                  style={{ background: (proj.gapClosedShare ?? 0) >= 1 ? C.green : `linear-gradient(90deg, ${C.gold}, ${C.green})` }} />
+              </div>
+              <span className="shrink-0 text-[11px] tabular-nums text-white/55">{numFmt(proj.modelClients, 1)} clients · {pct(Math.min(1, proj.gapClosedShare ?? 0), 0)} of gap</span>
+            </div>
+          </div>
+          <button onClick={submitPlan} aria-label="Submit plan"
+            className="flex min-h-[52px] shrink-0 items-center gap-1.5 rounded-xl px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_24px_-6px_hsla(152,62%,55%,.9)]"
+            style={{ background: "linear-gradient(120deg,hsl(160,70%,38%),hsl(152,62%,45%))" }}>
+            <Send className="h-4 w-4" /><span className="hidden sm:inline">{plan && !planStale ? "Submitted" : "Submit"}</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
