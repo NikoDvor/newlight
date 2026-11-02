@@ -4161,6 +4161,8 @@ export type Database = {
           agreement_status: string
           allow_sms: boolean
           avg_deal_value: number | null
+          billing_paused_at: string | null
+          billing_paused_reason: string | null
           business_name: string
           business_type: string | null
           created_at: string
@@ -4217,6 +4219,8 @@ export type Database = {
           agreement_status?: string
           allow_sms?: boolean
           avg_deal_value?: number | null
+          billing_paused_at?: string | null
+          billing_paused_reason?: string | null
           business_name: string
           business_type?: string | null
           created_at?: string
@@ -4273,6 +4277,8 @@ export type Database = {
           agreement_status?: string
           allow_sms?: boolean
           avg_deal_value?: number | null
+          billing_paused_at?: string | null
+          billing_paused_reason?: string | null
           business_name?: string
           business_type?: string | null
           created_at?: string
@@ -5087,11 +5093,16 @@ export type Database = {
       }
       crm_deals: {
         Row: {
+          annual_amount_first: number | null
+          annual_amount_renewal: number | null
+          annual_anchor_date: string | null
           annual_started_at: string | null
           app_store_complimentary: boolean
           assigned_operator_user_id: string | null
           assigned_user: string | null
+          avg_client_value: number | null
           billing_cadence: string
+          billing_start_date: string | null
           client_id: string
           client_is_finra_member: boolean
           close_date: string | null
@@ -5105,12 +5116,16 @@ export type Database = {
           company_id: string | null
           contact_id: string | null
           created_at: string
+          custom_pricing: boolean
           data_retention_days: number
           deal_name: string
           deal_value: number | null
           expected_close_date: string | null
           external_crm_deal_id: string | null
           fully_activated_at: string | null
+          guarantee_ends_at: string | null
+          guarantee_started_at: string | null
+          has_guarantee: boolean
           id: string
           initial_fee: number | null
           interest_type: string | null
@@ -5118,37 +5133,56 @@ export type Database = {
           lead_source: string | null
           lost_at: string | null
           lost_reason: string | null
+          made_back_at: string | null
+          made_back_confirmed_by: string | null
           meeting_id_latest: string | null
           next_charge_at: string | null
           notes_summary: string | null
           onboarding_meeting_id: string | null
+          package: string | null
           paid_signed_at: string | null
           pay_sign_last_sent_at: string | null
           pay_sign_sent_at: string | null
           pay_sign_status: string
           payment_invoice_id: string | null
+          payment_plan: boolean
+          payment_plan_total: number | null
           pipeline_stage: string
           pipeline_stage_id: string | null
+          plan_preview: Json | null
+          price_approval_status: string
+          price_approved_at: string | null
+          price_approved_by: string | null
+          pricing_defaults: Json | null
           pricing_model: string | null
           proposal_id_current: string | null
           provisioned_client_id: string | null
           qualification_status: string | null
           recurring_fee: number | null
+          recurring_method_saved_at: string | null
           retainer_kpi: string | null
           revenue_auto_logged: boolean
           service_agreement_envelope_id: string | null
+          setup_method: string | null
           status: string
           stripe_subscription_id: string | null
           updated_at: string
           urgency_level: string | null
           welcome_email_sent: boolean
+          work_paused_at: string | null
+          work_paused_reason: string | null
         }
         Insert: {
+          annual_amount_first?: number | null
+          annual_amount_renewal?: number | null
+          annual_anchor_date?: string | null
           annual_started_at?: string | null
           app_store_complimentary?: boolean
           assigned_operator_user_id?: string | null
           assigned_user?: string | null
+          avg_client_value?: number | null
           billing_cadence?: string
+          billing_start_date?: string | null
           client_id: string
           client_is_finra_member?: boolean
           close_date?: string | null
@@ -5162,12 +5196,16 @@ export type Database = {
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
+          custom_pricing?: boolean
           data_retention_days?: number
           deal_name: string
           deal_value?: number | null
           expected_close_date?: string | null
           external_crm_deal_id?: string | null
           fully_activated_at?: string | null
+          guarantee_ends_at?: string | null
+          guarantee_started_at?: string | null
+          has_guarantee?: boolean
           id?: string
           initial_fee?: number | null
           interest_type?: string | null
@@ -5175,37 +5213,56 @@ export type Database = {
           lead_source?: string | null
           lost_at?: string | null
           lost_reason?: string | null
+          made_back_at?: string | null
+          made_back_confirmed_by?: string | null
           meeting_id_latest?: string | null
           next_charge_at?: string | null
           notes_summary?: string | null
           onboarding_meeting_id?: string | null
+          package?: string | null
           paid_signed_at?: string | null
           pay_sign_last_sent_at?: string | null
           pay_sign_sent_at?: string | null
           pay_sign_status?: string
           payment_invoice_id?: string | null
+          payment_plan?: boolean
+          payment_plan_total?: number | null
           pipeline_stage?: string
           pipeline_stage_id?: string | null
+          plan_preview?: Json | null
+          price_approval_status?: string
+          price_approved_at?: string | null
+          price_approved_by?: string | null
+          pricing_defaults?: Json | null
           pricing_model?: string | null
           proposal_id_current?: string | null
           provisioned_client_id?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
+          recurring_method_saved_at?: string | null
           retainer_kpi?: string | null
           revenue_auto_logged?: boolean
           service_agreement_envelope_id?: string | null
+          setup_method?: string | null
           status?: string
           stripe_subscription_id?: string | null
           updated_at?: string
           urgency_level?: string | null
           welcome_email_sent?: boolean
+          work_paused_at?: string | null
+          work_paused_reason?: string | null
         }
         Update: {
+          annual_amount_first?: number | null
+          annual_amount_renewal?: number | null
+          annual_anchor_date?: string | null
           annual_started_at?: string | null
           app_store_complimentary?: boolean
           assigned_operator_user_id?: string | null
           assigned_user?: string | null
+          avg_client_value?: number | null
           billing_cadence?: string
+          billing_start_date?: string | null
           client_id?: string
           client_is_finra_member?: boolean
           close_date?: string | null
@@ -5219,12 +5276,16 @@ export type Database = {
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
+          custom_pricing?: boolean
           data_retention_days?: number
           deal_name?: string
           deal_value?: number | null
           expected_close_date?: string | null
           external_crm_deal_id?: string | null
           fully_activated_at?: string | null
+          guarantee_ends_at?: string | null
+          guarantee_started_at?: string | null
+          has_guarantee?: boolean
           id?: string
           initial_fee?: number | null
           interest_type?: string | null
@@ -5232,30 +5293,44 @@ export type Database = {
           lead_source?: string | null
           lost_at?: string | null
           lost_reason?: string | null
+          made_back_at?: string | null
+          made_back_confirmed_by?: string | null
           meeting_id_latest?: string | null
           next_charge_at?: string | null
           notes_summary?: string | null
           onboarding_meeting_id?: string | null
+          package?: string | null
           paid_signed_at?: string | null
           pay_sign_last_sent_at?: string | null
           pay_sign_sent_at?: string | null
           pay_sign_status?: string
           payment_invoice_id?: string | null
+          payment_plan?: boolean
+          payment_plan_total?: number | null
           pipeline_stage?: string
           pipeline_stage_id?: string | null
+          plan_preview?: Json | null
+          price_approval_status?: string
+          price_approved_at?: string | null
+          price_approved_by?: string | null
+          pricing_defaults?: Json | null
           pricing_model?: string | null
           proposal_id_current?: string | null
           provisioned_client_id?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
+          recurring_method_saved_at?: string | null
           retainer_kpi?: string | null
           revenue_auto_logged?: boolean
           service_agreement_envelope_id?: string | null
+          setup_method?: string | null
           status?: string
           stripe_subscription_id?: string | null
           updated_at?: string
           urgency_level?: string | null
           welcome_email_sent?: boolean
+          work_paused_at?: string | null
+          work_paused_reason?: string | null
         }
         Relationships: [
           {
@@ -8411,6 +8486,63 @@ export type Database = {
           },
         ]
       }
+      nl_attributed_revenue: {
+        Row: {
+          client_id: string | null
+          client_started_on: string
+          created_at: string
+          deal_id: string
+          entered_by: string | null
+          entry_kind: string
+          id: string
+          month: string
+          new_client_label: string
+          revenue: number
+          source: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          client_started_on: string
+          created_at?: string
+          deal_id: string
+          entered_by?: string | null
+          entry_kind?: string
+          id?: string
+          month: string
+          new_client_label: string
+          revenue: number
+          source?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          client_started_on?: string
+          created_at?: string
+          deal_id?: string
+          entered_by?: string | null
+          entry_kind?: string
+          id?: string
+          month?: string
+          new_client_label?: string
+          revenue?: number
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_attributed_revenue_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_attributed_revenue_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_bdr_dial_log: {
         Row: {
           bdr_user_id: string
@@ -8717,6 +8849,150 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_billing_events: {
+        Row: {
+          created_at: string
+          deal_id: string | null
+          dedupe_key: string | null
+          detail: Json | null
+          id: string
+          kind: string
+          schedule_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          deal_id?: string | null
+          dedupe_key?: string | null
+          detail?: Json | null
+          id?: string
+          kind: string
+          schedule_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string | null
+          dedupe_key?: string | null
+          detail?: Json | null
+          id?: string
+          kind?: string
+          schedule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_billing_events_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_billing_events_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "nl_billing_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_billing_schedule: {
+        Row: {
+          amount: number | null
+          attempts: number
+          client_id: string | null
+          covers: string | null
+          created_at: string
+          deal_id: string
+          due_date: string
+          failure_reason: string | null
+          id: string
+          invoice_id: string | null
+          kind: string
+          label: string | null
+          last_attempt_at: string | null
+          method: string
+          next_retry_at: string | null
+          paid_at: string | null
+          paid_marked_by: string | null
+          period_end: string | null
+          period_start: string | null
+          reminders_sent: Json
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          wire_reference: string | null
+        }
+        Insert: {
+          amount?: number | null
+          attempts?: number
+          client_id?: string | null
+          covers?: string | null
+          created_at?: string
+          deal_id: string
+          due_date: string
+          failure_reason?: string | null
+          id?: string
+          invoice_id?: string | null
+          kind: string
+          label?: string | null
+          last_attempt_at?: string | null
+          method: string
+          next_retry_at?: string | null
+          paid_at?: string | null
+          paid_marked_by?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          reminders_sent?: Json
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          wire_reference?: string | null
+        }
+        Update: {
+          amount?: number | null
+          attempts?: number
+          client_id?: string | null
+          covers?: string | null
+          created_at?: string
+          deal_id?: string
+          due_date?: string
+          failure_reason?: string | null
+          id?: string
+          invoice_id?: string | null
+          kind?: string
+          label?: string | null
+          last_attempt_at?: string | null
+          method?: string
+          next_retry_at?: string | null
+          paid_at?: string | null
+          paid_marked_by?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          reminders_sent?: Json
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          wire_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_billing_schedule_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_billing_schedule_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
             referencedColumns: ["id"]
           },
         ]
@@ -9570,6 +9846,66 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_package_defaults: {
+        Row: {
+          annual_discount_pct: number | null
+          commission_rate: number | null
+          commission_rate_ongoing: number | null
+          discount_approval_pct: number | null
+          guarantee_days: number | null
+          key: string
+          label: string | null
+          min_ad_budget: number | null
+          min_avg_client: number | null
+          monthly_fee: number | null
+          monthly_multiplier: number | null
+          payment_plan_markup_pct: number | null
+          setup_fee: number | null
+          setup_multiplier: number | null
+          steps: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          annual_discount_pct?: number | null
+          commission_rate?: number | null
+          commission_rate_ongoing?: number | null
+          discount_approval_pct?: number | null
+          guarantee_days?: number | null
+          key: string
+          label?: string | null
+          min_ad_budget?: number | null
+          min_avg_client?: number | null
+          monthly_fee?: number | null
+          monthly_multiplier?: number | null
+          payment_plan_markup_pct?: number | null
+          setup_fee?: number | null
+          setup_multiplier?: number | null
+          steps?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          annual_discount_pct?: number | null
+          commission_rate?: number | null
+          commission_rate_ongoing?: number | null
+          discount_approval_pct?: number | null
+          guarantee_days?: number | null
+          key?: string
+          label?: string | null
+          min_ad_budget?: number | null
+          min_avg_client?: number | null
+          monthly_fee?: number | null
+          monthly_multiplier?: number | null
+          payment_plan_markup_pct?: number | null
+          setup_fee?: number | null
+          setup_multiplier?: number | null
+          steps?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       nl_practice_recordings: {
         Row: {
           chapter_id: string
@@ -10274,6 +10610,45 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      nl_wire_settings: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_address: string | null
+          bank_name: string | null
+          id: boolean
+          note: string | null
+          routing_number: string | null
+          swift_code: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_address?: string | null
+          bank_name?: string | null
+          id?: boolean
+          note?: string | null
+          routing_number?: string | null
+          swift_code?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_address?: string | null
+          bank_name?: string | null
+          id?: boolean
+          note?: string | null
+          routing_number?: string | null
+          swift_code?: string | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
