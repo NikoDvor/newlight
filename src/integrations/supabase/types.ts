@@ -16261,6 +16261,7 @@ export type Database = {
         Args: { _consent?: boolean; _phone?: string; _token: string }
         Returns: Json
       }
+      nl_billing_cron_ok: { Args: { p: string }; Returns: boolean }
       nl_contact_rank: {
         Args: { _owner: boolean; _title: string }
         Returns: number
