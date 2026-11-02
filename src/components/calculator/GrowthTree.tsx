@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+import { Crosshair } from "lucide-react";
 import type { useDiscoveryNumbers } from "@/hooks/useDiscoveryNumbers";
 import { projectModel } from "@/lib/discoveryNumbers";
 import { C, CountUp, Delta, GlowSlider, MiniInput, money, moneyShort, numFmt, pct } from "./kit";
@@ -16,8 +17,28 @@ export default function GrowthTree({ calc }: { calc: Calc }) {
   const gap = result.gapRevenue;
   // Generous ranges so the sliders can always reach the goal (a bigger number can still be typed in the box).
   const roundUp = (n: number, step: number) => Math.ceil(n / step) * step;
-  const ticketMax = roundUp(Math.max(100000, (calc.base.ticket || 0) * 10), 5000);
-  const leadsMax = roundUp(Math.max(1000, (calc.base.leads || 0) * 10, (proj.leadsNeeded || 0) * 1.5), 50);
+  // "Hit the goal": the value each lever needs (others held where they are) so the plan covers the whole gap.
+  const g = gap ?? 0;
+  const needLeads = g > 0 && m.closeRate > 0 && m.ticket > 0 ? Math.ceil(g / (m.closeRate * m.ticket)) : null;
+  const needClose = g > 0 && m.leads > 0 && m.ticket > 0 ? g / (m.leads * m.ticket) : null;
+  const needTicket = g > 0 && m.leads > 0 && m.closeRate > 0 ? Math.ceil(g / (m.leads * m.closeRate) / 50) * 50 : null;
+  const ticketMax = roundUp(Math.max(100000, (calc.base.ticket || 0) * 10, (needTicket || 0) * 1.25), 5000);
+  const leadsMax = roundUp(Math.max(1000, (calc.base.leads || 0) * 10, (proj.leadsNeeded || 0) * 1.5, (needLeads || 0) * 1.25), 50);
+
+  // Glide the slider to the target so they watch it move.
+  const raf = useRef(0);
+  const glide = (key: "leads" | "closeRate" | "ticket", to: number) => {
+    cancelAnimationFrame(raf.current);
+    const from = m[key], start = performance.now(), dur = 900;
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { setM({ [key]: to } as any); return; }
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - start) / dur), e = 1 - Math.pow(1 - k, 3);
+      setM({ [key]: k < 1 ? from + (to - from) * e : to } as any);
+      if (k < 1) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+  };
   const b = calc.base;
   const bp = projectModel(result, b); // their real numbers, for "vs today"
   const covered = proj.gapClosedShare ?? 0;
@@ -53,6 +74,7 @@ export default function GrowthTree({ calc }: { calc: Calc }) {
             delta={<Delta now={proj.clientsNeeded} before={bp.clientsNeeded} format={(n) => numFmt(Math.ceil(n))} higherIsBetter={false} />}>
             <Lever label="Avg client value" display={money(m.ticket)} value={m.ticket} min={0} max={ticketMax} step={250} color={C.sky}
               before={b.ticket} now={m.ticket} fmt={money} brings={proj.modelRevenue} broughtBefore={bp.modelRevenue}
+              solve={needTicket == null ? null : { text: `${money(needTicket)} avg client`, onClick: () => glide("ticket", needTicket) }}
               onChange={(v) => setM({ ticket: v })} input={<MiniInput label="Average client value" prefix="$" value={m.ticket} onChange={(v) => setM({ ticket: v })} />} />
           </Node>
           <VLine color={C.green} />
@@ -60,6 +82,7 @@ export default function GrowthTree({ calc }: { calc: Calc }) {
             delta={<Delta now={proj.modelRevenue} before={bp.modelRevenue} format={money} />}>
             <Lever label="Leads per year" display={numFmt(m.leads)} value={m.leads} min={0} max={leadsMax} step={1} color={C.green}
               before={b.leads} now={m.leads} fmt={(n) => numFmt(n)} brings={proj.modelRevenue} broughtBefore={bp.modelRevenue}
+              solve={needLeads == null ? null : { text: `${numFmt(needLeads)} leads / yr`, onClick: () => glide("leads", needLeads) }}
               onChange={(v) => setM({ leads: v })} input={<MiniInput label="Leads per year" value={m.leads} width="w-20" onChange={(v) => setM({ leads: v })} />} />
           </Node>
         </div>
@@ -73,6 +96,9 @@ export default function GrowthTree({ calc }: { calc: Calc }) {
             <Lever label="Close rate" display={`${pct(m.closeRate)}${m.closeRate > 0 ? ` · 1 in ${numFmt(1 / m.closeRate, 1)}` : ""}`}
               value={Math.round(m.closeRate * 1000) / 10} min={0} max={100} step={0.5} color={C.blue}
               before={b.closeRate * 100} now={m.closeRate * 100} fmt={(n) => `${numFmt(n, 1)} pts`} brings={proj.modelRevenue} broughtBefore={bp.modelRevenue}
+              solve={needClose == null ? null : needClose > 1
+                ? { text: "Over 100% — add leads", onClick: () => {}, disabled: true }
+                : { text: `${pct(Math.ceil(needClose * 1000) / 1000)} close rate`, onClick: () => glide("closeRate", Math.ceil(needClose * 1000) / 1000) }}
               onChange={(v) => setM({ closeRate: v / 100 })}
               input={<MiniInput label="Close rate percent" value={Math.round(m.closeRate * 1000) / 10} width="w-20" onChange={(v) => setM({ closeRate: Math.min(1, Math.max(0, v / 100)) })} />} />
           </Node>
@@ -118,9 +144,10 @@ function Edit({ label, value, onChange, prefix }: { label: string; value: number
   );
 }
 
-function Lever({ label, display, value, min, max, step, onChange, input, color, before, now, fmt, brings }: {
+function Lever({ label, display, value, min, max, step, onChange, input, color, before, now, fmt, brings, solve }: {
   label: string; display: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; input: ReactNode; color: string;
   before?: number; now?: number; fmt?: (n: number) => string; brings?: number; broughtBefore?: number;
+  solve?: { text: string; onClick: () => void; disabled?: boolean } | null;
 }) {
   return (
     <div className="mt-2.5">
@@ -140,6 +167,14 @@ function Lever({ label, display, value, min, max, step, onChange, input, color, 
             <CountUp value={brings} format={(n) => `${money(n)}/yr`} className="text-[14px] font-black tabular-nums text-[hsl(188,95%,72%)]" />
           </span>
         </div>
+      )}
+      {solve && (
+        <button type="button" onClick={solve.onClick} disabled={solve.disabled}
+          className="mt-2 flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border px-3 text-left transition active:scale-[.99] disabled:opacity-50"
+          style={{ borderColor: `color-mix(in srgb, ${color} 55%, transparent)`, background: `linear-gradient(120deg, color-mix(in srgb, ${color} 18%, transparent), transparent)`, boxShadow: `0 0 22px -12px ${color}` }}>
+          <span className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.1em] text-white"><Crosshair className="h-4 w-4" style={{ color }} />Hit the goal</span>
+          <span className="text-[13px] font-black tabular-nums" style={{ color }}>{solve.text}</span>
+        </button>
       )}
     </div>
   );
