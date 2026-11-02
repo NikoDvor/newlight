@@ -163,3 +163,20 @@ export function CalcStyles() {
 export function Kick({ children, color = "rgba(255,255,255,.5)" }: { children: ReactNode; color?: string }) {
   return <p className="text-[10.5px] font-semibold uppercase tracking-[0.18em]" style={{ color }}>{children}</p>;
 }
+
+/** "▲ +$150,000 vs today" — the change from their real numbers. Green when it helps, red when it hurts. */
+export function Delta({ now, before, format, higherIsBetter = true, unit = "vs today", className = "" }: {
+  now: number | null | undefined; before: number | null | undefined; format: (n: number) => string;
+  higherIsBetter?: boolean; unit?: string; className?: string;
+}) {
+  if (now == null || before == null || !Number.isFinite(now) || !Number.isFinite(before)) return null;
+  const d = now - before;
+  if (Math.abs(d) < Math.max(0.0005, Math.abs(before) * 0.0005)) return null;
+  const good = higherIsBetter ? d > 0 : d < 0;
+  const pctTxt = before !== 0 ? ` (${d > 0 ? "+" : "−"}${Math.round(Math.abs(d / before) * 100)}%)` : "";
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${good ? "bg-[hsla(152,62%,55%,.14)] text-[hsl(152,62%,65%)]" : "bg-[hsla(0,72%,60%,.14)] text-[hsl(0,72%,72%)]"} ${className}`} aria-live="polite">
+      {d > 0 ? "▲" : "▼"} {d > 0 ? "+" : "−"}{format(Math.abs(d))}{pctTxt} <span className="font-medium opacity-70">{unit}</span>
+    </span>
+  );
+}

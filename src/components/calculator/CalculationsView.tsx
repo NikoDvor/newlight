@@ -5,19 +5,20 @@ import type { useDiscoveryNumbers } from "@/hooks/useDiscoveryNumbers";
 import { usePackageDefaults } from "@/components/packages/PlanPreview";
 import { PACKAGE_ORDER, buildPlan, defaultPrices, type PackageKey } from "@/lib/packages";
 import GrowthTree from "./GrowthTree";
-import { C, CountUp, GlowSlider, Kick, MiniInput, SaveDot, glass, glassSoft, money, moneyShort, numFmt, pct } from "./kit";
+import { C, CountUp, Delta, GlowSlider, Kick, MiniInput, SaveDot, glass, glassSoft, money, moneyShort, numFmt, pct } from "./kit";
 
 type Calc = ReturnType<typeof useDiscoveryNumbers>;
 const ease = [0.22, 1, 0.36, 1] as any;
 
 /** Page 2 — what the prospect sees when you share your screen. No script text here. */
 export default function CalculationsView({ calc, title, onBack }: { calc: Calc; title: string; onBack: () => void }) {
-  const { result, model: m, setM, resetModel, dirty, proj, inputs, set } = calc;
+  const { result, model: m, setM, resetModel, dirty, proj, inputs, set, base } = calc;
   const [showValue, setShowValue] = useState(false);
   const [plan, setPlan] = useState<PlanSnap | null>(null);
   const snap = (): PlanSnap => ({
     leads: m.leads, closeRate: m.closeRate, ticket: m.ticket, gap: gap ?? 0, current: cur ?? 0, goal: goal ?? 0,
     clients: proj.modelClients, revenue: proj.modelRevenue, todayRevenue: result.newRevenue ?? 0,
+    before: { leads: base.leads, closeRate: base.closeRate, ticket: base.ticket, clients: result.newClients ?? 0 },
   });
   const planStale = !!plan && (Math.round(plan.leads) !== Math.round(m.leads) || Math.abs(plan.closeRate - m.closeRate) > 0.0005 || Math.round(plan.ticket) !== Math.round(m.ticket));
   const submitPlan = () => {
@@ -65,7 +66,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
           </div>
           <Ring progress={progress} />
         </div>
-        <div className="relative mt-6 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <div className="grid-preserve relative mt-6 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
           <Stat icon={Wallet} label="Average client" value={result.avgTicket} f={money} sub="per year" color={C.sky} />
           <Stat icon={Target} label="Close rate" value={result.closeRate} f={(n) => pct(n)} sub={inputs.leads_per_client ? `1 in ${numFmt(inputs.leads_per_client, 1)} leads` : ""} color={C.blue} />
           <Stat icon={Users} label="Today's pace" value={result.newRevenue} f={money} sub={`${numFmt(result.newClients, 1)} new clients / yr`} color={C.green} />
@@ -117,7 +118,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
           <MiniInput label="Target increase per year" prefix="$" width="w-36" value={target ?? 0} onChange={(v) => set({ their_number: v })} />
         </div>
         <GlowSlider label="Target increase" value={target ?? 0} min={0} max={targetMax} step={1000} color={C.green} onChange={(v) => set({ their_number: v })} />
-        <div className="mt-3 grid grid-cols-2 gap-2.5">
+        <div className="grid-preserve mt-3 grid grid-cols-2 gap-2.5">
           <div className={`${glassSoft} px-3.5 py-2.5`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">New clients that takes</p>
             <CountUp value={target != null && m.ticket > 0 ? Math.ceil(target / m.ticket) : null} format={(n) => numFmt(Math.ceil(n))} className="text-xl font-bold tabular-nums text-white" />
@@ -131,7 +132,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
 
       {/* summary (#7) */}
       <section className={`${glass} mt-4 p-4 sm:p-5`}>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-stretch sm:gap-0">
+        <div className="grid-preserve grid grid-cols-2 gap-2 sm:flex sm:items-stretch sm:gap-0">
           {[
             { k: "Today", v: cur, c: "hsl(187,70%,58%)" },
             { k: "Goal", v: goal, c: C.gold },
@@ -240,7 +241,7 @@ function ValuePanel({ calc }: { calc: Calc }) {
   );
 }
 
-interface PlanSnap { leads: number; closeRate: number; ticket: number; gap: number; current: number; goal: number; clients: number; revenue: number; todayRevenue: number }
+interface PlanSnap { leads: number; closeRate: number; ticket: number; gap: number; current: number; goal: number; clients: number; revenue: number; todayRevenue: number; before: { leads: number; closeRate: number; ticket: number; clients: number } }
 
 /** Opens at the bottom after "Submit plan": the levers they chose and a 12-month build-up against the gap. */
 function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; onClose: () => void }) {
@@ -250,10 +251,10 @@ function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; o
   const hitMonth = plan.gap > 0 && monthly > 0 ? Math.ceil(plan.gap / monthly) : null;
   const covered = plan.gap > 0 ? Math.min(1, plan.revenue / plan.gap) : 1;
   const pillars = [
-    { k: "Leads", v: `${numFmt(plan.leads)} / yr`, s: `${numFmt(plan.leads / 12, 1)} a month`, c: C.green },
-    { k: "Close rate", v: pct(plan.closeRate), s: plan.closeRate > 0 ? `1 in ${numFmt(1 / plan.closeRate, 1)} leads` : "", c: C.blue },
-    { k: "Average client", v: money(plan.ticket), s: "per year", c: C.sky },
-    { k: "New clients", v: `${numFmt(plan.clients, 1)} / yr`, s: `${numFmt(plan.clients / 12, 1)} a month`, c: C.gold },
+    { k: "Leads", v: `${numFmt(plan.leads)} / yr`, s: `${numFmt(plan.leads / 12, 1)} a month`, c: C.green, d: <Delta now={plan.leads} before={plan.before.leads} format={(n) => numFmt(n)} /> },
+    { k: "Close rate", v: pct(plan.closeRate), s: plan.closeRate > 0 ? `1 in ${numFmt(1 / plan.closeRate, 1)} leads` : "", c: C.blue, d: <Delta now={plan.closeRate * 100} before={plan.before.closeRate * 100} format={(n) => `${numFmt(n, 1)} pts`} /> },
+    { k: "Average client", v: money(plan.ticket), s: "per year", c: C.sky, d: <Delta now={plan.ticket} before={plan.before.ticket} format={money} /> },
+    { k: "New clients", v: `${numFmt(plan.clients, 1)} / yr`, s: `${numFmt(plan.clients / 12, 1)} a month`, c: C.gold, d: <Delta now={plan.clients} before={plan.before.clients} format={(n) => numFmt(n, 1)} /> },
   ];
   return (
     <motion.section id="calc-plan" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.55, ease }}
@@ -271,12 +272,13 @@ function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; o
         <button onClick={onClose} aria-label="Close plan" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-white/45 hover:text-white"><X className="h-4 w-4" /></button>
       </div>
 
-      <div className="relative mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <div className="grid-preserve relative mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {pillars.map((x) => (
           <div key={x.k} className="rounded-xl border bg-black/25 px-3.5 py-3" style={{ borderColor: `color-mix(in srgb, ${x.c} 35%, transparent)` }}>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: x.c }}>{x.k}</p>
             <p className="mt-0.5 truncate text-lg font-black tabular-nums text-white sm:text-xl">{x.v}</p>
             <p className="truncate text-[11px] text-white/45">{x.s}</p>
+            {x.d && <div className="mt-1">{x.d}</div>}
           </div>
         ))}
       </div>
@@ -316,7 +318,7 @@ function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; o
         </div>
       </div>
 
-      <div className="relative mt-4 grid grid-cols-3 gap-2 text-center">
+      <div className="grid-preserve relative mt-4 grid grid-cols-3 gap-2 text-center">
         {[
           { k: "Added in year one", v: money(plan.revenue), c: C.green },
           { k: "Today's pace", v: money(plan.todayRevenue), c: "rgba(255,255,255,.6)" },
