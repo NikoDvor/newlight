@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useState } from "react";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
-import { Building2, Film } from "lucide-react";
+import { Building2, Calculator, Film } from "lucide-react";
 
 interface NavItem { title: string; description: string; url: string; icon: any }
 interface NavGroup {
@@ -53,6 +53,7 @@ const adminGroups: NavGroup[] = [
   {
     label: "Sales Tools",
     items: [
+      { title: "Calculator", description: "The discovery script and calculator — practice, or open any lead's numbers.", url: "/admin/calculator", icon: Calculator },
       { title: "Packages & Pricing", description: "Package prices, custom-price approvals, every charge and wire, the simulator and the rules.", url: "/admin/packages-pricing", icon: DollarSign },
       { title: "Sales Control Center", description: "Build pricing, packages, and proposals for a client.", url: "/admin/sales-control-center", icon: LayoutDashboard },
       { title: "Proposal Templates", description: "Manage reusable pricing and terms for proposals.", url: "/admin/proposal-templates", icon: FileSignature },

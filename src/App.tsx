@@ -108,6 +108,7 @@ const AdminProposalTemplates = lazy(() => import("./pages/admin/AdminProposalTem
 const AdminSalesDemoCreator = lazy(() => import("./pages/admin/AdminSalesDemoCreator"));
 const AdminProposalWizard = lazy(() => import("./pages/admin/AdminProposalWizard"));
 const AdminBilling = lazy(() => import("./pages/admin/AdminBilling"));
+const CalculatorPage = lazy(() => import("./pages/calculator/CalculatorPage"));
 const AdminPackagesPricing = lazy(() => import("./pages/admin/AdminPackagesPricing"));
 const AdminClientRevenue = lazy(() => import("./pages/admin/AdminClientRevenue"));
 const AdminAutomations = lazy(() => import("./pages/admin/AdminAutomations"));
@@ -348,6 +349,8 @@ const App = () => {
                 <Route path="clients/:clientId/proposal-wizard" element={<AdminProposalWizard />} />
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="packages-pricing" element={<AdminPackagesPricing />} />
+                <Route path="calculator" element={<CalculatorPage />} />
+                <Route path="calculator/:leadId" element={<CalculatorPage />} />
                 <Route path="client-revenue" element={<AdminClientRevenue />} />
                 <Route path="automations" element={<AdminAutomations />} />
                 <Route path="executive" element={<Navigate to="/admin/clients-overview" replace />} />
@@ -404,6 +407,8 @@ const App = () => {
                 <Route path="support" element={<SupportEmployeeDashboard />} />
                 <Route path="generic" element={<GenericEmployeeDashboard />} />
                 <Route path="training" element={<AcademyHub />} />
+                <Route path="calculator" element={<CalculatorPage />} />
+                <Route path="calculator/:leadId" element={<CalculatorPage />} />
                 <Route path="recordings" element={<EmployeeRecordings />} />
                 <Route path="training/m/:n" element={<AcademyModule />} />
                 <Route path="training/m/:n/c/:c" element={<AcademyChapter />} />

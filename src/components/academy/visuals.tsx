@@ -863,6 +863,20 @@ function StartTour() {
   );
 }
 
+/** Button in the Meeting 1 script that opens the Calculator (admin → admin Calculator). */
+function OpenCalculator() {
+  const navigate = useNavigate();
+  const loc = useLocation();
+  const to = loc.pathname.startsWith("/admin") ? "/admin/calculator" : "/employee/calculator";
+  return (
+    <button onClick={() => navigate(to)}
+      className="my-4 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-black uppercase tracking-[0.12em] text-white shadow-[0_0_36px_-10px_hsla(197,100%,60%,.85)] transition active:scale-[.99]"
+      style={{ background: "linear-gradient(120deg,hsl(217,90%,52%),hsl(197,100%,50%) 60%,hsl(187,90%,50%))" }}>
+      Open the calculator →
+    </button>
+  );
+}
+
 export const VISUALS: Record<string, ComponentType> = {
   "cert-path": CertPath,
   "job-flow": JobFlow,
@@ -894,6 +908,7 @@ export const VISUALS: Record<string, ComponentType> = {
   "full-stack": FullStack,
   "option-close": OptionClose,
   "start-tour": StartTour,
+  "open-calculator": OpenCalculator,
 };
 
 export function Visual({ name }: { name: string }) {

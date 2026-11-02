@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, Navigate, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Film, Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints, GraduationCap, Lock, LogOut, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
+import { Calculator, Film, Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints, GraduationCap, Lock, LogOut, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ const navGroups: { label?: string; items: { title: string; url: string; icon: an
     items: [
       { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
       { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
+      { title: "Calculator", url: "/employee/calculator", icon: Calculator },
     ],
   },
   {
@@ -75,7 +76,7 @@ function EmployeeSidebar() {
                 )}
                 {group.items.map((item) => {
                   const url = item.url === "/employee" ? dashboardRoute : item.url;
-                  const active = location.pathname === url || (item.url === "/employee" && location.pathname === dashboardRoute);
+                  const active = location.pathname === url || (item.url === "/employee/calculator" && location.pathname.startsWith(url)) || (item.url === "/employee" && location.pathname === dashboardRoute);
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={active} tooltip={item.title}>

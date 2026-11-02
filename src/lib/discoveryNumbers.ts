@@ -31,6 +31,10 @@ export interface DiscoveryInputs {
   new_leads: number | null;
   new_leads_period: Period;
   leads_per_client: number | null;
+  /** Script #4 (Nov 2): "How many new clients have you brought on in the last 12 months?" When set, it drives new leads. */
+  new_clients_12m?: number | null;
+  /** Script #6: the revenue increase they want from us (per year). */
+  their_number?: number | null;
 }
 
 export interface DiscoveryModel {
@@ -47,6 +51,8 @@ export const EMPTY_INPUTS: DiscoveryInputs = {
   current_clients: null,
   new_leads: null, new_leads_period: "year",
   leads_per_client: null,
+  new_clients_12m: null,
+  their_number: null,
 };
 
 const annual = (v: number | null, p: Period) => (v == null ? null : p === "month" ? v * 12 : v);
@@ -72,7 +78,8 @@ export interface DiscoveryResult {
 export function computeDiscovery(i: DiscoveryInputs): DiscoveryResult {
   const goalRevenue = annual(i.goal_revenue, i.goal_revenue_period);
   const currentRevenue = annual(i.current_revenue, i.current_revenue_period);
-  const leadsPerYear = annual(i.new_leads, i.new_leads_period);
+  const fromClients = i.new_clients_12m != null && pos(i.leads_per_client) ? i.new_clients_12m * i.leads_per_client : null;
+  const leadsPerYear = fromClients ?? annual(i.new_leads, i.new_leads_period);
   const avgTicket = pos(currentRevenue) && pos(i.current_clients) ? currentRevenue / i.current_clients : null;
   const closeRate = pos(i.leads_per_client) ? Math.min(1, 1 / i.leads_per_client) : null;
   const newClients = leadsPerYear != null && pos(i.leads_per_client) ? leadsPerYear / i.leads_per_client : null;
@@ -86,7 +93,7 @@ export function computeDiscovery(i: DiscoveryInputs): DiscoveryResult {
   if (i.goal_clients == null) missing.push(`goal ${clientWord}`);
   if (i.current_revenue == null) missing.push("current revenue");
   if (i.current_clients == null) missing.push(`current ${clientWord}`);
-  if (i.new_leads == null) missing.push("new leads");
+  if (i.new_leads == null && i.new_clients_12m == null) missing.push("new clients (last 12 months)");
   if (i.leads_per_client == null) missing.push("leads per client");
   return {
     goalRevenue, goalClients: i.goal_clients, currentRevenue, currentClients: i.current_clients,

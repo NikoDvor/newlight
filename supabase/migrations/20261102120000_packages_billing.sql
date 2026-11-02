@@ -153,3 +153,8 @@ create or replace function public.nl_billing_cron_ok(p text) returns boolean
 $f$;
 revoke all on function public.nl_billing_cron_ok(text) from public, anon, authenticated;
 grant execute on function public.nl_billing_cron_ok(text) to service_role;
+
+-- 9. Calculator (Nov 2, applied directly): script #4 "new clients in the last 12 months" and #6 "their number".
+alter table public.nl_discovery_numbers
+  add column if not exists new_clients_12m numeric,
+  add column if not exists their_number numeric;
