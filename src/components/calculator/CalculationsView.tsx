@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Gem, Rocket, RotateCcw, Target, TrendingUp, Users, Wallet, X, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Gem, Rocket, RotateCcw, Send, Target, TrendingUp, Users, Wallet, X, Zap } from "lucide-react";
 import type { useDiscoveryNumbers } from "@/hooks/useDiscoveryNumbers";
 import { usePackageDefaults } from "@/components/packages/PlanPreview";
-import { buildPlan, defaultPrices } from "@/lib/packages";
+import { PACKAGE_ORDER, buildPlan, defaultPrices, type PackageKey } from "@/lib/packages";
 import GrowthTree from "./GrowthTree";
 import { C, CountUp, GlowSlider, Kick, MiniInput, SaveDot, glass, glassSoft, money, moneyShort, numFmt, pct } from "./kit";
 
@@ -14,6 +14,16 @@ const ease = [0.22, 1, 0.36, 1] as any;
 export default function CalculationsView({ calc, title, onBack }: { calc: Calc; title: string; onBack: () => void }) {
   const { result, model: m, setM, resetModel, dirty, proj, inputs, set } = calc;
   const [showValue, setShowValue] = useState(false);
+  const [plan, setPlan] = useState<PlanSnap | null>(null);
+  const snap = (): PlanSnap => ({
+    leads: m.leads, closeRate: m.closeRate, ticket: m.ticket, gap: gap ?? 0, current: cur ?? 0, goal: goal ?? 0,
+    clients: proj.modelClients, revenue: proj.modelRevenue, todayRevenue: result.newRevenue ?? 0,
+  });
+  const planStale = !!plan && (Math.round(plan.leads) !== Math.round(m.leads) || Math.abs(plan.closeRate - m.closeRate) > 0.0005 || Math.round(plan.ticket) !== Math.round(m.ticket));
+  const submitPlan = () => {
+    setPlan(snap());
+    setTimeout(() => document.getElementById("calc-plan")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+  };
   const goal = result.goalRevenue, cur = result.currentRevenue, gap = result.gapRevenue;
   const progress = goal && cur != null ? Math.min(1, cur / goal) : 0;
   const target = inputs.their_number ?? null;
@@ -86,6 +96,17 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
         <GrowthTree calc={calc} />
       </section>
 
+      {/* submit plan */}
+      <div className="mt-4 flex flex-col items-center gap-2">
+        <button onClick={submitPlan}
+          className="relative flex min-h-[60px] w-full max-w-md items-center justify-center gap-2.5 overflow-hidden rounded-2xl text-[16px] font-black uppercase tracking-[0.14em] text-white shadow-[0_0_40px_-8px_hsla(152,62%,55%,.85)] transition active:scale-[.99]"
+          style={{ background: "linear-gradient(120deg,hsl(160,70%,38%),hsl(152,62%,45%) 55%,hsl(187,80%,45%))" }}>
+          <span className="calc-sheen" aria-hidden />
+          <Send className="h-5 w-5" /> {plan ? (planStale ? "Update plan" : "Plan submitted") : "Submit plan"}
+        </button>
+        <p className="text-[11px] text-white/40">Set the leads, close rate and average client that close the gap, then submit.</p>
+      </div>
+
       {/* target (#6) */}
       <section className={`${glass} mt-4 p-5 sm:p-6`}>
         <div className="flex flex-wrap items-end justify-between gap-3">
@@ -127,6 +148,8 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
           ))}
         </div>
       </section>
+
+      <AnimatePresence>{plan && <PlanPanel plan={plan} stale={planStale} onClose={() => setPlan(null)} />}</AnimatePresence>
 
       {/* hidden value panel */}
       <div className="mt-4 flex justify-end">
@@ -170,35 +193,140 @@ function Stat({ icon: Icon, label, value, f, sub, color }: { icon: any; label: s
   );
 }
 
-/** Hidden until tapped: what the target is worth next to the Growth package's first year. */
+/** Hidden until tapped: what the target is worth next to each package's first year. */
 function ValuePanel({ calc }: { calc: Calc }) {
   const { defs } = usePackageDefaults();
   const { result, inputs, proj } = calc;
-  const g = defs.growth;
+  const [pkg, setPkg] = useState<PackageKey>("growth");
+  const d = defs[pkg];
   const plan = useMemo(() => {
-    const d = defaultPrices(g, result.avgTicket ?? 0);
-    const p = buildPlan({ pkg: g, setup: d.setup, monthly: d.monthly, cadence: "monthly", paymentPlan: false, ongoing: "retainer", signDate: new Date() } as any);
-    return { ...d, firstYear: p.firstYearTotal };
-  }, [g, result.avgTicket]);
+    const pr = defaultPrices(d, result.avgTicket ?? 0);
+    const p = buildPlan({ pkg: d, setup: pr.setup, monthly: pr.monthly, cadence: "monthly", paymentPlan: false, ongoing: "retainer", signDate: new Date() } as any);
+    return { ...pr, firstYear: p.firstYearTotal };
+  }, [d, result.avgTicket]);
   const worth = inputs.their_number ?? (proj.missedOpportunity || result.gapRevenue || 0);
   const ratio = plan.firstYear ? worth / plan.firstYear : null;
+  const ratioTxt = ratio == null ? "—" : ratio >= 9.95 ? `${Math.round(ratio)}×` : `${ratio.toFixed(1)}×`;
+  const terms = pkg === "growth"
+    ? `${money(plan.setup)} setup · ${money(plan.monthly)}/mo after the 90-day guarantee`
+    : `${money(plan.setup)} setup · ${money(plan.monthly)}/mo`;
   return (
     <motion.section initial={{ opacity: 0, y: 12, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, y: 8, height: 0 }} transition={{ duration: 0.45, ease }}
       className={`${glass} mt-2 overflow-hidden`}>
+      <div className="flex flex-wrap justify-center gap-1.5 px-4 pt-4" role="tablist" aria-label="Package">
+        {PACKAGE_ORDER.map((k) => (
+          <button key={k} role="tab" aria-selected={pkg === k} onClick={() => setPkg(k)}
+            className={`min-h-[40px] rounded-xl border px-4 text-[13px] font-bold transition ${pkg === k ? "border-[hsla(42,96%,63%,.6)] bg-[hsla(42,96%,63%,.14)] text-white" : "border-white/10 text-white/55 hover:text-white"}`}>
+            {defs[k].label}
+          </button>
+        ))}
+      </div>
       <div className="grid gap-3 p-5 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:p-6">
         <div className="text-center sm:text-left">
           <Kick color={C.green}>What it's worth · per year</Kick>
           <CountUp value={worth} format={money} className="block text-3xl font-black tabular-nums text-white" />
           <p className="text-[11px] text-white/45">{inputs.their_number != null ? "your target increase" : "from your numbers"}</p>
         </div>
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-[hsla(42,96%,63%,.5)] text-[13px] font-black text-[hsl(42,96%,70%)] shadow-[0_0_30px_-8px_hsla(42,96%,63%,.9)]">
-          {ratio != null ? `${ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}×` : "—"}
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[hsla(42,96%,63%,.5)] text-[15px] font-black text-[hsl(42,96%,70%)] shadow-[0_0_30px_-8px_hsla(42,96%,63%,.9)]">
+          {ratioTxt}
         </div>
         <div className="text-center sm:text-right">
-          <Kick color={C.gold}>Growth package · first year</Kick>
+          <Kick color={C.gold}>{d.label} · first year</Kick>
           <CountUp value={plan.firstYear ?? null} format={money} className="block text-3xl font-black tabular-nums text-white" />
-          <p className="text-[11px] text-white/45">{money(plan.setup)} setup · {money(plan.monthly)}/mo after the 90-day guarantee</p>
+          <p className="text-[11px] text-white/45">{terms}</p>
         </div>
+      </div>
+    </motion.section>
+  );
+}
+
+interface PlanSnap { leads: number; closeRate: number; ticket: number; gap: number; current: number; goal: number; clients: number; revenue: number; todayRevenue: number }
+
+/** Opens at the bottom after "Submit plan": the levers they chose and a 12-month build-up against the gap. */
+function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; onClose: () => void }) {
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const monthly = plan.revenue / 12, todayMonthly = plan.todayRevenue / 12;
+  const top = Math.max(plan.gap, plan.revenue, plan.todayRevenue, 1) * 1.08;
+  const hitMonth = plan.gap > 0 && monthly > 0 ? Math.ceil(plan.gap / monthly) : null;
+  const covered = plan.gap > 0 ? Math.min(1, plan.revenue / plan.gap) : 1;
+  const pillars = [
+    { k: "Leads", v: `${numFmt(plan.leads)} / yr`, s: `${numFmt(plan.leads / 12, 1)} a month`, c: C.green },
+    { k: "Close rate", v: pct(plan.closeRate), s: plan.closeRate > 0 ? `1 in ${numFmt(1 / plan.closeRate, 1)} leads` : "", c: C.blue },
+    { k: "Average client", v: money(plan.ticket), s: "per year", c: C.sky },
+    { k: "New clients", v: `${numFmt(plan.clients, 1)} / yr`, s: `${numFmt(plan.clients / 12, 1)} a month`, c: C.gold },
+  ];
+  return (
+    <motion.section id="calc-plan" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.55, ease }}
+      className={`${glass} relative mt-4 scroll-mt-4 overflow-hidden p-5 sm:p-7`}>
+      <span className="calc-sheen" aria-hidden />
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <Kick color={C.green}>Your plan to close the gap</Kick>
+          <h2 className="mt-1 flex items-center gap-2 text-xl font-black text-white sm:text-2xl">
+            <CheckCircle2 className="h-6 w-6 text-[hsl(152,62%,60%)]" />
+            {covered >= 1 ? (hitMonth ? `Gap closed in month ${hitMonth}` : "Gap closed") : `${pct(covered, 0)} of the gap in year one`}
+          </h2>
+          {stale && <p className="mt-1 text-[12px] text-[hsl(42,96%,70%)]">Numbers changed — tap Update plan to refresh.</p>}
+        </div>
+        <button onClick={onClose} aria-label="Close plan" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-white/45 hover:text-white"><X className="h-4 w-4" /></button>
+      </div>
+
+      <div className="relative mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        {pillars.map((x) => (
+          <div key={x.k} className="rounded-xl border bg-black/25 px-3.5 py-3" style={{ borderColor: `color-mix(in srgb, ${x.c} 35%, transparent)` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: x.c }}>{x.k}</p>
+            <p className="mt-0.5 truncate text-lg font-black tabular-nums text-white sm:text-xl">{x.v}</p>
+            <p className="truncate text-[11px] text-white/45">{x.s}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 12-month build-up */}
+      <div className="relative mt-5 rounded-xl border border-white/[0.07] bg-black/25 p-3 sm:p-4">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <span className="font-semibold uppercase tracking-[0.14em] text-white/55">New revenue added · month by month</span>
+          <span className="flex items-center gap-3 text-white/50">
+            <span className="inline-flex items-center gap-1"><i className="inline-block h-2 w-3 rounded-sm" style={{ background: C.green }} />Plan</span>
+            <span className="inline-flex items-center gap-1"><i className="inline-block h-2 w-3 rounded-sm bg-white/25" />Today's pace</span>
+            <span className="inline-flex items-center gap-1"><i className="inline-block h-0.5 w-3" style={{ background: C.gold }} />Gap</span>
+          </span>
+        </div>
+        <div className="relative h-48 sm:h-56" role="img" aria-label={`Plan adds ${money(plan.revenue)} over 12 months against a gap of ${money(plan.gap)}`}>
+          {plan.gap > 0 && (
+            <div className="absolute inset-x-0 z-10 border-t-2 border-dashed" style={{ bottom: `${(plan.gap / top) * 100}%`, borderColor: C.gold }}>
+              <span className="absolute -top-5 right-0 rounded bg-black/60 px-1.5 text-[10px] font-bold tabular-nums" style={{ color: C.gold }}>{moneyShort(plan.gap)}</span>
+            </div>
+          )}
+          <div className="absolute inset-0 flex items-end gap-1 sm:gap-1.5">
+            {months.map((mo) => {
+              const v = monthly * mo, t = todayMonthly * mo, done = plan.gap > 0 && v >= plan.gap;
+              return (
+                <div key={mo} className="relative flex h-full flex-1 items-end justify-center">
+                  <div className="absolute bottom-0 w-full rounded-t-sm bg-white/[0.12]" style={{ height: `${(t / top) * 100}%` }} />
+                  <motion.div className="relative w-[70%] rounded-t-md" initial={{ height: 0 }} animate={{ height: `${(v / top) * 100}%` }}
+                    transition={{ delay: 0.1 + mo * 0.05, duration: 0.6, ease }}
+                    style={{ background: done ? `linear-gradient(180deg, ${C.green}, hsl(160,70%,32%))` : `linear-gradient(180deg, ${C.sky}, hsl(217,90%,40%))`, boxShadow: done ? `0 0 14px -2px ${C.green}` : `0 0 12px -4px ${C.sky}` }} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="mt-1.5 flex gap-1 sm:gap-1.5">
+          {months.map((mo) => <span key={mo} className="flex-1 text-center text-[9.5px] tabular-nums text-white/40 sm:text-[10.5px]">{mo}</span>)}
+        </div>
+      </div>
+
+      <div className="relative mt-4 grid grid-cols-3 gap-2 text-center">
+        {[
+          { k: "Added in year one", v: money(plan.revenue), c: C.green },
+          { k: "Today's pace", v: money(plan.todayRevenue), c: "rgba(255,255,255,.6)" },
+          { k: "New total", v: money(plan.current + plan.revenue), c: C.gold },
+        ].map((x) => (
+          <div key={x.k} className="rounded-xl bg-white/[0.04] px-2 py-2.5">
+            <p className="text-[9.5px] font-bold uppercase tracking-[0.12em] sm:text-[10px]" style={{ color: x.c }}>{x.k}</p>
+            <p className="truncate text-[15px] font-black tabular-nums text-white sm:text-lg">{x.v}</p>
+          </div>
+        ))}
       </div>
     </motion.section>
   );

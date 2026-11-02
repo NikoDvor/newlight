@@ -13,8 +13,10 @@ const ease = [0.22, 1, 0.36, 1] as any;
 export default function GrowthTree({ calc }: { calc: Calc }) {
   const { result, model: m, setM, set, proj } = calc;
   const gap = result.gapRevenue;
-  const ticketMax = Math.max(20000, Math.round((calc.base.ticket || 5000) * 3));
-  const leadsMax = Math.max(50, Math.round((calc.base.leads || 20) * 4));
+  // Generous ranges so the sliders can always reach the goal (a bigger number can still be typed in the box).
+  const roundUp = (n: number, step: number) => Math.ceil(n / step) * step;
+  const ticketMax = roundUp(Math.max(100000, (calc.base.ticket || 0) * 10), 5000);
+  const leadsMax = roundUp(Math.max(1000, (calc.base.leads || 0) * 10, (proj.leadsNeeded || 0) * 1.5), 50);
   const covered = proj.gapClosedShare ?? 0;
   const lift = proj.missedOpportunity;
 
