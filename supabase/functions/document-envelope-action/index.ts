@@ -277,6 +277,6 @@ serve(async (req) => {
 
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
-    return json({ error: String(e?.message || e) }, 500);
+    return json({ error: String((e as { message?: string })?.message || e) }, 500);
   }
 });
