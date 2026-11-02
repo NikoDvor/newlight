@@ -108,6 +108,7 @@ const AdminProposalTemplates = lazy(() => import("./pages/admin/AdminProposalTem
 const AdminSalesDemoCreator = lazy(() => import("./pages/admin/AdminSalesDemoCreator"));
 const AdminProposalWizard = lazy(() => import("./pages/admin/AdminProposalWizard"));
 const AdminBilling = lazy(() => import("./pages/admin/AdminBilling"));
+const AdminPackagesPricing = lazy(() => import("./pages/admin/AdminPackagesPricing"));
 const AdminClientRevenue = lazy(() => import("./pages/admin/AdminClientRevenue"));
 const AdminAutomations = lazy(() => import("./pages/admin/AdminAutomations"));
 const AdminExecutiveDashboard = lazy(() => import("./pages/admin/AdminExecutiveDashboard"));
@@ -346,6 +347,7 @@ const App = () => {
                 <Route path="employee-performance" element={<AdminEmployeePerformance />} />
                 <Route path="clients/:clientId/proposal-wizard" element={<AdminProposalWizard />} />
                 <Route path="billing" element={<AdminBilling />} />
+                <Route path="packages-pricing" element={<AdminPackagesPricing />} />
                 <Route path="client-revenue" element={<AdminClientRevenue />} />
                 <Route path="automations" element={<AdminAutomations />} />
                 <Route path="executive" element={<Navigate to="/admin/clients-overview" replace />} />

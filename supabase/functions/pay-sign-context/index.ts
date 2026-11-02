@@ -8,6 +8,8 @@ import { createZoomMeeting } from "../_shared/zoom.ts";
 import { sendPaymentConfirmation, sendWelcomeDocument, sendOnboardingRescheduleNotice } from "../_shared/pay-sign-notify.ts";
 import { getStripe, ensureStripeCustomer } from "../_shared/stripe-billing.ts";
 import { ensureServicePocCalendar, listServicePocs, listOnboardingPocs } from "../_shared/service-poc-calendar.ts";
+import { markRowPaid, materializeSigning, planForDeal, wireInstructions } from "../_shared/nlBilling.ts";
+import { pacificDate } from "../_shared/packages.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,7 +62,7 @@ Deno.serve(async (req) => {
   if (envelope.related_type === "crm_deal" && envelope.related_id) {
     const { data: d } = await supabase
       .from("crm_deals")
-      .select("id, client_id, provisioned_client_id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, payment_invoice_id, pay_sign_status, contact_id, proposal_id_current, assigned_user, onboarding_meeting_id, pay_sign_sent_at")
+      .select("id, client_id, provisioned_client_id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, commission_rate_ongoing, payment_invoice_id, pay_sign_status, contact_id, proposal_id_current, assigned_user, onboarding_meeting_id, pay_sign_sent_at, package, billing_cadence, payment_plan, payment_plan_total, avg_client_value, has_guarantee, annual_amount_first, annual_amount_renewal, price_approval_status, recurring_method_saved_at, made_back_at, service_agreement_envelope_id, work_paused_at")
       .eq("id", envelope.related_id)
       .maybeSingle();
     deal = d;
@@ -180,10 +182,28 @@ Deno.serve(async (req) => {
         sms = { consent: await leadSmsConsent(lead.id), phone_last4: ph ? ph.slice(-4) : null };
       }
     } catch (e) { console.error("[pay-sign-context] sms status failed:", (e as Error).message); }
+    // Package deals (Nov 2026): plan preview, scheduled charges and wire instructions.
+    let package_plan: any = null;
+    if (deal?.package) {
+      try {
+        const { data: rows } = await supabase.from("nl_billing_schedule")
+          .select("id, kind, method, amount, label, covers, due_date, status, wire_reference")
+          .eq("deal_id", deal.id).neq("status", "cancelled").order("due_date");
+        const needsWire = (rows || []).some((r: any) => r.method === "wire" && r.status === "scheduled")
+          || deal.package !== "growth" || deal.billing_cadence === "annual";
+        package_plan = {
+          preview: await planForDeal(supabase, deal, pacificDate()),
+          schedule: rows || [],
+          wire: needsWire ? await wireInstructions(supabase) : null,
+          wire_reference: `NL-${String(deal.id).slice(0, 8).toUpperCase()}`,
+          method_saved: !!deal.recurring_method_saved_at,
+        };
+      } catch (e) { console.error("[pay-sign-context] plan failed:", (e as Error).message); }
+    }
     return json({
       envelope, deal, invoice, client, items: items || [],
       proposal, rep, rep_availability: calendar?.availability || null,
-      rep_timezone: calendar?.timezone || null, onboarding_meeting, sms,
+      rep_timezone: calendar?.timezone || null, onboarding_meeting, sms, package_plan,
     });
   }
 
@@ -593,6 +613,61 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ─── Package deals: first payment / wire / save a payment method ─────────
+  if (action === "plan_pay" || action === "save_method") {
+    if (!deal?.package) return json({ error: "Not a package deal" }, 400);
+    if (deal.price_approval_status === "pending" || deal.price_approval_status === "rejected") {
+      return json({ error: "This price is waiting for NewLight approval. Your rep will be in touch." }, 409);
+    }
+    const stripe = await getStripe();
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+    let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
+    const back = `${originBase}/pay-sign/${share_token}`;
+    const realClientId = deal.provisioned_client_id || deal.client_id;
+    const ensureCustomer = async () => stripe ? await ensureStripeCustomer(stripe, supabase, {
+      clientId: realClientId, email: envelope.recipient_email, name: client?.name || deal.deal_name,
+    }) : null;
+
+    if (action === "save_method") {
+      if (!stripe) return json({ error: "Stripe not configured" }, 503);
+      const customerId = await ensureCustomer();
+      const session = await stripe.checkout.sessions.create({
+        mode: "setup",
+        payment_method_types: ["us_bank_account", "card"],
+        ...(customerId ? { customer: customerId } : {}),
+        success_url: `${back}?method=saved&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${back}?method=cancelled`,
+        metadata: { nl_setup: "true", deal_id: deal.id, client_id: realClientId || "" },
+      });
+      return json({ url: session.url });
+    }
+
+    // plan_pay: create the signing-time charges, then pay the first one (Stripe) or show the wire.
+    await materializeSigning(supabase, deal, pacificDate());
+    const { data: first } = await supabase.from("nl_billing_schedule").select("*")
+      .eq("deal_id", deal.id).in("kind", ["setup", "setup_installment_1", "annual"]).neq("status", "cancelled")
+      .order("due_date").limit(1).maybeSingle();
+    if (!first) return json({ error: "No first charge found" }, 500);
+    if (first.status === "paid") return json({ already_paid: true });
+    if (first.method === "wire") {
+      return json({ wire: await wireInstructions(supabase), amount: first.amount, reference: `NL-${String(deal.id).slice(0, 8).toUpperCase()}`, schedule_id: first.id });
+    }
+    if (!stripe) return json({ error: "Stripe not configured" }, 503);
+    const customerId = await ensureCustomer();
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["us_bank_account", "card"],
+      line_items: [{ price_data: { currency: "usd", product_data: { name: `${client?.name || deal.deal_name || "NewLight"} — ${first.label}` }, unit_amount: Math.round(Number(first.amount) * 100) }, quantity: 1 }],
+      ...(customerId ? { customer: customerId } : { customer_email: envelope.recipient_email || undefined }),
+      payment_intent_data: { setup_future_usage: "off_session", metadata: { nl_schedule_id: first.id, deal_id: deal.id } },
+      success_url: `${back}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${back}?payment=cancelled`,
+      metadata: { nl_schedule_id: first.id, deal_id: deal.id, envelope_id: envelope.id },
+    });
+    await supabase.from("nl_billing_schedule").update({ stripe_checkout_session_id: session.id }).eq("id", first.id);
+    return json({ url: session.url, amount: first.amount });
+  }
+
   if (action === "create_payment") {
     if (!deal) return json({ error: "No deal linked to envelope" }, 400);
     const initialFee = Number(deal.initial_fee ?? 0);
@@ -715,6 +790,33 @@ Deno.serve(async (req) => {
     return json({ url: session.url, session_id: session.id, invoice_id: invId, amount: chargeTotal });
   }
 
+  // Package deals: browser return from Stripe (the webhook does the same; markRowPaid is idempotent).
+  if ((action === "mark_paid" || action === "confirm_method") && deal?.package) {
+    const stripe = await getStripe();
+    if (!stripe || !body.session_id) return json({ ok: false });
+    const sess: any = await stripe.checkout.sessions.retrieve(body.session_id, { expand: ["setup_intent"] });
+    if (sess.metadata?.deal_id !== deal.id) return json({ error: "Session does not belong to this agreement" }, 403);
+    const cust = typeof sess.customer === "string" ? sess.customer : sess.customer?.id;
+    const realClientId = deal.provisioned_client_id || deal.client_id;
+    if (action === "confirm_method") {
+      const pm = typeof sess.setup_intent?.payment_method === "string" ? sess.setup_intent.payment_method : sess.setup_intent?.payment_method?.id;
+      if (sess.status !== "complete" || !pm || !cust) return json({ ok: false, status: sess.status });
+      await stripe.customers.update(cust, { invoice_settings: { default_payment_method: pm } });
+      if (realClientId) await supabase.from("clients").update({ stripe_customer_id: cust, stripe_payment_method_id: pm }).eq("id", realClientId);
+      await supabase.from("crm_deals").update({ recurring_method_saved_at: new Date().toISOString() }).eq("id", deal.id);
+      return json({ ok: true });
+    }
+    const sid = sess.metadata?.nl_schedule_id;
+    if (!sid) return json({ ok: false });
+    if (sess.payment_status === "paid") {
+      const { data: row } = await supabase.from("nl_billing_schedule").select("*").eq("id", sid).maybeSingle();
+      const { data: fullDeal } = await supabase.from("crm_deals").select("*").eq("id", deal.id).maybeSingle();
+      if (row && fullDeal && row.status !== "paid") await markRowPaid(supabase, row, fullDeal, { via: "stripe" });
+      return json({ ok: true, paid: true });
+    }
+    return json({ ok: true, paid: false, processing: true }); // bank debit clearing — webhook finishes it
+  }
+
   if (action === "mark_paid") {
     // Manual mark-paid path for admin polling; verifies via session id if provided
     const session_id = body.session_id;
@@ -825,6 +927,8 @@ Deno.serve(async (req) => {
   // Repeatable on purpose — a rep may need to resend.
   if (action === "send_pay_sign_email") {
     if (!deal) return json({ error: "No deal linked to this envelope" }, 404);
+    if (deal.price_approval_status === "pending") return json({ error: "This custom price needs admin approval before the Pay & Sign link can be sent." }, 409);
+    if (deal.price_approval_status === "rejected") return json({ error: "This custom price was rejected. Redo Form 2 with a new price." }, 409);
 
     const authHeader = req.headers.get("Authorization") || "";
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);

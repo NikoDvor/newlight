@@ -7,6 +7,7 @@ import {
   createRetainerSubscription,
   applyAnnualSwitch,
 } from "../_shared/stripe-billing.ts";
+import { markRowPaid, failRow } from "../_shared/nlBilling.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,6 +86,48 @@ Deno.serve(async (req) => {
         const subscriptionId = session.subscription;
         const clientEmail = session.customer_details?.email || session.customer_email;
         const paySignInvoiceId = session.metadata?.invoice_id as string | undefined;
+
+        // ---- Package billing (Nov 2026): save a payment method (setup mode) ----
+        if (session.metadata?.nl_setup === "true") {
+          try {
+            const dealId = session.metadata?.deal_id as string;
+            const realClientId = (session.metadata?.client_id as string) || null;
+            const si = typeof session.setup_intent === "string" ? await stripe.setupIntents.retrieve(session.setup_intent) : session.setup_intent;
+            const pmId = typeof si?.payment_method === "string" ? si.payment_method : si?.payment_method?.id;
+            const cust = typeof customerId === "string" ? customerId : null;
+            if (pmId && cust) {
+              await stripe.customers.update(cust, { invoice_settings: { default_payment_method: pmId } });
+              if (realClientId) await supabase.from("clients").update({ stripe_customer_id: cust, stripe_payment_method_id: pmId }).eq("id", realClientId);
+              if (dealId) await supabase.from("crm_deals").update({ recurring_method_saved_at: new Date().toISOString() }).eq("id", dealId);
+            }
+          } catch (e) { console.error("[stripe-webhook] nl_setup failed", e); }
+          break;
+        }
+
+        // ---- Package billing: first payment through Pay & Sign ----
+        if (session.metadata?.nl_schedule_id) {
+          try {
+            const { data: row } = await supabase.from("nl_billing_schedule").select("*").eq("id", session.metadata.nl_schedule_id).maybeSingle();
+            const { data: deal } = row ? await supabase.from("crm_deals").select("*").eq("id", row.deal_id).maybeSingle() : { data: null };
+            if (row && deal) {
+              const realClientId = deal.provisioned_client_id || deal.client_id;
+              const cust = await ensureStripeCustomer(stripe, supabase, { clientId: realClientId, email: clientEmail, existingCustomerId: typeof customerId === "string" ? customerId : null });
+              if (cust) {
+                const pm = await savePaymentMethodFromSession(stripe, supabase, session, cust, realClientId);
+                if (pm) await supabase.from("crm_deals").update({ recurring_method_saved_at: new Date().toISOString() }).eq("id", deal.id);
+              }
+              const piId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+              if (session.payment_status === "paid") {
+                await supabase.from("nl_billing_schedule").update({ stripe_payment_intent_id: piId ?? null, attempts: 1, last_attempt_at: new Date().toISOString() }).eq("id", row.id);
+                if (row.status !== "paid") await markRowPaid(supabase, row, deal, { via: "stripe" });
+              } else {
+                // Bank debit (ACH) is still clearing — payment_intent.succeeded finishes it.
+                await supabase.from("nl_billing_schedule").update({ status: "processing", stripe_payment_intent_id: piId ?? null, attempts: 1, last_attempt_at: new Date().toISOString() }).eq("id", row.id);
+              }
+            }
+          } catch (e) { console.error("[stripe-webhook] nl first payment failed", e); }
+          break;
+        }
 
         // ---- Ad-hoc invoice payment (standalone one-off charge) ----
         if (session.metadata?.adhoc === "true") {
@@ -441,6 +484,26 @@ Deno.serve(async (req) => {
           status: "error",
           metadata: { customer_id: customerId, invoice_id: invoice.id },
         });
+        break;
+      }
+
+      // ---- Package billing: off-session + ACH outcomes ----
+      case "payment_intent.succeeded":
+      case "payment_intent.payment_failed": {
+        const pi = event.data.object;
+        const sid = pi.metadata?.nl_schedule_id as string | undefined;
+        if (!sid) { console.log(`[stripe-webhook] ${event.type} without nl_schedule_id`); break; }
+        const { data: row } = await supabase.from("nl_billing_schedule").select("*").eq("id", sid).maybeSingle();
+        if (!row || row.status === "paid") break;
+        const { data: deal } = await supabase.from("crm_deals").select("*").eq("id", row.deal_id).maybeSingle();
+        if (!deal) break;
+        if (event.type === "payment_intent.succeeded") {
+          await markRowPaid(supabase, { ...row, stripe_payment_intent_id: pi.id }, deal, { via: "stripe" });
+        } else if (row.status === "processing") {
+          // Only async (bank debit) failures land here; card failures were handled when charged.
+          const reason = pi.last_payment_error?.message || "Payment failed";
+          await failRow(supabase, { ...row, attempts: Math.max(1, row.attempts || 1) }, deal, reason);
+        }
         break;
       }
 

@@ -10,6 +10,7 @@ import { useEffect, useRef, useMemo } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import PausedBanner from "@/components/packages/PausedBanner";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import { getEmployeeRoute } from "@/lib/employeeRouting";
@@ -231,6 +232,7 @@ export function AppLayout() {
             <CursorGlow />
             <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1 flex-1">
                 <PWAInstallBanner />
+                <PausedBanner clientId={activeClientId} />
 
                 <Outlet />
               </div>

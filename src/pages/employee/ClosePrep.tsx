@@ -12,6 +12,9 @@ import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots"
 import { TEAM_SIZES, form1Modules } from "@/lib/form1Modules";
 import AttendeesEditor, { AwayToggle } from "@/components/employee/AttendeesEditor";
 import { cleanDrafts, type AttendeeDraft } from "@/lib/meetingAttendees";
+import { computeDiscovery } from "@/lib/discoveryNumbers";
+import PlanBuilder, { initialPlanState, type PlanState } from "@/components/packages/PlanBuilder";
+import { usePackageDefaults } from "@/components/packages/PlanPreview";
 
 interface Lead {
   id: string;
@@ -37,12 +40,12 @@ export default function ClosePrep() {
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [sendingLink, setSendingLink] = useState(false);
   const [linkSent, setLinkSent] = useState(false);
+  const [approvalPending, setApprovalPending] = useState(false);
 
-  const [initialFee, setInitialFee] = useState("25000");
-  const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
-  const [recurringFee, setRecurringFee] = useState("7000");
-  const [commissionRate, setCommissionRate] = useState("25");
-  const [commissionRateOngoing, setCommissionRateOngoing] = useState("10");
+  // Package plan (Growth / Command Center / Enterprise). Prices fill from the admin defaults; Edit pencils for negotiated numbers.
+  const { defs, loaded: defsLoaded } = usePackageDefaults();
+  const [plan, setPlan] = useState<PlanState | null>(null);
+  const [discoveryAvg, setDiscoveryAvg] = useState<number | null>(null);
   const [kpiTarget, setKpiTarget] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
@@ -75,6 +78,20 @@ export default function ClosePrep() {
         .maybeSingle();
       setLead(ld || null);
       if (ld) {
+        // Average client value from their Discovery numbers (if the rep filled them in).
+        const { data: dn } = await (supabase as any).from("nl_discovery_numbers").select("*").eq("lead_id", ld.id).maybeSingle();
+        if (dn) {
+          const n = (v: any) => (v == null ? null : Number(v));
+          try {
+            const r = computeDiscovery({
+              firm_type: dn.firm_type, goal_revenue: n(dn.goal_revenue), goal_revenue_period: dn.goal_revenue_period,
+              goal_clients: n(dn.goal_clients), current_revenue: n(dn.current_revenue), current_revenue_period: dn.current_revenue_period,
+              current_clients: n(dn.current_clients), new_leads: n(dn.new_leads), new_leads_period: dn.new_leads_period,
+              leads_per_client: n(dn.leads_per_client),
+            } as any);
+            if (r.avgTicket && r.avgTicket > 0) setDiscoveryAvg(Math.round(r.avgTicket));
+          } catch { /* numbers incomplete */ }
+        }
         const { count } = await (supabase as any)
           .from("bdr_calendar_events")
           .select("id", { count: "exact", head: true })
@@ -96,6 +113,11 @@ export default function ClosePrep() {
     })();
   }, [leadId]);
 
+  // Start the plan once defaults (and any Discovery average) are loaded.
+  useEffect(() => {
+    if (defsLoaded && !loading && !plan) setPlan(initialPlanState(defs, discoveryAvg ?? 0));
+  }, [defsLoaded, loading, plan, defs, discoveryAvg]);
+
   const slots = useMemo(() => {
     if (!availability) return [];
     return computeAvailableSlots(weeklyMapToRows(availability), {
@@ -110,15 +132,15 @@ export default function ClosePrep() {
     }));
   }, [availability, calTimezone]);
 
+  const isCommission = !!plan && plan.pkg === "growth" && plan.cadence === "monthly" && plan.ongoing === "commission";
   const cdValid = !skippedDiscovery || (
     !!cdName.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cdEmail.trim()) && !!cdPhone.trim()
   );
   const meetingStart = away ? (awayWhen ? new Date(awayWhen).toISOString() : "") : selectedSlot;
   const canSubmit =
-    !!lead && !!meetingStart && !!initialFee.trim() && cdValid &&
-    (pricingModel === "retainer"
-      ? !!recurringFee.trim()
-      : (!!commissionRate.trim() && !!commissionRateOngoing.trim()));
+    !!lead && !!meetingStart && cdValid && !!plan && plan.setup > 0 &&
+    (plan.pkg !== "growth" || plan.avgClient > 0) &&
+    (isCommission ? plan.commissionRate > 0 : plan.monthly > 0);
 
   const submit = async () => {
     if (!lead || !canSubmit) return;
@@ -127,11 +149,15 @@ export default function ClosePrep() {
       body: {
         lead_id: lead.id,
         event_id: new URLSearchParams(window.location.search).get("event") || null,
-        initial_fee: Number(initialFee),
-        pricing_model: pricingModel,
-        recurring_fee: pricingModel === "retainer" ? Number(recurringFee) : null,
-        commission_rate: pricingModel === "commission" ? Number(commissionRate) : null,
-        commission_rate_ongoing: pricingModel === "commission" ? Number(commissionRateOngoing) : null,
+        package: plan!.pkg,
+        avg_client_value: plan!.pkg === "growth" ? plan!.avgClient : null,
+        billing_cadence: plan!.cadence,
+        payment_plan: plan!.cadence === "monthly" && plan!.paymentPlan,
+        initial_fee: plan!.setup,
+        pricing_model: isCommission ? "commission" : "retainer",
+        recurring_fee: isCommission ? null : plan!.monthly,
+        commission_rate: isCommission ? plan!.commissionRate : null,
+        commission_rate_ongoing: isCommission ? plan!.commissionRateOngoing : null,
         retainer_kpi: kpiTarget || null,
         closing_notes: notes || null,
         meeting_starts_at: meetingStart,
@@ -160,6 +186,7 @@ export default function ClosePrep() {
       return;
     }
     setShareToken((data as any)?.envelope_share_token || null);
+    setApprovalPending((data as any)?.price_approval_status === "pending");
     setDone(true);
     toast({ title: "Close prep complete", description: away ? "Closing meeting scheduled (away from our Zoom — nothing sent to the client)." : "Closing meeting scheduled and notifications sent." });
   };
@@ -209,6 +236,11 @@ export default function ClosePrep() {
         {shareToken && (
           <div className="pt-4 mt-2 border-t border-white/10 space-y-2 text-left">
             <div className="text-sm font-semibold text-white">After the closing meeting</div>
+            {approvalPending && (
+              <p className="text-xs rounded-md border border-[hsla(42,100%,60%,.4)] bg-[hsla(42,100%,60%,.08)] px-2 py-1.5 text-[hsl(42,100%,70%)]">
+                Your custom price is waiting for admin approval. The link can be sent once it's approved — you'll get an email.
+              </p>
+            )}
             <p className="text-xs text-white/55">
               Only send this once {lead.business_name} has verbally agreed. It emails them the terms and their secure link to sign, pay, and pick an onboarding date.
             </p>
@@ -303,82 +335,15 @@ export default function ClosePrep() {
       )}
 
       <section className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-        <h2 className="text-sm font-semibold text-white">Deal Terms</h2>
-
         <div>
-          <Label className="text-xs text-white/60">Initial Fee (USD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number" min="0" step="0.01"
-            value={initialFee}
-            onChange={e => setInitialFee(e.target.value)}
-            placeholder="e.g. 2500"
-            className="bg-white/5 border-white/10 text-white mt-1"
-          />
-          <p className="text-[11px] text-white/45 mt-1">
-            Default financial-firm pricing — adjust for the actual negotiated terms.
-          </p>
+          <h2 className="text-sm font-semibold text-white">Package &amp; Payment</h2>
+          <p className="text-[11px] text-white/45 mt-0.5">Pick the package and how they'll pay. Prices fill in automatically — use Edit only for a negotiated number. This is exactly what goes into their service agreement.</p>
         </div>
-
-        <div>
-          <Label className="text-xs text-white/60">Pricing Model</Label>
-          <div className="grid grid-cols-2 gap-2 mt-1">
-            {(["retainer", "commission"] as const).map(m => (
-              <Button
-                key={m}
-                type="button"
-                variant="outline"
-                onClick={() => setPricingModel(m)}
-                className={pricingModel === m
-                  ? "border-[hsl(211,96%,56%)] bg-[hsl(211,96%,56%)]/15 text-white"
-                  : "border-white/10 bg-white/5 text-white/60"}
-              >
-                {m === "retainer" ? "Retainer" : "Commission"}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {pricingModel === "retainer" ? (
-          <div>
-            <Label className="text-xs text-white/60">Recurring Fee (USD / month) <span className="text-red-500">*</span></Label>
-            <Input
-              type="number" min="0" step="0.01"
-              value={recurringFee}
-              onChange={e => setRecurringFee(e.target.value)}
-              placeholder="e.g. 1500"
-              className="bg-white/5 border-white/10 text-white mt-1"
-            />
-          </div>
+        {plan ? (
+          <PlanBuilder defs={defs} value={plan} onChange={setPlan} lockAvgFromDiscovery={discoveryAvg} />
         ) : (
-          <div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <Label className="text-xs text-white/60">Commission Rate — Year 1 (%) <span className="text-red-500">*</span></Label>
-                <Input
-                  type="number" min="0" max="100" step="0.1"
-                  value={commissionRate}
-                  onChange={e => setCommissionRate(e.target.value)}
-                  placeholder="e.g. 25"
-                  className="bg-white/5 border-white/10 text-white mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-white/60">Commission Rate — After Year 1 (%) <span className="text-red-500">*</span></Label>
-                <Input
-                  type="number" min="0" max="100" step="0.1"
-                  value={commissionRateOngoing}
-                  onChange={e => setCommissionRateOngoing(e.target.value)}
-                  placeholder="e.g. 10"
-                  className="bg-white/5 border-white/10 text-white mt-1"
-                />
-              </div>
-            </div>
-            <p className="text-[11px] text-white/45 mt-1">
-              Calculated on Attributable Revenue Agency's own Services generate for Client — not Client's AUM or advisory fee revenue. Defaults to 25% for the first 12 months, 10% ongoing — adjust per deal if needed.
-            </p>
-          </div>
+          <div className="py-6 text-center"><Loader2 className="h-5 w-5 animate-spin text-white/40 mx-auto" /></div>
         )}
-
 
         <div>
           <Label className="text-xs text-white/60">KPI Target</Label>

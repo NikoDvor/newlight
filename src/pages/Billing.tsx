@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { ReferralCard } from "@/components/SaveAndEarn";
 import { ManageSubscriptionDialog } from "@/components/ManageSubscriptionDialog";
+import { ClientPlan } from "@/components/packages/PlanAccount";
 
 const statusColor: Record<string, string> = {
   Active: "bg-emerald-50 text-emerald-600",
@@ -103,6 +104,8 @@ export default function Billing() {
         </Button>
       </div>
       <ManageSubscriptionDialog open={manageOpen} onOpenChange={setManageOpen} />
+
+      {activeClientId && <ClientPlan clientId={activeClientId} />}
 
       <WidgetGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
         <MetricCard

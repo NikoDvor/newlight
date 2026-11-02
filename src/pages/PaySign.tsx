@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 import { BookingSlotPicker } from "@/components/BookingSlotPicker";
+import PackagePayCard, { packagePayDone, type PackagePlanCtx } from "@/components/packages/PackagePayCard";
+import { money } from "@/lib/packages";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   Command,
@@ -46,6 +48,7 @@ type Ctx = {
   rep_timezone?: string | null;
   onboarding_meeting?: any;
   sms?: { consent: boolean; phone_last4: string | null } | null;
+  package_plan?: PackagePlanCtx | null;
 };
 
 type StepKey = "review" | "pay" | "sign" | "schedule" | "done";
@@ -200,6 +203,10 @@ export default function PaySign() {
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
     const sessionId = searchParams.get("session_id");
+    if (searchParams.get("method") === "saved" && sessionId && token) {
+      supabase.functions.invoke("pay-sign-context", { body: { share_token: token, action: "confirm_method", session_id: sessionId } })
+        .then(() => { toast.success("Payment method saved."); load(); });
+    }
     if (paymentStatus === "success" && sessionId && token) {
       supabase.functions.invoke("pay-sign-context", {
         body: { share_token: token, action: "mark_paid", session_id: sessionId },
@@ -221,13 +228,23 @@ export default function PaySign() {
   const priceLine = useMemo(() => {
     const d = ctx?.deal;
     if (!d) return "";
+    if (d.package) {
+      const PK: Record<string, string> = { growth: "Growth", command_center: "Command Center", enterprise: "Enterprise" };
+      if (d.billing_cadence === "annual") return `${PK[d.package]} — annual ${money(d.annual_amount_first)} first year, then ${money(d.annual_amount_renewal)}/year`;
+      const setup = d.payment_plan ? `Setup ${money(d.payment_plan_total)} in 2 payments` : `Setup ${money(d.initial_fee)}`;
+      const ongoing = d.pricing_model === "commission" ? `${d.commission_rate}% commission year 1, ${d.commission_rate_ongoing}% after` : `${money(d.recurring_fee)}/month`;
+      return `${PK[d.package]} — ${setup} + ${ongoing}${d.package === "growth" ? " (after the 90-day guarantee)" : ""}`;
+    }
     if (d.pricing_model === "retainer") {
       return `Initial $${Number(d.initial_fee ?? 0).toLocaleString()} + $${Number(d.recurring_fee ?? 0).toLocaleString()}/month retainer`;
     }
     return `Initial $${Number(d.initial_fee ?? 0).toLocaleString()} + ${Number(d.commission_rate ?? 0)}% commission on generated revenue`;
   }, [ctx]);
 
-  const isPaid = ctx?.invoice?.invoice_status === "paid";
+  const isPkg = !!ctx?.deal?.package && !!ctx?.package_plan;
+  const invoicePaid = ctx?.invoice?.invoice_status === "paid";
+  // Package deals: the pay step is done once paid/clearing, or (wire first) once a method is saved — they can sign while the wire travels.
+  const isPaid = invoicePaid || (isPkg && packagePayDone(ctx?.package_plan));
   const initialFeeDue = Number(ctx?.deal?.initial_fee ?? 0);
   const amountDue = initialFeeDue + (cadence === "annual" ? ANNUAL_PRICE : 0);
   const scheduledAt: string | null = ctx?.onboarding_meeting?.starts_at || null;
@@ -448,7 +465,7 @@ export default function PaySign() {
               <div>
                 <h2 className="text-lg font-semibold text-emerald-500 mb-1">You're all set.</h2>
                 <p className="text-sm text-muted-foreground">
-                  Payment received, service agreement signed, and your onboarding meeting is booked for{" "}
+                  {invoicePaid ? "Payment received" : "Your payment is on its way (we'll confirm when it arrives)"}, service agreement signed, and your onboarding meeting is booked for{" "}
                   <span className="text-foreground font-medium">
                     {new Date(scheduledAt!).toLocaleString([], { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   </span>
@@ -541,7 +558,10 @@ export default function PaySign() {
         )}
 
         {/* Payment card */}
-        {!bothDone && (
+        {!bothDone && isPkg && token && (
+          <PackagePayCard token={token} deal={ctx.deal} plan={ctx.package_plan!} enabled={reviewed} onChanged={load} />
+        )}
+        {!bothDone && !isPkg && (
           <Card className={cn("p-6 mb-6 transition-opacity", !reviewed && "opacity-50 pointer-events-none")}>
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">

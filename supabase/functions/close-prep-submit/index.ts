@@ -6,7 +6,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { createZoomMeeting } from "../_shared/zoom.ts";
 import { attendeeEmail, type MeetingAttendee } from "../_shared/meetingAttendees.ts";
-import { esc, fmtMoney, buildServiceAgreementHtml } from "../_shared/service-agreement-html.ts";
+import { esc, fmtMoney, buildServiceAgreementHtml, applyPlanTerms } from "../_shared/service-agreement-html.ts";
+import { mergeDefaults, defaultPrices, needsApproval, buildPlan, pacificDate, type PackageKey } from "../_shared/packages.ts";
+import { sendEmail as nlSendEmail, emailHtml as nlEmailHtml, OPS_EMAIL as NL_OPS_EMAIL, APP_BASE_URL as NL_APP_BASE } from "../_shared/nlBilling.ts";
 
 // Short, distinct receipt/terms-summary document (separate from the full 16-section agreement).
 function buildTermsSummaryHtml(args: { businessName: string; priceLine: string; retainerKpi?: string | null }): string {
@@ -126,7 +128,14 @@ Deno.serve(async (req) => {
       client_details,
       away,
       attendees: attendeesIn,
+      package: packageIn,
+      avg_client_value,
+      billing_cadence: cadenceIn,
+      payment_plan: paymentPlanIn,
     } = body || {};
+    const pkgKey: PackageKey | null = ["growth", "command_center", "enterprise"].includes(packageIn) ? packageIn : null;
+    const cadence = cadenceIn === "annual" ? "annual" : "monthly";
+    const paymentPlan = paymentPlanIn === true && cadence === "monthly";
     // "Meeting away from our Zoom": no Zoom link, no client/attendee emails or texts.
     const isAway = away === true;
     const attendeeInput: Array<{ name: string; email: string | null; phone: string | null }> = Array.isArray(attendeesIn)
@@ -142,7 +151,8 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const pricing_model = pricing_model_in === "commission" ? "commission" : "retainer";
+    // Annual and the fixed packages are always retainer; commission is a Growth-only option.
+    const pricing_model = pricing_model_in === "commission" && pkgKey !== "command_center" && pkgKey !== "enterprise" && cadence !== "annual" ? "commission" : "retainer";
     const isCommission = pricing_model === "commission";
     const kpi = typeof retainer_kpi === "string" && retainer_kpi.trim() ? retainer_kpi.trim() : null;
 
@@ -330,8 +340,28 @@ Deno.serve(async (req) => {
       console.error("[close-prep zoom] create failed:", (e as Error).message);
     }
 
+    // Package plan (Nov 2026): defaults from nl_package_defaults, custom-price check, agreement terms.
+    let planInfo: any = null;
+    if (pkgKey) {
+      const { data: defRows } = await supabase.from("nl_package_defaults").select("*");
+      const defs = mergeDefaults(defRows || []);
+      const pkg = defs[pkgKey];
+      const dflt = defaultPrices(pkg, Number(avg_client_value || 0));
+      const setupN = Number(initial_fee || 0), monthlyN = Number(recurring_fee || (isCommission ? 0 : 0));
+      const custom = Math.abs(setupN - dflt.setup) > 0.5 || (!isCommission && Math.abs(monthlyN - dflt.monthly) > 0.5);
+      const approval = needsApproval(pkg, setupN, isCommission ? dflt.monthly : monthlyN, dflt) ? "pending" : "not_needed";
+      const preview = buildPlan({ pkg, setup: setupN, monthly: monthlyN, cadence, paymentPlan, ongoing: isCommission ? "commission" : "retainer",
+        commissionRate: commission_rate != null ? Number(commission_rate) : undefined, commissionRateOngoing: commission_rate_ongoing != null ? Number(commission_rate_ongoing) : undefined, signDate: pacificDate() });
+      planInfo = { pkg, dflt, custom, approval, preview };
+    }
+
     // 5a. Create Proposal row (Form 2 artifact #1)
-    const priceLineForDoc =
+    const priceLineForDoc = planInfo ? (
+      `${planInfo.pkg.label} — ` + (cadence === "annual"
+        ? `Annual ${fmtMoney(planInfo.preview.annualFirst)} first year, then ${fmtMoney(planInfo.preview.annualRenewal)}/yr`
+        : `Setup ${fmtMoney(Number(initial_fee ?? 0))}${paymentPlan ? ` (payment plan ${fmtMoney(planInfo.preview.paymentPlanTotal)})` : ""} + ` +
+          (isCommission ? `${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% commission` : `${fmtMoney(Number(recurring_fee ?? 0))}/month`))
+    ) :
       (isCommission
         ? `Commission — Initial ${fmtMoney(Number(initial_fee ?? 0))} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
         : `Retainer — Initial ${fmtMoney(Number(initial_fee ?? 0))} + ${fmtMoney(Number(recurring_fee ?? 0))}/month`) +
@@ -381,7 +411,14 @@ Deno.serve(async (req) => {
       venueCounty: agencySettings?.venue_county || "Santa Barbara County",
       dataRetentionDays: 365,
     });
-    const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(summaryHtml)))}`;
+    const finalAgreementHtml = planInfo ? applyPlanTerms(summaryHtml, {
+      packageKey: pkgKey!, packageLabel: planInfo.pkg.label, steps: planInfo.pkg.steps, cadence,
+      ongoing: isCommission ? "commission" : "retainer", setup: Number(initial_fee || 0), monthly: Number(recurring_fee || 0),
+      commissionRate: commission_rate != null ? Number(commission_rate) : null, commissionRateOngoing: commission_rate_ongoing != null ? Number(commission_rate_ongoing) : null,
+      paymentPlan, paymentPlanTotal: planInfo.preview.paymentPlanTotal, annualFirst: planInfo.preview.annualFirst, annualRenewal: planInfo.preview.annualRenewal,
+      minAdBudget: planInfo.pkg.min_ad_budget,
+    }) : summaryHtml;
+    const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(finalAgreementHtml)))}`;
     const termsSummaryHtml = buildTermsSummaryHtml({ businessName: lead.business_name, priceLine: priceLineForDoc, retainerKpi: kpi });
     const termsSummaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(termsSummaryHtml)))}`;
 
@@ -428,7 +465,23 @@ Deno.serve(async (req) => {
       service_agreement_envelope_id: envelopeId,
       pay_sign_status: "pending",
     };
+    if (planInfo) Object.assign(dealPatch, {
+      package: pkgKey, avg_client_value: avg_client_value != null ? Number(avg_client_value) : null,
+      billing_cadence: cadence, payment_plan: paymentPlan, payment_plan_total: planInfo.preview.paymentPlanTotal,
+      has_guarantee: pkgKey === "growth", annual_amount_first: planInfo.preview.annualFirst, annual_amount_renewal: planInfo.preview.annualRenewal,
+      custom_pricing: planInfo.custom, pricing_defaults: planInfo.dflt, price_approval_status: planInfo.approval,
+      plan_preview: planInfo.preview, recurring_fee: isCommission ? null : Number(recurring_fee || 0),
+    });
     await supabase.from("crm_deals").update(dealPatch as any).eq("id", dealId);
+    if (planInfo?.approval === "pending") {
+      try {
+        await nlSendEmail([NL_OPS_EMAIL], `Price approval needed — ${lead.business_name}`, nlEmailHtml(`Custom price needs your approval`, [
+          `${lead.business_name} — ${planInfo.pkg.label}.`,
+          `Entered: setup ${fmtMoney(Number(initial_fee || 0))}${isCommission ? "" : `, monthly ${fmtMoney(Number(recurring_fee || 0))}`}. Default: setup ${fmtMoney(planInfo.dflt.setup)}, monthly ${fmtMoney(planInfo.dflt.monthly)}.`,
+          "The Pay & Sign link can't be used until you approve.",
+        ], `${NL_APP_BASE}/admin/packages-pricing`, "Review in Packages & Pricing"));
+      } catch (e) { console.error("[close-prep] approval email failed", e); }
+    }
 
     // 6. Link back to lead + create close_prep_links row
     const { error: linkErr } = await supabase.from("nl_bdr_leads").update({
@@ -581,6 +634,7 @@ Deno.serve(async (req) => {
       proposal_id: proposalId,
       envelope_id: envelopeId,
       envelope_share_token: envelopeToken,
+      price_approval_status: planInfo?.approval ?? null,
       pay_sign_url: paySignUrl,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

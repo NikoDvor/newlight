@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FileText, Loader2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { NewLightHero } from "@/components/admin/NewLightHero";
 import { fmtMoney } from "@/lib/pipelineRevenue";
+import { AdminDealPlan } from "@/components/packages/PlanAccount";
 
 /**
  * Client Records — every client who has paid + signed, split into Current and
@@ -20,6 +21,7 @@ interface Rec {
   signedAt: string | null; terms: string; paid: number; lastPaid: string | null;
   subStatus: string | null; agreementStatus: string | null; hasAgreement: boolean;
   formerAt: string | null; formerReason: string | null;
+  pkg: string | null; paused: boolean;
 }
 
 export default function AdminClientRecords() {
@@ -28,6 +30,7 @@ export default function AdminClientRecords() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const [openPlan, setOpenPlan] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,7 +38,7 @@ export default function AdminClientRecords() {
       setLoading(true);
       const db = supabase as any;
       const { data: deals } = await db.from("crm_deals")
-        .select("id, deal_name, provisioned_client_id, assigned_user, paid_signed_at, pay_sign_status, pricing_model, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, service_agreement_envelope_id")
+        .select("id, deal_name, provisioned_client_id, assigned_user, paid_signed_at, pay_sign_status, pricing_model, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, service_agreement_envelope_id, package, billing_cadence, work_paused_at")
         .or("paid_signed_at.not.is.null,pay_sign_status.eq.paid_signed")
         .order("paid_signed_at", { ascending: false });
       const list = deals || [];
@@ -64,6 +67,7 @@ export default function AdminClientRecords() {
         const lastPaid = myInv.map((i: any) => i.paid_at).filter(Boolean).sort().pop() || null;
         const sub: any = (subs || []).find((s: any) => s.client_id === d.provisioned_client_id);
         const env: any = d.service_agreement_envelope_id ? em.get(d.service_agreement_envelope_id) : null;
+        const PK: Record<string, string> = { growth: "Growth", command_center: "Command Center", enterprise: "Enterprise" };
         const init = d.initial_fee != null ? fmtMoney(Number(d.initial_fee)) : "—";
         const tail = d.pricing_model === "commission"
           ? `${d.commission_rate ?? "—"}% yr 1 / ${d.commission_rate_ongoing ?? "—"}% after`
@@ -72,7 +76,8 @@ export default function AdminClientRecords() {
           dealId: d.id, clientId: d.provisioned_client_id || null,
           business: c?.business_name || lead?.business_name || d.deal_name, owner: c?.owner_name || lead?.owner_name || null,
           rep: nm.get(d.assigned_user) || "—", signedAt: d.paid_signed_at,
-          terms: [init, tail].filter(Boolean).join(" + "), paid, lastPaid,
+          terms: (d.package ? `${PK[d.package]}${d.billing_cadence === "annual" ? " (annual)" : ""} · ` : "") + [init, tail].filter(Boolean).join(" + "), paid, lastPaid,
+          pkg: d.package || null, paused: !!d.work_paused_at,
           subStatus: sub?.subscription_status || null,
           agreementStatus: env?.status || null, hasAgreement: !!d.service_agreement_envelope_id,
           formerAt: c?.former_client_at || null, formerReason: c?.former_client_reason || null,
@@ -127,9 +132,10 @@ export default function AdminClientRecords() {
           </thead>
           <tbody>
             {list.map((r) => (
-              <tr key={r.dealId} className="border-t border-white/5 text-white/85 align-top">
+              <Fragment key={r.dealId}>
+              <tr className="border-t border-white/5 text-white/85 align-top">
                 <td className="py-2 pr-3">
-                  <div className="font-medium">{r.business}</div>
+                  <div className="font-medium">{r.business}{r.paused && <span className="ml-1.5 rounded bg-red-500/15 px-1 text-[9px] font-bold text-red-300">PAUSED</span>}</div>
                   <div className="text-white/45">{r.owner || ""}</div>
                   {isFormer && <div className="text-[10px] text-amber-300">Former since {d(r.formerAt)}{r.formerReason ? ` · ${r.formerReason}` : ""}</div>}
                 </td>
@@ -149,6 +155,11 @@ export default function AdminClientRecords() {
                 </td>
                 <td className="py-2 whitespace-nowrap">
                   <div className="flex items-center gap-1">
+                    {r.pkg && (
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-sky-300" onClick={() => setOpenPlan(openPlan === r.dealId ? null : r.dealId)}>
+                        {openPlan === r.dealId ? "Hide plan" : "Plan & billing"}
+                      </Button>
+                    )}
                     {r.clientId && (
                       <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/admin/clients/${r.clientId}`)}>
                         Profile <ArrowRight className="h-3 w-3 ml-1" />
@@ -160,6 +171,10 @@ export default function AdminClientRecords() {
                   </div>
                 </td>
               </tr>
+              {openPlan === r.dealId && (
+                <tr className="border-t border-white/5"><td colSpan={9} className="py-3"><AdminDealPlan dealId={r.dealId} /></td></tr>
+              )}
+              </Fragment>
             ))}
           </tbody>
         </table>

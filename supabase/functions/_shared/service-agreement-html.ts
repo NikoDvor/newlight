@@ -177,3 +177,87 @@ export function buildServiceAgreementHtml(args: {
   <p class="fine">By signing the accompanying envelope, Client acknowledges receipt of this Agreement, agrees to be bound by its terms, and confirms that the Initial Fee is non-refundable and that Client's sole and exclusive remedy for underperformance during the Guarantee Period is the continued-service mechanism in Section 3.2.</p>
 </div></body></html>`;
 }
+
+// ─── Package agreements (Nov 2026) ─────────────────────────────────────────
+// Rewrites the commercial sections of the Master Services Agreement for the chosen package.
+// Every number comes from the deal (defaults or the salesman's edits), so what's signed = what's charged.
+export interface AgreementPlan {
+  packageKey: "growth" | "command_center" | "enterprise";
+  packageLabel: string;
+  steps: string;
+  cadence: "monthly" | "annual";
+  ongoing: "retainer" | "commission";
+  setup: number;
+  monthly: number;
+  commissionRate: number | null;
+  commissionRateOngoing: number | null;
+  paymentPlan: boolean;
+  paymentPlanTotal: number | null;
+  annualFirst: number | null;
+  annualRenewal: number | null;
+  minAdBudget: number | null;
+}
+
+function between(html: string, startMarker: string, endMarker: string, replacement: string): string {
+  const a = html.indexOf(startMarker);
+  const b = html.indexOf(endMarker, a + 1);
+  if (a < 0 || b < 0) return html;
+  return html.slice(0, a) + replacement + html.slice(b);
+}
+
+export function applyPlanTerms(html: string, p: AgreementPlan): string {
+  const m = (n: number | null | undefined) => fmtMoney(Number(n || 0));
+  const growth = p.packageKey === "growth";
+  const annual = p.cadence === "annual";
+  const half = p.paymentPlanTotal ? Math.round((p.paymentPlanTotal / 2) * 100) / 100 : 0;
+
+  // Commercial terms box
+  const termsLines = [
+    `<strong>Package:</strong> ${esc(p.packageLabel)} — ${esc(p.steps)}`,
+    annual
+      ? `<strong>Annual Fee:</strong> ${m(p.annualFirst)} for the first year (includes the Setup Fee; 20% annual discount), then ${m(p.annualRenewal)} per year, due by bank wire on the Effective Date and each anniversary`
+      : `<strong>Setup Fee:</strong> ${m(p.setup)}${p.paymentPlan ? ` — payment plan: ${m(p.paymentPlanTotal)} in two payments of ${m(half)}, 30 days apart` : ""}`,
+    !annual && p.ongoing === "retainer" ? `<strong>Monthly Fee:</strong> ${m(p.monthly)} per month, billed on the 1st` : "",
+    !annual && p.ongoing === "commission" ? `<strong>Commission:</strong> ${p.commissionRate ?? 0}% of Attributable Revenue from each new client in that client's first 12 months, then ${p.commissionRateOngoing ?? 0}%` : "",
+    growth ? `<strong>90-Day Guarantee:</strong> yes — see Section 3` : `<strong>Guarantee:</strong> none`,
+  ].filter(Boolean).join("<br>");
+  html = between(html, `<div class="terms">`, `</div>`, `<div class="terms">${termsLines}`);
+
+  // Section 3
+  const sec3 = growth
+    ? `<h2>3. Performance Guarantee</h2>
+  <p><strong>3.1 Setup Fee.</strong> Client will pay the Setup Fee stated above upon execution of this Agreement. The Setup Fee is non-refundable and is fully earned upon Recoupment. The mechanism in this Section 3 is a "Performance Guarantee" of continued service, and is not a money-back guarantee, satisfaction guarantee, or free-trial offer within the meaning of 16 CFR 239.3.</p>
+  <p><strong>3.2 Recoupment.</strong> The Guarantee Period begins when Agency receives the first Setup Fee payment and lasts ninety (90) days. No Monthly Fee or Commission is charged during the Guarantee Period. If Recoupment has not occurred by the end of the Guarantee Period, Agency will continue to provide services at no additional charge until Recoupment occurs, subject to the Client Cooperation Conditions in Section 3.4.</p>
+  <p><strong>3.3 SOLE AND EXCLUSIVE REMEDY; NO REFUND.</strong> The continued-service remedy in Section 3.2 is Client's <strong>SOLE AND EXCLUSIVE REMEDY</strong> for any failure to achieve Attributable Revenue equal to or greater than the Setup Fee. Under no circumstance will Client be entitled to any cash refund, credit, rebate, or bonus payment of any kind.</p>
+  <p><strong>3.4 Client Cooperation Conditions.</strong> Client's rights under Sections 3.2–3.3 are conditioned on Client, throughout the Guarantee Period and any extension: maintaining active access for Agency to all analytics, CRM, ad accounts, and reporting systems used as the System of Record; maintaining paid-media spend of at least ${m(p.minAdBudget || 3000)} per month, paid by Client directly to the advertising platforms; responding to approval requests within three (3) business days; not materially altering pricing, offer, landing pages, website, or intake process without prior consultation with Agency; and promptly notifying Agency of any issue that affects conversion. Repeated or material breach of these conditions terminates the guarantee remedy.</p>
+  <p><strong>3.5 Tolling.</strong> If tracking, analytics, or ad-account access is revoked, suspended, or degraded, the Guarantee Period is tolled until access is restored.</p>
+  <p><strong>3.6 Revenue Confirmation.</strong> Each month Client will confirm, in the Command Center, the revenue recognized from new clients sourced through the Services. If Client does not respond within seven (7) days, Agency may rely on the System of Record.</p>
+`
+    : `<h2>3. Setup Fee</h2>
+  <p><strong>3.1 Setup Fee.</strong> ${annual ? "The Setup Fee is included in the first-year Annual Fee." : `Client will pay the Setup Fee of ${m(p.setup)} upon execution of this Agreement${p.paymentPlan ? `, or under the payment plan of two payments of ${m(half)} (total ${m(p.paymentPlanTotal)}) thirty (30) days apart` : ""}.`} The Setup Fee is non-refundable and fully earned when paid. This package does not include a performance guarantee.</p>
+`;
+  html = between(html, `<h2>3. Performance Guarantee</h2>`, `<h2>4.`, sec3 + "\n  ");
+
+  // Section 4 (fees, payment methods, failed payments, scope)
+  const fees = annual
+    ? `<p><strong>4.1 Annual Fee.</strong> Client will pay ${m(p.annualFirst)} for the first year on the Effective Date${growth ? " (the Setup Fee plus nine (9) months of service, reflecting the ninety (90) day Guarantee Period, at a 20% discount)" : " (the Setup Fee plus eleven (11) months of service at a 20% discount)"}. The Annual Fee renews automatically on each anniversary of the Effective Date at ${m(p.annualRenewal)} per year (twelve (12) months at a 20% discount) unless either party gives notice under Section 12.</p>`
+    : p.ongoing === "commission"
+      ? `<p><strong>4.1 Commission.</strong> Beginning on the first day of the month after the later of the end of the Guarantee Period and Recoupment, Agency will charge Client on the 1st of each month a Commission equal to ${p.commissionRate ?? 0}% of Attributable Revenue recognized in the prior month from each new client during that client's first twelve (12) months, and ${p.commissionRateOngoing ?? 0}% thereafter. The Commission is calculated only on Attributable Revenue that Agency's own Services generated, never on Client's overall revenue or assets under management.</p>`
+      : `<p><strong>4.1 Monthly Fee.</strong> ${growth ? "Beginning on the later of the end of the Guarantee Period and Recoupment" : "Beginning on the Effective Date"}, Client will pay ${m(p.monthly)} per month, charged in advance on the 1st of each month. The first charge covers the partial month from the start date through the end of that month plus the following full month. The Monthly Fee is a fixed amount and does not vary with Client's revenue, assets under management, number of clients, or investment performance.</p>`;
+  const methods = `<p><strong>4.2 Payment Methods.</strong> ${growth && !annual ? "The Setup Fee is paid through Agency's payment processor (bank debit or card)." : "The Setup Fee" + (annual ? " and every Annual Fee are" : " is") + " paid by bank wire using the instructions shown in Client's Command Center; Agency will never change its bank details by email."} ${annual ? "" : "Client authorizes Agency to charge the payment method saved at signing (bank account or card) automatically for every Monthly Fee, Commission" + (p.paymentPlan ? ", and the second payment-plan installment" : "") + ", on its due date, until this Agreement ends."}</p>`;
+  const failed = `<p><strong>4.3 Failed or Late Payments.</strong> If a payment fails or a wire is not received when due, Agency will notify Client and retry automatic payments one (1) and three (3) days later. If payment is still not received three (3) days after the due date, Agency may pause all work and make Client's Command Center read-only until the balance is paid, at which point work resumes.</p>`;
+  const scope = p.packageKey === "enterprise"
+    ? `<p><strong>4.4 Enterprise Benefits.</strong> While this Agreement is active and paid, Agency will not provide the Services to a directly competing firm of the same type within Client's metropolitan area, and will assign Client a dedicated strategist.</p>`
+    : growth ? `<p><strong>4.4 Ad Spend.</strong> Paid-media spend (minimum ${m(p.minAdBudget || 3000)} per month) is paid by Client directly to the advertising platforms and is not included in Agency's fees.</p>` : "";
+  html = between(html, `<h2>4.`, `<h2>5.`, `<h2>4. Fees and Payment</h2>\n  ${fees}\n  ${methods}\n  ${failed}\n  ${scope}\n\n  `);
+
+  // Termination: 7 days' notice, no refunds.
+  html = between(html, `<p><strong>12.1 Term.</strong>`, `<p><strong>12.3`, `<p><strong>12.1 Term.</strong> This Agreement begins on the Effective Date (the date of Client's signature) and continues ${annual ? "for one-year terms that renew automatically on each anniversary" : "month to month"}.</p>
+  <p><strong>12.2 Termination for Convenience.</strong> Either party may terminate this Agreement for any reason on seven (7) days' prior written notice${annual ? "; to stop an annual renewal, notice must be given at least seven (7) days before the anniversary date" : ""}. No fees already paid are refundable.</p>
+  `);
+  if (!growth) {
+    html = html.replace(/<p><strong>10\.2 Guarantee Remedy Excluded\.<\/strong>[\s\S]*?<\/p>/, "");
+    html = html.replace(/<p class="fine">[\s\S]*?<\/p>/, `<p class="fine">By signing the accompanying envelope, Client acknowledges receipt of this Agreement, agrees to be bound by its terms, and confirms that the Setup Fee and all fees paid are non-refundable.</p>`);
+  }
+  return html;
+}

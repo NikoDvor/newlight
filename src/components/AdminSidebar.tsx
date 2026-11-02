@@ -53,6 +53,7 @@ const adminGroups: NavGroup[] = [
   {
     label: "Sales Tools",
     items: [
+      { title: "Packages & Pricing", description: "Package prices, custom-price approvals, every charge and wire, the simulator and the rules.", url: "/admin/packages-pricing", icon: DollarSign },
       { title: "Sales Control Center", description: "Build pricing, packages, and proposals for a client.", url: "/admin/sales-control-center", icon: LayoutDashboard },
       { title: "Proposal Templates", description: "Manage reusable pricing and terms for proposals.", url: "/admin/proposal-templates", icon: FileSignature },
     ],
