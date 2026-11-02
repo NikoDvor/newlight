@@ -118,7 +118,7 @@ function Edit({ label, value, onChange, prefix }: { label: string; value: number
   );
 }
 
-function Lever({ label, display, value, min, max, step, onChange, input, color, before, now, fmt }: {
+function Lever({ label, display, value, min, max, step, onChange, input, color, before, now, fmt, brings }: {
   label: string; display: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; input: ReactNode; color: string;
   before?: number; now?: number; fmt?: (n: number) => string; brings?: number; broughtBefore?: number;
 }) {
