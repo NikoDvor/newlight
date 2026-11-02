@@ -108,7 +108,8 @@ Deno.serve(async (req) => {
     .from("crm_deals")
     .select("id, client_id, deal_name, commission_rate, commission_rate_ongoing, commission_start_at, pricing_model, pay_sign_status, assigned_user")
     .eq("pricing_model", "commission")
-    .eq("pay_sign_status", "paid_signed");
+    .eq("pay_sign_status", "paid_signed")
+    .is("package", null); // package deals are billed by nl-billing
   if (dealsErr) return json({ error: dealsErr.message }, 500);
 
   const results: unknown[] = [];

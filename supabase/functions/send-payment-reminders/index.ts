@@ -124,6 +124,7 @@ Deno.serve(async (req) => {
   const { data: deals, error: dealsErr } = await supabase
     .from("crm_deals")
     .select("id, client_id, provisioned_client_id, deal_name, pricing_model, billing_cadence, recurring_fee, next_charge_at, last_reminder_sent_for")
+    .is("package", null) // package deals: nl-billing sends its own reminders
     .not("next_charge_at", "is", null)
     .gte("next_charge_at", windowStart)
     .lte("next_charge_at", windowEnd);

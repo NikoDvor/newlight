@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
     .from("crm_deals")
     .select("id, client_id, provisioned_client_id, deal_name, billing_cadence, next_charge_at, assigned_user")
     .eq("billing_cadence", "annual")
+    .is("package", null) // package deals are billed by nl-billing
     .not("next_charge_at", "is", null)
     .lte("next_charge_at", nowIso);
   if (dealsErr) return json({ error: dealsErr.message }, 500);
