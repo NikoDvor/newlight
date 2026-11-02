@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  EMPTY_INPUTS, baselineModel, computeDiscovery, projectModel,
+  EMPTY_INPUTS, LTV_DEFAULTS, baselineModel, computeDiscovery, ltvMultiplier, projectModel,
   type DiscoveryInputs, type DiscoveryModel,
 } from "@/lib/discoveryNumbers";
 
@@ -50,6 +50,7 @@ export function useDiscoveryNumbers(leadId: string | null) {
           goal_clients: n(row.goal_clients), current_revenue: n(row.current_revenue), current_revenue_period: row.current_revenue_period || "year",
           current_clients: n(row.current_clients), new_leads: n(row.new_leads), new_leads_period: row.new_leads_period || "year",
           leads_per_client: lpc, new_clients_12m: nc, their_number: n(row.their_number),
+          ltv_retention: n(row.ltv_retention), ltv_years: n(row.ltv_years),
         });
         setModel(row.model_leads != null || row.model_close_rate != null || row.model_ticket != null
           ? { leads: Number(row.model_leads ?? 0), closeRate: Number(row.model_close_rate ?? 0), ticket: Number(row.model_ticket ?? 0) }
@@ -86,6 +87,8 @@ export function useDiscoveryNumbers(leadId: string | null) {
         leads_per_client: inputs.leads_per_client,
         new_clients_12m: inputs.new_clients_12m ?? null,
         their_number: inputs.their_number ?? null,
+        ltv_retention: inputs.ltv_retention ?? null,
+        ltv_years: inputs.ltv_years ?? null,
         model_leads: model ? model.leads : null,
         model_close_rate: model ? Math.min(1, Math.max(0, model.closeRate)) : null,
         model_ticket: model ? model.ticket : null,
@@ -96,9 +99,20 @@ export function useDiscoveryNumbers(leadId: string | null) {
     return () => clearTimeout(t);
   }, [inputs, model]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Lifetime value (per client, and of each year's new clients).
+  const retention = inputs.ltv_retention ?? LTV_DEFAULTS.retention;
+  const years = inputs.ltv_years ?? LTV_DEFAULTS.years;
+  const ltvMult = ltvMultiplier(retention, years);
+  const ltv = {
+    retention, years, mult: ltvMult,
+    perClient: m.ticket * ltvMult,
+    plan: proj.modelClients * m.ticket * ltvMult,                     // new clients this plan brings in one year, over their lifetime
+    today: (result.newClients ?? 0) * (base.ticket || 0) * ltvMult,    // same at today's pace
+  };
+
   const set = (patch: Partial<DiscoveryInputs>) => setInputs((p) => ({ ...p, ...patch }));
   const setM = (patch: Partial<DiscoveryModel>) => setModel({ ...m, ...patch });
   const resetModel = () => setModel(null);
 
-  return { inputs, set, model: m, setM, resetModel, dirty, result, base, proj, loading, saveState, businessName, practice: !leadId };
+  return { ltv, inputs, set, model: m, setM, resetModel, dirty, result, base, proj, loading, saveState, businessName, practice: !leadId };
 }

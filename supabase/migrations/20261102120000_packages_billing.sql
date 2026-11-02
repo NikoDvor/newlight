@@ -158,3 +158,8 @@ grant execute on function public.nl_billing_cron_ok(text) to service_role;
 alter table public.nl_discovery_numbers
   add column if not exists new_clients_12m numeric,
   add column if not exists their_number numeric;
+
+-- 10. Calculator lifetime value (Nov 2, applied directly): clients kept each year (0–1) and years counted.
+alter table public.nl_discovery_numbers
+  add column if not exists ltv_retention numeric,
+  add column if not exists ltv_years numeric;

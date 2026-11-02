@@ -35,6 +35,16 @@ export interface DiscoveryInputs {
   new_clients_12m?: number | null;
   /** Script #6: the revenue increase they want from us (per year). */
   their_number?: number | null;
+  /** Lifetime value: share of clients kept each year (0–1) and years counted. */
+  ltv_retention?: number | null;
+  ltv_years?: number | null;
+}
+
+export const LTV_DEFAULTS = { retention: 0.9, years: 5 };
+/** Years of revenue one client is worth: 1 + r + r² + … for `years` years. */
+export function ltvMultiplier(retention: number, years: number) {
+  const r = Math.min(1, Math.max(0, retention)), y = Math.max(1, Math.round(years));
+  return r >= 0.9999 ? y : (1 - Math.pow(r, y)) / (1 - r);
 }
 
 export interface DiscoveryModel {
@@ -53,6 +63,8 @@ export const EMPTY_INPUTS: DiscoveryInputs = {
   leads_per_client: null,
   new_clients_12m: null,
   their_number: null,
+  ltv_retention: null,
+  ltv_years: null,
 };
 
 const annual = (v: number | null, p: Period) => (v == null ? null : p === "month" ? v * 12 : v);

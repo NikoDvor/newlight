@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, CheckCircle2, Gem, Rocket, RotateCcw, Send, Target, TrendingUp, Users, Wallet, X, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Infinity as InfinityIcon, Gem, Rocket, RotateCcw, Send, Target, TrendingUp, Users, Wallet, X, Zap } from "lucide-react";
 import type { useDiscoveryNumbers } from "@/hooks/useDiscoveryNumbers";
 import { usePackageDefaults } from "@/components/packages/PlanPreview";
 import { PACKAGE_ORDER, buildPlan, defaultPrices, type PackageKey } from "@/lib/packages";
@@ -18,6 +18,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
   const snap = (): PlanSnap => ({
     leads: m.leads, closeRate: m.closeRate, ticket: m.ticket, gap: gap ?? 0, current: cur ?? 0, goal: goal ?? 0,
     clients: proj.modelClients, revenue: proj.modelRevenue, todayRevenue: result.newRevenue ?? 0,
+    ltv: calc.ltv.plan, ltvToday: calc.ltv.today, ltvYears: calc.ltv.years, ltvRetention: calc.ltv.retention,
     before: { leads: base.leads, closeRate: base.closeRate, ticket: base.ticket, clients: result.newClients ?? 0 },
   });
   const planStale = !!plan && (Math.round(plan.leads) !== Math.round(m.leads) || Math.abs(plan.closeRate - m.closeRate) > 0.0005 || Math.round(plan.ticket) !== Math.round(m.ticket));
@@ -96,6 +97,9 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
         </div>
         <GrowthTree calc={calc} />
       </section>
+
+      {/* lifetime value */}
+      <LifetimeSection calc={calc} />
 
       {/* submit plan */}
       <div className="mt-4 flex flex-col items-center gap-2">
@@ -179,6 +183,9 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
               </div>
               <span className="shrink-0 text-[11px] tabular-nums text-white/55">{numFmt(proj.modelClients, 1)} clients · {pct(Math.min(1, proj.gapClosedShare ?? 0), 0)} of gap</span>
             </div>
+            <div className="mt-0.5 text-[11px] text-white/55">
+              Lifetime <CountUp value={calc.ltv.plan} format={money} className="font-bold tabular-nums text-[hsl(205,100%,90%)]" /> <span className="text-white/35">· {calc.ltv.years} yrs at {pct(calc.ltv.retention, 0)} kept</span>
+            </div>
           </div>
           <button onClick={submitPlan} aria-label="Submit plan"
             className="flex min-h-[52px] shrink-0 items-center gap-1.5 rounded-xl px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_24px_-6px_hsla(188,95%,58%,.9)]"
@@ -224,13 +231,15 @@ function ValuePanel({ calc }: { calc: Calc }) {
   const { defs } = usePackageDefaults();
   const { result, inputs, proj } = calc;
   const [pkg, setPkg] = useState<PackageKey>("growth");
+  const [life, setLife] = useState(true);
   const d = defs[pkg];
   const plan = useMemo(() => {
     const pr = defaultPrices(d, result.avgTicket ?? 0);
     const p = buildPlan({ pkg: d, setup: pr.setup, monthly: pr.monthly, cadence: "monthly", paymentPlan: false, ongoing: "retainer", signDate: new Date() } as any);
     return { ...pr, firstYear: p.firstYearTotal };
   }, [d, result.avgTicket]);
-  const worth = inputs.their_number ?? (proj.missedOpportunity || result.gapRevenue || 0);
+  const yearly = inputs.their_number ?? (proj.missedOpportunity || result.gapRevenue || 0);
+  const worth = life ? yearly * calc.ltv.mult : yearly;
   const ratio = plan.firstYear ? worth / plan.firstYear : null;
   const ratioTxt = ratio == null ? "—" : ratio >= 9.95 ? `${Math.round(ratio)}×` : `${ratio.toFixed(1)}×`;
   const terms = pkg === "growth"
@@ -247,11 +256,17 @@ function ValuePanel({ calc }: { calc: Calc }) {
           </button>
         ))}
       </div>
+      <div className="mt-2 flex justify-center gap-1" role="group" aria-label="Value period">
+        {[["Year one", false], ["Lifetime", true]].map(([l, v]) => (
+          <button key={l as string} onClick={() => setLife(v as boolean)} aria-pressed={life === v}
+            className={`min-h-[36px] rounded-lg px-3 text-[12px] font-semibold transition ${life === v ? "bg-[hsla(197,100%,55%,.2)] text-white" : "text-white/45 hover:text-white"}`}>{l as string}</button>
+        ))}
+      </div>
       <div className="grid gap-3 p-5 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:p-6">
         <div className="text-center sm:text-left">
-          <Kick color={C.green}>What it's worth · per year</Kick>
+          <Kick color={C.green}>What it's worth · {life ? `over ${calc.ltv.years} years` : "year one"}</Kick>
           <CountUp value={worth} format={money} className="block text-3xl font-black tabular-nums text-white" />
-          <p className="text-[11px] text-white/45">{inputs.their_number != null ? "your target increase" : "from your numbers"}</p>
+          <p className="text-[11px] text-white/45">{inputs.their_number != null ? "your target increase" : "from your numbers"}{life ? ` · ${pct(calc.ltv.retention, 0)} of clients kept each year` : ""}</p>
         </div>
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[hsla(205,100%,88%,.5)] text-[15px] font-black text-[hsl(205,100%,90%)] shadow-[0_0_30px_-8px_hsla(205,100%,88%,.9)]">
           {ratioTxt}
@@ -266,7 +281,7 @@ function ValuePanel({ calc }: { calc: Calc }) {
   );
 }
 
-interface PlanSnap { leads: number; closeRate: number; ticket: number; gap: number; current: number; goal: number; clients: number; revenue: number; todayRevenue: number; before: { leads: number; closeRate: number; ticket: number; clients: number } }
+interface PlanSnap { ltv: number; ltvToday: number; ltvYears: number; ltvRetention: number; leads: number; closeRate: number; ticket: number; gap: number; current: number; goal: number; clients: number; revenue: number; todayRevenue: number; before: { leads: number; closeRate: number; ticket: number; clients: number } }
 
 /** Opens at the bottom after "Submit plan": the levers they chose and a 12-month build-up against the gap. */
 function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; onClose: () => void }) {
@@ -343,11 +358,12 @@ function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; o
         </div>
       </div>
 
-      <div className="grid-preserve relative mt-4 grid grid-cols-3 gap-2 text-center">
+      <div className="grid-preserve relative mt-4 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
         {[
           { k: "Added in year one", v: money(plan.revenue), c: C.green },
           { k: "Today's pace", v: money(plan.todayRevenue), c: "rgba(255,255,255,.6)" },
           { k: "New total", v: money(plan.current + plan.revenue), c: C.gold },
+          { k: `Lifetime · ${plan.ltvYears} yrs`, v: money(plan.ltv), c: C.ice },
         ].map((x) => (
           <div key={x.k} className="rounded-xl bg-white/[0.04] px-2 py-2.5">
             <p className="text-[9.5px] font-bold uppercase tracking-[0.12em] sm:text-[10px]" style={{ color: x.c }}>{x.k}</p>
@@ -356,5 +372,54 @@ function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; o
         ))}
       </div>
     </motion.section>
+  );
+}
+
+/** Lifetime value of the new clients — retention and years are sliders; saved to the client. */
+function LifetimeSection({ calc }: { calc: Calc }) {
+  const { ltv, set, model: m } = calc;
+  return (
+    <section className={`${glass} relative mt-4 overflow-hidden p-5 sm:p-6`}>
+      <span className="calc-sheen" aria-hidden />
+      <div className="relative flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <Kick color={C.ice}>Lifetime value · new clients from one year</Kick>
+          <CountUp value={ltv.plan} format={money} className="mt-1 block text-[34px] font-black tabular-nums leading-tight sm:text-[44px]"
+            style={{ backgroundImage: "linear-gradient(120deg, hsl(205,100%,96%), hsl(197,100%,66%))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }} />
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <Delta now={ltv.plan} before={ltv.today} format={money} />
+            <span className="text-[12px] text-white/50">{numFmt(calc.proj.modelClients, 1)} clients × {money(ltv.perClient)} each</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 rounded-xl border border-[hsla(205,100%,88%,.3)] bg-[hsla(205,100%,88%,.06)] px-3 py-2">
+          <InfinityIcon className="h-5 w-5 text-[hsl(205,100%,90%)]" />
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/50">One client is worth</p>
+            <CountUp value={ltv.perClient} format={money} className="text-lg font-black tabular-nums text-white" />
+            <p className="text-[10.5px] text-white/45">{money(m.ticket)}/yr × {numFmt(ltv.mult, 1)} yrs</p>
+          </div>
+        </div>
+      </div>
+      <div className="relative mt-4 grid gap-4 md:grid-cols-2">
+        <div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[12px] font-medium text-white/70">Clients kept each year</span>
+            <MiniInput label="Clients kept each year, percent" width="w-20" value={Math.round(ltv.retention * 100)} onChange={(v) => set({ ltv_retention: Math.min(1, Math.max(0, v / 100)) })} />
+          </div>
+          <GlowSlider label="Clients kept each year" value={Math.round(ltv.retention * 100)} min={50} max={100} step={1} color={C.ice}
+            onChange={(v) => set({ ltv_retention: v / 100 })} />
+          <p className="text-right text-[10.5px] tabular-nums text-white/45">{pct(ltv.retention, 0)} stay · {pct(1 - ltv.retention, 0)} leave each year</p>
+        </div>
+        <div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[12px] font-medium text-white/70">Years counted</span>
+            <MiniInput label="Years counted" width="w-20" value={ltv.years} onChange={(v) => set({ ltv_years: Math.min(40, Math.max(1, Math.round(v))) })} />
+          </div>
+          <GlowSlider label="Years counted" value={ltv.years} min={1} max={20} step={1} color={C.sky}
+            onChange={(v) => set({ ltv_years: v })} />
+          <p className="text-right text-[10.5px] tabular-nums text-white/45">{ltv.years} {ltv.years === 1 ? "year" : "years"}</p>
+        </div>
+      </div>
+    </section>
   );
 }
