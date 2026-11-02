@@ -80,14 +80,14 @@ export function computeDiscovery(i: DiscoveryInputs): DiscoveryResult {
   const gapRevenue = goalRevenue != null && currentRevenue != null ? Math.max(0, goalRevenue - currentRevenue) : null;
   const gapClients = i.goal_clients != null && i.current_clients != null ? Math.max(0, i.goal_clients - i.current_clients) : null;
   const shortAtPace = gapRevenue != null && newRevenue != null ? Math.max(0, gapRevenue - newRevenue) : null;
-  const clientWord = i.firm_type === "insurance" ? "policies" : "clients";
+  const clientWord = "clients";
   const missing: string[] = [];
   if (i.goal_revenue == null) missing.push("goal revenue");
   if (i.goal_clients == null) missing.push(`goal ${clientWord}`);
   if (i.current_revenue == null) missing.push("current revenue");
   if (i.current_clients == null) missing.push(`current ${clientWord}`);
   if (i.new_leads == null) missing.push("new leads");
-  if (i.leads_per_client == null) missing.push(`leads per ${i.firm_type === "insurance" ? "policy" : "client"}`);
+  if (i.leads_per_client == null) missing.push("leads per client");
   return {
     goalRevenue, goalClients: i.goal_clients, currentRevenue, currentClients: i.current_clients,
     avgTicket, closeRate, leadsPerYear, newClients, newRevenue, gapRevenue, gapClients, shortAtPace, missing,

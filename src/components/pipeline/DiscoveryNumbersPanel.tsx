@@ -137,7 +137,7 @@ export default function DiscoveryNumbersPanel({
   const dirty = model != null && (Math.round(model.leads) !== Math.round(base.leads)
     || Math.abs(model.closeRate - base.closeRate) > 0.0005 || Math.round(model.ticket) !== Math.round(base.ticket));
   const proj = useMemo(() => projectModel(result, m), [result, m]);
-  const isInsurance = inputs.firm_type === "insurance";
+  const isInsurance = false; // Advisor/Insurance switch removed (Nov 2) — always households / clients
   const unit = isInsurance ? "policies" : "households";
   const unitOne = isInsurance ? "policy" : "client";
 
@@ -236,14 +236,6 @@ export default function DiscoveryNumbersPanel({
                 {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" />Saving</> : saveState === "saved" ? <><Check className="h-3 w-3" />Saved</> : saveState === "error" ? <span className="text-red-400">Not saved</span> : null}
               </span>
             )}
-            <div className="inline-flex rounded-md overflow-hidden border border-white/10 text-[10px]">
-              {(["ria", "insurance"] as const).map((f) => (
-                <button key={f} type="button" disabled={readOnly} onClick={() => set({ firm_type: f })}
-                  className={`px-2 py-0.5 ${inputs.firm_type === f ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"}`}>
-                  {f === "ria" ? "Advisor" : "Insurance"}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
         <div className="grid gap-2 grid-cols-2 lg:grid-cols-3">
