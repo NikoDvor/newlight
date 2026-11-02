@@ -144,3 +144,12 @@ grant select on public.nl_billing_events to authenticated;
 alter table public.clients
   add column if not exists billing_paused_at timestamptz,
   add column if not exists billing_paused_reason text;
+
+-- 8. Daily job auth (applied Nov 2): secret in vault, checked by nl-billing through this function. Job: nl-billing-daily, 15:07 UTC.
+--    select vault.create_secret(encode(extensions.gen_random_bytes(32),'hex'), 'NL_BILLING_CRON_SECRET');
+create or replace function public.nl_billing_cron_ok(p text) returns boolean
+  language sql security definer set search_path = '' as $f$
+  select p is not null and length(p) > 20 and exists (select 1 from vault.decrypted_secrets where name = 'NL_BILLING_CRON_SECRET' and decrypted_secret = p)
+$f$;
+revoke all on function public.nl_billing_cron_ok(text) from public, anon, authenticated;
+grant execute on function public.nl_billing_cron_ok(text) to service_role;

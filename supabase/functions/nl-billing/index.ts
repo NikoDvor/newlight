@@ -47,7 +47,13 @@ Deno.serve(async (req) => {
   }
 
   // Auth: cron secret for "run", otherwise an admin/operator JWT.
-  const cronOk = !!Deno.env.get("CRON_SECRET") && req.headers.get("x-cron-secret") === Deno.env.get("CRON_SECRET");
+  // Cron: header matches the CRON_SECRET env var, or the NL_BILLING_CRON_SECRET stored in the database vault.
+  const cronHeader = req.headers.get("x-cron-secret") || "";
+  let cronOk = !!Deno.env.get("CRON_SECRET") && cronHeader === Deno.env.get("CRON_SECRET");
+  if (!cronOk && cronHeader.length > 20) {
+    const { data: ok } = await sb.rpc("nl_billing_cron_ok", { p: cronHeader });
+    cronOk = ok === true;
+  }
   let userId: string | null = null;
   if (!cronOk) {
     const auth = req.headers.get("authorization") || "";
