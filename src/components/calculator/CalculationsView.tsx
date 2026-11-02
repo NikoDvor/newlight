@@ -61,7 +61,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
               className="mt-2 block text-[44px] font-black leading-none tabular-nums sm:text-[64px]"
               style={{ backgroundImage: "linear-gradient(120deg, hsl(205,100%,96%), hsl(197,100%,62%) 55%, hsl(217,90%,62%))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", filter: "drop-shadow(0 4px 24px hsla(197,100%,55%,.45))" }} />
             <p className="mt-2 text-sm text-white/55">
-              {result.missing.length ? `Add ${result.missing.join(", ")} on the script page` : <>From <b className="text-white/85">{money(cur)}</b> today to <b className="text-[hsl(42,96%,70%)]">{money(goal)}</b></>}
+              {result.missing.length ? `Add ${result.missing.join(", ")} on the script page` : <>From <b className="text-white/85">{money(cur)}</b> today to <b className="text-[hsl(205,100%,90%)]">{money(goal)}</b></>}
             </p>
           </div>
           <Ring progress={progress} />
@@ -100,8 +100,8 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
       {/* submit plan */}
       <div className="mt-4 flex flex-col items-center gap-2">
         <button onClick={submitPlan}
-          className="relative flex min-h-[60px] w-full max-w-md items-center justify-center gap-2.5 overflow-hidden rounded-2xl text-[16px] font-black uppercase tracking-[0.14em] text-white shadow-[0_0_40px_-8px_hsla(152,62%,55%,.85)] transition active:scale-[.99]"
-          style={{ background: "linear-gradient(120deg,hsl(160,70%,38%),hsl(152,62%,45%) 55%,hsl(187,80%,45%))" }}>
+          className="relative flex min-h-[60px] w-full max-w-md items-center justify-center gap-2.5 overflow-hidden rounded-2xl text-[16px] font-black uppercase tracking-[0.14em] text-white shadow-[0_0_40px_-8px_hsla(188,95%,58%,.85)] transition active:scale-[.99]"
+          style={{ background: "linear-gradient(120deg,hsl(217,90%,46%),hsl(200,95%,50%) 55%,hsl(197,100%,48%))" }}>
           <span className="calc-sheen" aria-hidden />
           <Send className="h-5 w-5" /> {plan ? (planStale ? "Update plan" : "Plan submitted") : "Submit plan"}
         </button>
@@ -134,7 +134,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
       <section className={`${glass} mt-4 p-4 sm:p-5`}>
         <div className="grid-preserve grid grid-cols-2 gap-2 sm:flex sm:items-stretch sm:gap-0">
           {[
-            { k: "Today", v: cur, c: "hsl(187,70%,58%)" },
+            { k: "Today", v: cur, c: "hsl(192,90%,62%)" },
             { k: "Goal", v: goal, c: C.gold },
             { k: "The gap", v: gap, c: C.red },
             { k: "Target", v: target, c: C.green },
@@ -164,10 +164,10 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
       <p className="mt-6 text-center text-[11px] text-white/35">An illustration from the numbers you shared, per year. Not a guarantee of results.</p>
 
       {/* live revenue bar — updates while you slide */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[hsla(152,62%,55%,.3)] bg-[hsla(222,46%,5%,.94)] px-3 py-2.5 shadow-[0_-12px_40px_-12px_hsla(152,62%,50%,.45)] backdrop-blur-md sm:px-6">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[hsla(188,95%,58%,.3)] bg-[hsla(222,46%,5%,.94)] px-3 py-2.5 shadow-[0_-12px_40px_-12px_hsla(188,95%,58%,.45)] backdrop-blur-md sm:px-6">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[hsl(152,62%,62%)]">This plan brings in</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[hsl(188,95%,72%)]">This plan brings in</p>
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <CountUp value={proj.modelRevenue} format={(n) => `${money(n)}/yr`} className="text-[22px] font-black tabular-nums leading-tight text-white sm:text-[28px]" />
               <Delta now={proj.modelRevenue} before={result.newRevenue} format={money} />
@@ -181,8 +181,8 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
             </div>
           </div>
           <button onClick={submitPlan} aria-label="Submit plan"
-            className="flex min-h-[52px] shrink-0 items-center gap-1.5 rounded-xl px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_24px_-6px_hsla(152,62%,55%,.9)]"
-            style={{ background: "linear-gradient(120deg,hsl(160,70%,38%),hsl(152,62%,45%))" }}>
+            className="flex min-h-[52px] shrink-0 items-center gap-1.5 rounded-xl px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_24px_-6px_hsla(188,95%,58%,.9)]"
+            style={{ background: "linear-gradient(120deg,hsl(217,90%,46%),hsl(200,95%,50%))" }}>
             <Send className="h-4 w-4" /><span className="hidden sm:inline">{plan && !planStale ? "Submitted" : "Submit"}</span>
           </button>
         </div>
@@ -200,7 +200,7 @@ function Ring({ progress }: { progress: number }) {
         <motion.circle cx="60" cy="60" r={r} fill="none" stroke="url(#calc-ring)" strokeWidth="9" strokeLinecap="round"
           strokeDasharray={c} initial={{ strokeDashoffset: c }} animate={{ strokeDashoffset: c * (1 - progress) }} transition={{ duration: 1.1, ease }}
           style={{ filter: "drop-shadow(0 0 8px hsla(197,100%,60%,.7))" }} />
-        <defs><linearGradient id="calc-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="hsl(187,90%,55%)" /><stop offset="1" stopColor="hsl(42,96%,63%)" /></linearGradient></defs>
+        <defs><linearGradient id="calc-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="hsl(187,90%,55%)" /><stop offset="1" stopColor="hsl(205,100%,90%)" /></linearGradient></defs>
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">
         <div><CountUp value={progress} format={(n) => `${Math.round(n * 100)}%`} className="text-2xl font-black tabular-nums text-white" /><p className="text-[10px] uppercase tracking-[0.14em] text-white/45">of goal today</p></div>
@@ -242,7 +242,7 @@ function ValuePanel({ calc }: { calc: Calc }) {
       <div className="flex flex-wrap justify-center gap-1.5 px-4 pt-4" role="tablist" aria-label="Package">
         {PACKAGE_ORDER.map((k) => (
           <button key={k} role="tab" aria-selected={pkg === k} onClick={() => setPkg(k)}
-            className={`min-h-[40px] rounded-xl border px-4 text-[13px] font-bold transition ${pkg === k ? "border-[hsla(42,96%,63%,.6)] bg-[hsla(42,96%,63%,.14)] text-white" : "border-white/10 text-white/55 hover:text-white"}`}>
+            className={`min-h-[40px] rounded-xl border px-4 text-[13px] font-bold transition ${pkg === k ? "border-[hsla(205,100%,88%,.6)] bg-[hsla(205,100%,88%,.14)] text-white" : "border-white/10 text-white/55 hover:text-white"}`}>
             {defs[k].label}
           </button>
         ))}
@@ -253,7 +253,7 @@ function ValuePanel({ calc }: { calc: Calc }) {
           <CountUp value={worth} format={money} className="block text-3xl font-black tabular-nums text-white" />
           <p className="text-[11px] text-white/45">{inputs.their_number != null ? "your target increase" : "from your numbers"}</p>
         </div>
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[hsla(42,96%,63%,.5)] text-[15px] font-black text-[hsl(42,96%,70%)] shadow-[0_0_30px_-8px_hsla(42,96%,63%,.9)]">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[hsla(205,100%,88%,.5)] text-[15px] font-black text-[hsl(205,100%,90%)] shadow-[0_0_30px_-8px_hsla(205,100%,88%,.9)]">
           {ratioTxt}
         </div>
         <div className="text-center sm:text-right">
@@ -289,10 +289,10 @@ function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; o
         <div>
           <Kick color={C.green}>Your plan to close the gap</Kick>
           <h2 className="mt-1 flex items-center gap-2 text-xl font-black text-white sm:text-2xl">
-            <CheckCircle2 className="h-6 w-6 text-[hsl(152,62%,60%)]" />
+            <CheckCircle2 className="h-6 w-6 text-[hsl(188,95%,72%)]" />
             {covered >= 1 ? (hitMonth ? `Gap closed in month ${hitMonth}` : "Gap closed") : `${pct(covered, 0)} of the gap in year one`}
           </h2>
-          {stale && <p className="mt-1 text-[12px] text-[hsl(42,96%,70%)]">Numbers changed — tap Update plan to refresh.</p>}
+          {stale && <p className="mt-1 text-[12px] text-[hsl(205,100%,90%)]">Numbers changed — tap Update plan to refresh.</p>}
         </div>
         <button onClick={onClose} aria-label="Close plan" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-white/45 hover:text-white"><X className="h-4 w-4" /></button>
       </div>
@@ -332,7 +332,7 @@ function PlanPanel({ plan, stale, onClose }: { plan: PlanSnap; stale: boolean; o
                   <div className="absolute bottom-0 w-full rounded-t-sm bg-white/[0.12]" style={{ height: `${(t / top) * 100}%` }} />
                   <motion.div className="relative w-[70%] rounded-t-md" initial={{ height: 0 }} animate={{ height: `${(v / top) * 100}%` }}
                     transition={{ delay: 0.1 + mo * 0.05, duration: 0.6, ease }}
-                    style={{ background: done ? `linear-gradient(180deg, ${C.green}, hsl(160,70%,32%))` : `linear-gradient(180deg, ${C.sky}, hsl(217,90%,40%))`, boxShadow: done ? `0 0 14px -2px ${C.green}` : `0 0 12px -4px ${C.sky}` }} />
+                    style={{ background: done ? `linear-gradient(180deg, ${C.green}, hsl(222,85%,36%))` : `linear-gradient(180deg, ${C.sky}, hsl(217,90%,40%))`, boxShadow: done ? `0 0 14px -2px ${C.green}` : `0 0 12px -4px ${C.sky}` }} />
                 </div>
               );
             })}

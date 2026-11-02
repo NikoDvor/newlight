@@ -33,12 +33,12 @@ export default function GrowthTree({ calc }: { calc: Calc }) {
             <Edit label="Goal revenue per year" value={result.goalRevenue ?? 0} prefix="$" onChange={(v) => set({ goal_revenue: v, goal_revenue_period: "year" })} />
           </Node>
         </div>
-        <Branch from={[50]} to={[25, 75]} colors={["hsl(187,70%,58%)", C.red]} />
+        <Branch from={[50]} to={[25, 75]} colors={["hsl(192,90%,62%)", C.red]} />
         <VLine color={C.gold} />
 
         {/* Row 1 — current + gap */}
         <div className="flex flex-col md:grid md:grid-cols-2 md:gap-4">
-          <Node i={1} color="hsl(187,70%,58%)" label="Where you are" value={result.currentRevenue} format={money} sub={`${numFmt(result.currentClients)} households`}>
+          <Node i={1} color="hsl(192,90%,62%)" label="Where you are" value={result.currentRevenue} format={money} sub={`${numFmt(result.currentClients)} households`}>
             <Edit label="Current revenue per year" value={result.currentRevenue ?? 0} prefix="$" onChange={(v) => set({ current_revenue: v, current_revenue_period: "year" })} />
           </Node>
           <VLine color={C.red} />
@@ -84,7 +84,7 @@ export default function GrowthTree({ calc }: { calc: Calc }) {
               <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${Math.min(1, covered) * 100}%` }} transition={{ duration: 0.6, ease }}
                 style={{ background: covered >= 1 ? C.green : `linear-gradient(90deg, ${C.gold}, ${C.green})`, boxShadow: `0 0 16px ${covered >= 1 ? C.green : C.gold}` }} />
             </div>
-            {lift > 0 && <p className="mt-2 text-[12px] font-semibold text-[hsl(152,62%,65%)]">+{money(lift)} / yr vs. today</p>}
+            {lift > 0 && <p className="mt-2 text-[12px] font-semibold text-[hsl(188,95%,72%)]">+{money(lift)} / yr vs. today</p>}
           </Node>
         </div>
       </div>
@@ -134,10 +134,10 @@ function Lever({ label, display, value, min, max, step, onChange, input, color, 
         <p className="text-right text-[10.5px] tabular-nums text-white/45">{display}</p>
       </div>
       {brings != null && (
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg bg-[hsla(152,62%,55%,.07)] px-2.5 py-1.5">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg bg-[hsla(188,95%,58%,.07)] px-2.5 py-1.5">
           <span className="text-[11px] font-semibold text-white/60">Brings in</span>
           <span className="flex items-center gap-1.5">
-            <CountUp value={brings} format={(n) => `${money(n)}/yr`} className="text-[14px] font-black tabular-nums text-[hsl(152,62%,68%)]" />
+            <CountUp value={brings} format={(n) => `${money(n)}/yr`} className="text-[14px] font-black tabular-nums text-[hsl(188,95%,72%)]" />
           </span>
         </div>
       )}

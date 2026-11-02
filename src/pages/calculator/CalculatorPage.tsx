@@ -85,9 +85,9 @@ function LeadPicker({ base, admin }: { base: string; admin: boolean }) {
       <p className="mt-1 text-sm text-white/55">Pick the client. Their numbers save as you type and come back every time you open them.</p>
 
       <button onClick={() => navigate(`${base}/practice`)}
-        className={`${glass} relative mt-5 flex min-h-[72px] w-full items-center gap-4 overflow-hidden p-4 text-left transition hover:border-[hsla(42,96%,63%,.5)]`}>
+        className={`${glass} relative mt-5 flex min-h-[72px] w-full items-center gap-4 overflow-hidden p-4 text-left transition hover:border-[hsla(205,100%,88%,.5)]`}>
         <span className="calc-sheen" aria-hidden />
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[hsla(42,96%,63%,.15)] text-[hsl(42,96%,70%)]"><Dumbbell className="h-5 w-5" /></span>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[hsla(205,100%,88%,.15)] text-[hsl(205,100%,90%)]"><Dumbbell className="h-5 w-5" /></span>
         <span className="min-w-0 flex-1"><span className="block font-bold text-white">Practice</span><span className="block text-[12px] text-white/50">Role-play the script. Nothing is saved.</span></span>
         <ChevronRight className="h-5 w-5 text-white/40" />
       </button>
@@ -113,7 +113,7 @@ function LeadPicker({ base, admin }: { base: string; admin: boolean }) {
                 </span>
                 {n && (
                   <span className="shrink-0 text-right">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-[hsl(152,62%,62%)]">Numbers saved</span>
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-[hsl(188,95%,72%)]">Numbers saved</span>
                     <span className="block text-[11px] tabular-nums text-white/50">{money(yearly(n.current_revenue, n.current_revenue_period))} → {money(yearly(n.goal_revenue, n.goal_revenue_period))}</span>
                   </span>
                 )}

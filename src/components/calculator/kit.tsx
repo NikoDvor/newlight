@@ -3,14 +3,15 @@ import { useReducedMotion } from "framer-motion";
 import type { Period } from "@/lib/discoveryNumbers";
 
 /** Shared look for the Calculator: deep navy glass, electric-blue glow, gold for goals. */
+/** All blues + white-blue on the dark theme (names kept so every screen picks up the new palette). */
 export const C = {
-  sky: "hsl(197,100%,62%)",
-  blue: "hsl(211,96%,62%)",
-  ice: "hsl(205,100%,92%)",
-  gold: "hsl(42,96%,63%)",
-  green: "hsl(152,62%,55%)",
-  red: "hsl(0,72%,66%)",
-  violet: "hsl(262,85%,74%)",
+  sky: "hsl(197,100%,62%)",   // electric sky
+  blue: "hsl(214,95%,64%)",   // azure
+  ice: "hsl(205,100%,94%)",   // white-blue
+  gold: "hsl(205,100%,88%)",  // goal / highlight → frosted white-blue
+  green: "hsl(188,95%,58%)",  // good / plan → aqua blue
+  red: "hsl(228,92%,70%)",    // gap → cobalt
+  violet: "hsl(238,85%,78%)", // periwinkle
 };
 
 export const glass =
@@ -128,10 +129,10 @@ export function GlowSlider({ value, min, max, step, onChange, label, color = C.s
 }
 
 export function SaveDot({ state, practice }: { state: string; practice: boolean }) {
-  if (practice) return <span className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(42,96%,63%)]">Practice · not saved</span>;
+  if (practice) return <span className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(205,100%,90%)]">Practice · not saved</span>;
   const map: Record<string, [string, string]> = {
-    saving: ["Saving…", "text-white/50"], saved: ["Saved to this client", "text-[hsl(152,62%,60%)]"],
-    error: ["Not saved — check connection", "text-[hsl(0,72%,70%)]"], idle: ["", ""],
+    saving: ["Saving…", "text-white/50"], saved: ["Saved to this client", "text-[hsl(188,95%,72%)]"],
+    error: ["Not saved — check connection", "text-[hsl(228,70%,80%)]"], idle: ["", ""],
   };
   const [t, cls] = map[state] || map.idle;
   return t ? <span className={`text-[11px] font-medium ${cls}`} aria-live="polite">{t}</span> : null;
@@ -175,7 +176,7 @@ export function Delta({ now, before, format, higherIsBetter = true, unit = "vs t
   const good = higherIsBetter ? d > 0 : d < 0;
   const pctTxt = before !== 0 ? ` (${d > 0 ? "+" : "−"}${Math.round(Math.abs(d / before) * 100)}%)` : "";
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${good ? "bg-[hsla(152,62%,55%,.14)] text-[hsl(152,62%,65%)]" : "bg-[hsla(0,72%,60%,.14)] text-[hsl(0,72%,72%)]"} ${className}`} aria-live="polite">
+    <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${good ? "bg-[hsla(188,95%,58%,.14)] text-[hsl(188,95%,72%)]" : "bg-[hsla(228,60%,62%,.14)] text-[hsl(228,70%,80%)]"} ${className}`} aria-live="polite">
       {d > 0 ? "▲" : "▼"} {d > 0 ? "+" : "−"}{format(Math.abs(d))}{pctTxt} <span className="font-medium opacity-70">{unit}</span>
     </span>
   );

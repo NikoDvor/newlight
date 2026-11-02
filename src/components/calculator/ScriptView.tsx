@@ -51,7 +51,7 @@ export default function ScriptView({ script, calc, title, onBack, onCalculations
         <div className="flex w-max gap-1.5">
           {script.steps.map((s) => (
             <button key={s.key} onClick={() => jump(s.key)}
-              className={`inline-flex min-h-[36px] items-center gap-1 rounded-full border px-3 text-[12px] font-bold tabular-nums transition ${done[s.key] ? "border-[hsla(152,62%,55%,.5)] bg-[hsla(152,62%,55%,.12)] text-[hsl(152,62%,70%)]" : s.key === "5" ? "border-[hsla(197,100%,60%,.6)] bg-[hsla(197,100%,55%,.15)] text-white" : "border-white/10 bg-white/[0.04] text-white/60 hover:text-white"}`}>
+              className={`inline-flex min-h-[36px] items-center gap-1 rounded-full border px-3 text-[12px] font-bold tabular-nums transition ${done[s.key] ? "border-[hsla(188,95%,58%,.5)] bg-[hsla(188,95%,58%,.12)] text-[hsl(188,95%,72%)]" : s.key === "5" ? "border-[hsla(197,100%,60%,.6)] bg-[hsla(197,100%,55%,.15)] text-white" : "border-white/10 bg-white/[0.04] text-white/60 hover:text-white"}`}>
               {done[s.key] && <Check className="h-3 w-3" />}{s.key}
             </button>
           ))}
@@ -63,7 +63,7 @@ export default function ScriptView({ script, calc, title, onBack, onCalculations
           <motion.section key={s.key} id={`step-${s.key}`} className={`${glass} relative scroll-mt-20 overflow-hidden p-4 sm:p-5`}
             initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 8) * 0.04, duration: 0.45, ease }}>
             <div className="flex items-center gap-3">
-              <span className={`grid h-9 min-w-9 place-items-center rounded-xl px-2 text-sm font-black tabular-nums ${done[s.key] ? "bg-[hsla(152,62%,55%,.18)] text-[hsl(152,62%,70%)]" : "bg-[hsla(197,100%,55%,.16)] text-[hsl(197,100%,72%)]"}`}>{s.key}</span>
+              <span className={`grid h-9 min-w-9 place-items-center rounded-xl px-2 text-sm font-black tabular-nums ${done[s.key] ? "bg-[hsla(188,95%,58%,.18)] text-[hsl(188,95%,72%)]" : "bg-[hsla(197,100%,55%,.16)] text-[hsl(197,100%,72%)]"}`}>{s.key}</span>
               {s.title && <h2 className="text-[17px] font-bold text-white">{s.title}</h2>}
             </div>
             {s.body && <div className="mt-2 [&_blockquote]:my-2.5"><SlideBody slide={filledBody(s.key, s.body)} /></div>}
@@ -133,8 +133,8 @@ function Readout({ items }: { items: { k: string; v: number | null; f: (n: numbe
   return (
     <div className="mt-2 flex flex-wrap gap-2">
       {items.map((x) => (
-        <div key={x.k} className="rounded-xl border border-[hsla(42,96%,63%,.3)] bg-[hsla(42,96%,63%,.07)] px-3.5 py-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[hsl(42,96%,70%)]">{x.k} · auto</p>
+        <div key={x.k} className="rounded-xl border border-[hsla(205,100%,88%,.3)] bg-[hsla(205,100%,88%,.07)] px-3.5 py-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[hsl(205,100%,90%)]">{x.k} · auto</p>
           <p className="text-lg font-bold tabular-nums text-white"><CountUp value={x.v} format={x.f} /> <span className="text-[11px] font-normal text-white/45">{x.sub}</span></p>
         </div>
       ))}
