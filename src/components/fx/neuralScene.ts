@@ -254,16 +254,16 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
   let pr = o.dpr, slow = 0, seen = 0;
   const floor = phone ? 0.8 : 1;
   // Steps, one at a time while frames stay late: lower resolution → drop the halo copies → 30fps → lower again.
-  let step = 0;
+  let tier = 0;
   function adapt(gap: number) {
     seen++;
     if (gap > (1000 / baseCap) * 1.5) slow++;
     if (seen < 60) return;                        // judge every ~1.5–2 s
     if (slow / seen > 0.3) {
       if (pr > floor) { pr = Math.max(floor, Math.round((pr - 0.25) * 100) / 100); renderer.setPixelRatio(pr); renderer.setSize(curW, curH, false); }
-      else if (step === 0 && halos.length) { step = 1; halos.forEach((h) => { h.copy.visible = false; }); }
-      else if (step <= 1 && baseCap > 30) { step = 2; baseCap = 30; }
-      else if (step === 2 && pr > 0.75) { step = 3; pr = 0.75; renderer.setPixelRatio(pr); renderer.setSize(curW, curH, false); }
+      else if (tier === 0 && halos.length) { tier = 1; halos.forEach((h) => { h.copy.visible = false; }); }
+      else if (tier <= 1 && baseCap > 30) { tier = 2; baseCap = 30; }
+      else if (tier === 2 && pr > 0.75) { tier = 3; pr = 0.75; renderer.setPixelRatio(pr); renderer.setSize(curW, curH, false); }
     }
     slow = 0; seen = 0;
   }
