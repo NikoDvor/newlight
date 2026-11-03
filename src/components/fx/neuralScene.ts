@@ -27,7 +27,7 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
 
   const { phone } = o;
   const mul = phone ? 0.45 : 1;
-  const baseCap = phone ? 30 : 50;
+  let baseCap = phone ? 30 : 50;
   const vis = phone ? 1.45 : 1; // phones have no glow pass, so lines draw brighter instead
 
   const renderer = new THREE.WebGLRenderer({ canvas: canvas as any, alpha: true, antialias: !phone, powerPreference: "low-power" });
@@ -45,7 +45,7 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
   const track = <T extends { dispose: () => void }>(x: T) => { disposables.push(x); return x; };
 
   // Glow (computers): soft halo copies drawn inside the scene — replaces the old full-canvas CSS blur filter.
-  const halos: { mat: import("three").LineBasicMaterial; src: import("three").LineBasicMaterial; k: number }[] = [];
+  const halos: { mat: import("three").LineBasicMaterial; src: import("three").LineBasicMaterial; k: number; copy: import("three").Object3D }[] = [];
   const addGlow = (obj: import("three").Object3D & { geometry: import("three").BufferGeometry }, src: import("three").LineBasicMaterial, isLoop = false) => {
     if (!o.glow) return;
     for (const [s, k] of [[1.012, 0.38], [1.028, 0.16]] as const) {
@@ -53,7 +53,7 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
       const copy = isLoop ? new THREE.Line(obj.geometry, mat) : new THREE.LineSegments(obj.geometry, mat);
       copy.scale.setScalar(s);
       obj.add(copy);
-      halos.push({ mat, src, k });
+      halos.push({ mat, src, k, copy });
     }
   };
 
@@ -253,14 +253,17 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
   // render at a lower resolution — same look, far less work. Never changes the scene itself.
   let pr = o.dpr, slow = 0, seen = 0;
   const floor = phone ? 0.8 : 1;
+  // Steps, one at a time while frames stay late: lower resolution → drop the halo copies → 30fps → lower again.
+  let step = 0;
   function adapt(gap: number) {
     seen++;
-    if (gap > (1000 / baseCap) * 1.6) slow++;
-    if (seen < 90) return;                        // judge every ~2–3 s
-    if (slow / seen > 0.35 && pr > floor) {
-      pr = Math.max(floor, Math.round((pr - 0.25) * 100) / 100);
-      renderer.setPixelRatio(pr);
-      renderer.setSize(curW, curH, false);
+    if (gap > (1000 / baseCap) * 1.5) slow++;
+    if (seen < 60) return;                        // judge every ~1.5–2 s
+    if (slow / seen > 0.3) {
+      if (pr > floor) { pr = Math.max(floor, Math.round((pr - 0.25) * 100) / 100); renderer.setPixelRatio(pr); renderer.setSize(curW, curH, false); }
+      else if (step === 0 && halos.length) { step = 1; halos.forEach((h) => { h.copy.visible = false; }); }
+      else if (step <= 1 && baseCap > 30) { step = 2; baseCap = 30; }
+      else if (step === 2 && pr > 0.75) { step = 3; pr = 0.75; renderer.setPixelRatio(pr); renderer.setSize(curW, curH, false); }
     }
     slow = 0; seen = 0;
   }
