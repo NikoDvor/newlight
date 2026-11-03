@@ -11,7 +11,7 @@ export interface SceneCtl {
   pointer(x: number, y: number): void;    // -1..1
   setStill(v: boolean): void;              // freeze on a still frame (Calculator share page, reduced motion)
   setHidden(v: boolean): void;             // app in background → stop
-  setScrolling(v: boolean): void;          // user scrolling → half frame rate
+  setScrolling(v: boolean): void;          // user scrolling → phones hold the frame, computers half rate
   dispose(): void;
 }
 
@@ -239,7 +239,8 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
     if (disposed || hidden) { running = false; return; }
     id = raf(loop);
     if (still) { if (last !== -1) { renderer.render(scene, camera); last = -1; } return; }
-    const cap = scrolling ? baseCap / 2 : baseCap;
+    if (scrolling && phone) return;               // phones: hold the frame while a finger is scrolling
+    const cap = scrolling ? baseCap / 2 : baseCap; // computers: half rate while scrolling
     if (last > 0 && t - last < 1000 / cap - 2) return;
     last = t;
     frame++;

@@ -129,13 +129,17 @@ function useSceneInputs(send: (type: string, payload: Record<string, unknown>) =
     const onScroll = () => {
       if (!scrolling) { scrolling = true; send("scrolling", { v: true }); }
       window.clearTimeout(stimer);
-      stimer = window.setTimeout(() => { scrolling = false; send("scrolling", { v: false }); }, 180);
+      stimer = window.setTimeout(() => { scrolling = false; send("scrolling", { v: false }); }, 220);
     };
+    // a finger on the screen counts as scrolling (iOS fires scroll late for inner scrollers)
+    const onTouchStart = () => onScroll();
     window.addEventListener("pointermove", onPointer, { passive: true });
     window.addEventListener("resize", onResize);
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    window.addEventListener("touchmove", onTouchStart, { passive: true, capture: true });
     return () => {
+      window.removeEventListener("touchmove", onTouchStart, { capture: true } as any);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVis);

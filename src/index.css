@@ -170,14 +170,17 @@
 .nl-dark-bg > * { position: relative; z-index: 1; }
 /* The app-wide moving background is the one child that must stay fixed behind everything. */
 .nl-dark-bg > .nl-bg { position: fixed; inset: 0; z-index: 0; }
+/* Horizontal scrollers (dialer table, chip rows) scroll on the GPU — smooth swipes on phones. */
+.nl-dark-bg .overflow-x-auto { -webkit-overflow-scrolling: touch; transform: translateZ(0); will-change: scroll-position; }
+
 /* Boxes sit "at the face": every rounded box, card, tile, button or panel with a background or border
    (by class or inline style) gets a solid backing, so the moving background never shows through.
    ::before sits behind the element's own tinted background, so tints and borders stay. */
-.nl-dark-bg :is([class*="rounded-"],[class*="rounded "]):is([class*="border"],[class*="bg-"],[style*="background"],[style*="border"]):not([class*="rounded-full"]):not(.absolute):not(.fixed):not(.sticky):not(input):not(textarea):not(select):not(img):not(svg) {
+.nl-dark-bg :is([class*="rounded-"],[class*="rounded "]):is([class*="border"],[class*="bg-"],[style*="background"],[style*="border"]):not([class*="rounded-full"]):not(.absolute):not(.fixed):not(.sticky):not(input):not(textarea):not(select):not(img):not(svg):not(table *):not([data-no-backing] *) {
   position: relative;
   isolation: isolate;
 }
-.nl-dark-bg :is([class*="rounded-"],[class*="rounded "]):is([class*="border"],[class*="bg-"],[style*="background"],[style*="border"]):not([class*="rounded-full"]):not(.absolute):not(.fixed):not(.sticky):not(input):not(textarea):not(select):not(img):not(svg)::before {
+.nl-dark-bg :is([class*="rounded-"],[class*="rounded "]):is([class*="border"],[class*="bg-"],[style*="background"],[style*="border"]):not([class*="rounded-full"]):not(.absolute):not(.fixed):not(.sticky):not(input):not(textarea):not(select):not(img):not(svg):not(table *):not([data-no-backing] *)::before {
   content: "";
   position: absolute;
   inset: 0;
