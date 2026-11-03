@@ -112,6 +112,10 @@ function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) =
   );
 }
 
+// #, Business, Decision makers, Front desk, Location, AUM, Empl., Calls, Website, Booking, Called, Outcome, Notes
+const DIALER_COLS = [48, 220, 250, 170, 140, 96, 76, 110, 210, 110, 96, 260, 320];
+const DIALER_TABLE_WIDTH = DIALER_COLS.reduce((a, b) => a + b, 0);
+
 export default function BDRDialer() {
   const navigate = useNavigate();
   const { activeClientId } = useWorkspace();
@@ -531,7 +535,8 @@ export default function BDRDialer() {
   ];
 
   return (
-    <div className="space-y-4">
+    // Spans the full screen width and clips sideways overflow, so a sideways swipe only ever moves the table (never the page).
+    <div className="space-y-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10" style={{ overflowX: "clip" }}>
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">BDR Dialer</h1>
@@ -687,7 +692,9 @@ export default function BDRDialer() {
           className="overflow-x-auto"
           style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain", touchAction: "pan-x pan-y" }}
         >
-          <table className="text-sm border-collapse w-max">
+          {/* Fixed column widths: the table's width never changes as more rows load, so the sideways scroll range stays put. */}
+          <table className="text-sm border-collapse" style={{ tableLayout: "fixed", width: DIALER_TABLE_WIDTH, minWidth: DIALER_TABLE_WIDTH, maxWidth: DIALER_TABLE_WIDTH }}>
+            <colgroup>{DIALER_COLS.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
             <thead className="sticky top-0 z-30" style={{ background: "hsl(215,35%,12%)" }}>
               <tr className="text-left text-[10px] uppercase tracking-wider text-white/55">
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-10 min-w-[40px] max-w-[40px]" style={{ background: "hsl(215,35%,12%)" }}>#</th>
