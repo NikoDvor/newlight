@@ -3,57 +3,33 @@ import { useLocation } from "react-router-dom";
 
 /**
  * NeuralBackground — the newlightgen.com background, recolored to light glowing blue on the dark theme.
+ * Receding grid floor, breathing wireframe core (nested icospheres + rings + cube-in-cube), floating shards,
+ * electric arcs, particle field with proximity lines, light-streak bursts, flowing current lines,
+ * breathing glow and a cursor/touch glow. three.js is loaded on demand.
  *
- *  Full  (WebGL, three.js loaded on demand): receding grid floor, breathing wireframe core
- *        (nested icospheres + rings + cube-in-cube), floating shards, electric arcs, particle field
- *        with proximity lines, light-streak bursts — plus flowing current lines, breathing glow, cursor glow.
- *  Calm  (no WebGL): CSS perspective grid, flowing current lines, breathing glow. Used on phones that can't keep up,
- *        on public pages (Pay & Sign, booking) and when someone picks "Calm".
- *  Off   : soft static glow only.
- *
- * Safeguards: phones get fewer objects, lower resolution and 30fps; auto-downgrades to Calm when frames drop;
- * pauses when the app is hidden; freezes (still frame) on the Calculator's Calculations page so screen-sharing
- * stays crisp; respects reduced-motion. Per-device choice in localStorage ("nl-bg-mode").
+ * Built-in (not user options): phones draw fewer objects at 1x resolution and 30fps; it pauses while the app
+ * is hidden; it freezes on the Calculator's Calculations page so screen-sharing stays crisp.
+ * Public pages (Pay & Sign, booking) pass force="calm": same lines, grid and glow without the 3D scene.
+ * Layouts render it as a direct child of .nl-dark-bg (see index.css: .nl-dark-bg > .nl-bg stays fixed).
  */
-export type BgMode = "full" | "calm" | "off";
-const KEY = "nl-bg-mode";
-const DOWNGRADED = "nl-bg-downgraded";
+const BLUE = 0x9fe2ff, ICE = 0xe6f8ff, DEEP = 0x5cc2ff;
 
-export function getBgMode(): BgMode {
-  try { const v = localStorage.getItem(KEY); return v === "calm" || v === "off" ? v : "full"; } catch { return "full"; }
-}
-export function setBgMode(m: BgMode) {
-  try { localStorage.setItem(KEY, m); sessionStorage.removeItem(DOWNGRADED); } catch { /* private mode */ }
-  window.dispatchEvent(new CustomEvent("nl-bg-mode", { detail: m }));
-}
-
-const BLUE = 0x7fd3ff, ICE = 0xcdeeff, DEEP = 0x3da9ff;
-
-export default function NeuralBackground({ force }: { force?: BgMode }) {
+export default function NeuralBackground({ force }: { force?: "calm" }) {
   const loc = useLocation();
-  const [pref, setPref] = useState<BgMode>(() => getBgMode());
-  const [downgraded, setDowngraded] = useState(() => { try { return sessionStorage.getItem(DOWNGRADED) === "1"; } catch { return false; } });
   const reduce = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  useEffect(() => {
-    const on = (e: Event) => { setPref((e as CustomEvent).detail as BgMode); setDowngraded(false); };
-    window.addEventListener("nl-bg-mode", on);
-    return () => window.removeEventListener("nl-bg-mode", on);
-  }, []);
-
-  // Freeze while the Calculator's shared page is open.
   const still = reduce || (/\/calculator\//.test(loc.pathname) && new URLSearchParams(loc.search).get("view") === "calc");
-  let mode: BgMode = pref;
-  if (pref !== "off" && (force === "calm" || downgraded)) mode = "calm";
-  if (force === "off") mode = "off";
+  const [webglFailed, setWebglFailed] = useState(false);
+  const calm = force === "calm" || webglFailed;
 
   return (
     <div className="nl-bg pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden data-still={still ? "1" : "0"}>
       <BgStyles />
       <Glow still={still} />
-      {mode !== "off" && <CurrentLines still={still} />}
-      {mode === "calm" && <CssGrid still={still} />}
-      {mode === "full" && <Scene still={still} onSlow={() => { try { sessionStorage.setItem(DOWNGRADED, "1"); } catch { /* */ } setDowngraded(true); }} />}
-      {mode !== "off" && !still && <CursorGlow />}
+      <CurrentLines still={still} />
+      {!calm && <div className={`nl-bg-core absolute left-1/2 top-[42%] h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full ${still ? "nl-bg-paused" : ""}`}
+        style={{ background: "radial-gradient(circle, hsla(198,100%,62%,.28) 0%, hsla(205,100%,60%,.10) 40%, transparent 70%)" }} />}
+      {calm ? <CssGrid still={still} /> : <Scene still={still} onFail={() => setWebglFailed(true)} />}
+      {!still && <CursorGlow />}
     </div>
   );
 }
@@ -63,9 +39,9 @@ function Glow({ still }: { still: boolean }) {
   return (
     <>
       <div className={`nl-bg-glow absolute inset-x-0 top-0 h-[70vh] ${still ? "nl-bg-paused" : ""}`}
-        style={{ background: "radial-gradient(ellipse 55% 100% at 50% 0%, hsla(200,100%,62%,.16) 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(ellipse 55% 100% at 50% 0%, hsla(200,100%,62%,.22) 0%, transparent 70%)" }} />
       <div className={`nl-bg-glow2 absolute inset-x-0 bottom-0 h-[55vh] ${still ? "nl-bg-paused" : ""}`}
-        style={{ background: "radial-gradient(ellipse 60% 90% at 50% 100%, hsla(212,100%,60%,.10) 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(ellipse 60% 90% at 50% 100%, hsla(212,100%,60%,.15) 0%, transparent 70%)" }} />
     </>
   );
 }
@@ -91,7 +67,7 @@ function CurrentLines({ still }: { still: boolean }) {
     const n = typeof window !== "undefined" && window.innerWidth < 768 ? 5 : 10;
     return Array.from({ length: n }, (_, i) => ({
       id: i, d: organicPath(), dur: 5 + Math.random() * 5, delay: -((i / n) * 8 + Math.random()),
-      op: 0.22 + Math.random() * 0.2, w: 1 + Math.random() * 0.8,
+      op: 0.4 + Math.random() * 0.3, w: 1.2 + Math.random() * 0.9,
     }));
   });
   return (
@@ -133,7 +109,7 @@ function CursorGlow() {
 }
 
 /* ---------------- full WebGL scene ---------------- */
-function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
+function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stillRef = useRef(still);
   stillRef.current = still;
@@ -143,16 +119,17 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
     let cleanup = () => {};
     (async () => {
       let THREE: typeof import("three");
-      try { THREE = await import("three"); } catch { onSlow(); return; }
+      try { THREE = await import("three"); } catch { onFail(); return; }
       if (disposed || !mountRef.current) return;
       const mount = mountRef.current;
       const phone = window.innerWidth < 768;
       const mul = phone ? 0.45 : 1;
       const fpsCap = phone ? 30 : 50;
+      const vis = phone ? 1.45 : 1; // phones skip the CSS glow filter, so lines draw brighter instead
 
       let renderer: import("three").WebGLRenderer;
       try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !phone, powerPreference: "low-power" }); }
-      catch { onSlow(); return; }
+      catch { onFail(); return; }
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, phone ? 1 : 1.5));
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setClearColor(0x000000, 0);
@@ -171,7 +148,7 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
       const makeGrid = () => {
         const g = new THREE.GridHelper(gridSize, 40, BLUE, BLUE);
         const m = g.material as import("three").LineBasicMaterial;
-        m.transparent = true; m.opacity = 0.13; m.blending = add; m.depthWrite = false;
+        m.transparent = true; m.opacity = 0.3 * (phone ? 1.15 : 1); m.blending = add; m.depthWrite = false;
         g.position.y = -2.6; track(g.geometry); track(m); return g;
       };
       const grid1 = makeGrid(), grid2 = makeGrid();
@@ -184,10 +161,10 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
       scene.add(core);
       const spheres = [3.4, 2.6, 1.8].map((r, i) => {
         const geo = track(new THREE.EdgesGeometry(track(new THREE.IcosahedronGeometry(r, 1))));
-        const mat = track(lineMat(i === 2 ? ICE : BLUE, 0.07 + i * 0.03));
+        const mat = track(lineMat(i === 2 ? ICE : BLUE, (0.22 + i * 0.07) * vis));
         const mesh = new THREE.LineSegments(geo, mat);
         core.add(mesh);
-        return { mesh, mat, base: 0.07 + i * 0.03, off: i * 2000, rx: (i % 2 ? -1 : 1) * 0.0018 * (1 + i * 0.4), ry: 0.0013 * (1 + i * 0.5) };
+        return { mesh, mat, base: (0.22 + i * 0.07) * vis, off: i * 2000, rx: (i % 2 ? -1 : 1) * 0.0018 * (1 + i * 0.4), ry: 0.0013 * (1 + i * 0.5) };
       });
       const rings = [4.4, 5.2].map((r, i) => {
         const pts: import("three").Vector3[] = [];
@@ -201,7 +178,7 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
       });
       const cubes = [1.0, 0.55].map((s, i) => {
         const geo = track(new THREE.EdgesGeometry(track(new THREE.BoxGeometry(s, s, s))));
-        const mat = track(lineMat(ICE, 0.22 - i * 0.04));
+        const mat = track(lineMat(ICE, 0.38 - i * 0.06));
         const m = new THREE.LineSegments(geo, mat);
         core.add(m);
         return m;
@@ -211,7 +188,7 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
       const shards = Array.from({ length: Math.round(16 * mul) }, () => {
         const r = 0.15 + Math.random() * 0.5;
         const geo = track(new THREE.EdgesGeometry(track(Math.random() > 0.5 ? new THREE.TetrahedronGeometry(r, 0) : new THREE.OctahedronGeometry(r, 0))));
-        const m = new THREE.LineSegments(geo, track(lineMat(BLUE, 0.14 + Math.random() * 0.14)));
+        const m = new THREE.LineSegments(geo, track(lineMat(BLUE, (0.25 + Math.random() * 0.2) * vis)));
         m.position.set((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 10, -Math.random() * 22 - 2);
         m.userData = { rx: (Math.random() - 0.5) * 0.008, ry: (Math.random() - 0.5) * 0.008, vx: (Math.random() - 0.5) * 0.004, vy: (Math.random() - 0.5) * 0.004 };
         scene.add(m);
@@ -229,13 +206,13 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
         px: Math.random() * 6.28, py: Math.random() * 6.28, pz: Math.random() * 6.28,
       }));
       pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      const points = new THREE.Points(pGeo, track(new THREE.PointsMaterial({ color: ICE, size: phone ? 0.05 : 0.04, transparent: true, opacity: 0.7, blending: add, depthWrite: false })));
+      const points = new THREE.Points(pGeo, track(new THREE.PointsMaterial({ color: ICE, size: phone ? 0.07 : 0.05, transparent: true, opacity: 0.9, blending: add, depthWrite: false })));
       scene.add(points);
       const maxLinks = phone ? 40 : 120;
       const linkPos = new Float32Array(maxLinks * 6);
       const linkGeo = track(new THREE.BufferGeometry());
       linkGeo.setAttribute("position", new THREE.BufferAttribute(linkPos, 3));
-      const links = new THREE.LineSegments(linkGeo, track(lineMat(BLUE, 0.16)));
+      const links = new THREE.LineSegments(linkGeo, track(lineMat(BLUE, 0.28 * vis)));
       scene.add(links);
 
       // 5. electric arcs between drifting anchors
@@ -259,8 +236,6 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
       const onVis = () => { hidden = document.hidden; if (!hidden) { last = 0; raf = requestAnimationFrame(loop); } };
       document.addEventListener("visibilitychange", onVis);
 
-      // auto-downgrade: sample the first ~4s of real frames
-      let sampleStart = 0, sampleFrames = 0, sampled = false;
 
       const step = (now: number) => {
         // grid
@@ -277,7 +252,7 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
         rings.forEach((r, i) => {
           const ph = ((now + r.off) * Math.PI * 2) / 6000;
           r.line.scale.setScalar(1 + Math.sin(ph) * 0.08);
-          r.mat.opacity = 0.1 * (1 + Math.sin(ph) * 0.7);
+          r.mat.opacity = 0.3 * vis * (1 + Math.sin(ph) * 0.6);
           r.line.rotation.z += i ? -0.0016 : 0.0012;
         });
         cubes[0].rotation.x += 0.004; cubes[0].rotation.y += 0.003;
@@ -320,7 +295,7 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
             if (a.distanceTo(b) < 6) {
               const pts: import("three").Vector3[] = [];
               for (let k = 0; k <= 10; k++) { const v = new THREE.Vector3().lerpVectors(a, b, k / 10); if (k > 0 && k < 10) { v.x += (Math.random() - 0.5) * 0.3; v.y += (Math.random() - 0.5) * 0.3; } pts.push(v); }
-              arcGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(ICE, 0.18 + Math.random() * 0.14)));
+              arcGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(ICE, 0.3 + Math.random() * 0.2)));
             }
           }
         }
@@ -353,16 +328,6 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
         raf = requestAnimationFrame(loop);
         if (stillRef.current) { if (last !== -1) { renderer.render(scene, camera); last = -1; } return; }
         if (last > 0 && t - last < 1000 / fpsCap - 2) return;
-        // downgrade check: real frame rate during the first seconds
-        if (!sampled) {
-          if (!sampleStart) sampleStart = t;
-          sampleFrames++;
-          if (t - sampleStart > 4000) {
-            sampled = true;
-            const fps = (sampleFrames * 1000) / (t - sampleStart);
-            if (fps < (phone ? 18 : 24)) { onSlow(); return; }
-          }
-        }
         last = t;
         step(t);
         renderer.render(scene, camera);
@@ -385,7 +350,7 @@ function Scene({ still, onSlow }: { still: boolean; onSlow: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={mountRef} className="absolute inset-0 transition-opacity duration-1000" />;
+  return <div ref={mountRef} className="nl-bg-scene absolute inset-0" />;
 }
 
 function BgStyles() {
@@ -399,8 +364,13 @@ function BgStyles() {
 .nl-bg-floor{transform:rotateX(68deg);background-image:linear-gradient(rgba(127,211,255,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(127,211,255,.16) 1px,transparent 1px);background-size:56px 56px;mask-image:linear-gradient(to top,#000 10%,transparent 85%);-webkit-mask-image:linear-gradient(to top,#000 10%,transparent 85%);animation:nl-bg-floor 3.2s linear infinite}
 @keyframes nl-bg-floor{to{background-position:0 56px}}
 .nl-bg-paused,.nl-bg-paused *{animation-play-state:paused!important}
+.nl-bg-core{animation:nl-bg-core 6s ease-in-out infinite}
+@keyframes nl-bg-core{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
+.nl-bg-scene{-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 62%,transparent 98%);mask-image:linear-gradient(to bottom,#000 0%,#000 62%,transparent 98%)}
+@media (min-width:768px){.nl-bg-scene canvas{filter:drop-shadow(0 0 3px rgba(150,220,255,.55))}}
+@media (max-width:767px){.nl-bg-scene{-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 85%);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 85%)}}
 .nl-bg[data-still="1"] .nl-bg-streak{animation-play-state:paused}
-@media (prefers-reduced-motion:reduce){.nl-bg-streak,.nl-bg-glow,.nl-bg-glow2,.nl-bg-floor{animation:none}}
+@media (prefers-reduced-motion:reduce){.nl-bg-streak,.nl-bg-glow,.nl-bg-glow2,.nl-bg-floor,.nl-bg-core{animation:none}}
 `}</style>
   );
 }

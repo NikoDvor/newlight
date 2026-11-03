@@ -845,7 +845,7 @@ export default function Dashboard() {
   return (
     <div className="dash-dark dash-breathe">
       {/* ═══ Parallax Atmospheric layers (scroll-enhanced, on top of global bg) ═══ */}
-      <ParallaxBackground />
+      {/* App-wide NeuralBackground (layout) replaces the old dashboard layers */}
 
       <div className="relative z-10 space-y-14">
 

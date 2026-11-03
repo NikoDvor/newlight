@@ -168,6 +168,8 @@
   color: hsl(210 40% 90%);
 }
 .nl-dark-bg > * { position: relative; z-index: 1; }
+/* The app-wide moving background is the one child that must stay fixed behind everything. */
+.nl-dark-bg > .nl-bg { position: fixed; inset: 0; z-index: 0; }
 /* Heading overrides for dark bg */
 .nl-dark-bg h1, .nl-dark-bg h2, .nl-dark-bg h3,
 .nl-dark-bg h4, .nl-dark-bg h5, .nl-dark-bg h6 {

@@ -5,7 +5,6 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import NeuralBackground from "@/components/fx/NeuralBackground";
-import BackgroundModeSwitch from "@/components/fx/BackgroundModeSwitch";
 import AppTour from "@/components/tour/AppTour";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getEmployeeRoute, getRoleBadge } from "@/lib/employeeRouting";
@@ -92,7 +91,6 @@ function EmployeeSidebar() {
             ))}
           </SidebarGroupContent>
         </SidebarGroup>
-        <div className="mt-auto pb-2"><BackgroundModeSwitch compact /></div>
       </SidebarContent>
     </Sidebar>
   );
