@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Slider } from "@/components/ui/slider";
 import { computeDiscovery, EMPTY_INPUTS } from "@/lib/discoveryNumbers";
 import { ACADEMY } from "./ui";
+import { OfferCompare, OfferTimeline, Packages, PaymentSim, WhoPaysHow } from "./packageVisuals";
 
 /**
  * Interactive visuals for training chapters, referenced in content as [[visual:key]].
@@ -475,69 +476,13 @@ function LeakFix() {
   );
 }
 
-function OfferTimeline() {
-  const parts = [
-    { l: "Day 1", d: "Setup paid. We start building.", w: 12 },
-    { l: "Days 1–90", d: "No commission, no retainer. We make their investment back.", w: 48 },
-    { l: "After", d: "Ongoing plan starts (revenue share or $7,000/mo).", w: 40 },
-  ];
-  const [i, setI] = useState(1);
-  return (
-    <Frame caption="Tap a part of the timeline.">
-      <div className="flex h-10 w-full gap-1">
-        {parts.map((p, k) => (
-          <motion.button key={p.l} type="button" onClick={() => setI(k)}
-            className="h-full rounded-md text-[11px] font-semibold text-white"
-            style={{ width: `${p.w}%`, background: k === 0 ? "hsl(211,96%,45%)" : k === 1 ? "linear-gradient(90deg, hsla(197,100%,50%,.35), hsla(197,100%,55%,.65))" : "hsl(152,55%,38%)", outline: i === k ? "1px solid white" : "none" }}
-            initial={{ opacity: 0, scaleX: 0.6 }} whileInView={{ opacity: 1, scaleX: 1 }} viewport={{ once: true }} transition={{ delay: k * 0.15 }}>
-            {p.l}
-          </motion.button>
-        ))}
-      </div>
-      <AnimatePresence mode="wait">
-        <motion.p key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-3 text-[13px] text-white/80">{parts[i].d}</motion.p>
-      </AnimatePresence>
-    </Frame>
-  );
-}
-
-function OfferCompare() {
-  const [clients, setClients] = useState(10);
-  const [value, setValue] = useState(8000);
-  const a = clients * value * 0.25;
-  const b = 7000 * 12;
-  const max = Math.max(a, b, 1);
-  return (
-    <Frame caption="Year one after the 90 days, example only. Option A drops to 10% in later years.">
-      <div className="space-y-3">
-        <div>
-          <div className="flex justify-between text-[11px] text-white/60 mb-1"><span>New clients we produce (year 1)</span><span className="font-semibold text-white">{clients}</span></div>
-          <Slider value={[clients]} min={1} max={60} step={1} onValueChange={(v) => setClients(v[0])} />
-        </div>
-        <div>
-          <div className="flex justify-between text-[11px] text-white/60 mb-1"><span>First-year revenue per client</span><span className="font-semibold text-white">{money(value)}</span></div>
-          <Slider value={[value]} min={1000} max={30000} step={500} onValueChange={(v) => setValue(v[0])} />
-        </div>
-      </div>
-      <div className="mt-4 space-y-2">
-        {[{ l: "A · 25% revenue share", v: a, c: ACADEMY.electric }, { l: "B · $7,000 / month", v: b, c: ACADEMY.sdr }].map((r) => (
-          <div key={r.l}>
-            <div className="flex justify-between text-[11px] mb-1"><span className="text-white/70">{r.l}</span><span className="font-semibold text-white tabular-nums">{money(r.v)}</span></div>
-            <div className="h-2.5 rounded-full bg-white/[0.05] overflow-hidden"><motion.div className="h-full rounded-full" style={{ background: r.c }} animate={{ width: `${(r.v / max) * 100}%` }} /></div>
-          </div>
-        ))}
-      </div>
-    </Frame>
-  );
-}
-
 // ─── Objection handling ────────────────────────────────────────────────────
 
 const CORES: { key: string; name: string; ack: string; play: string; hear: string[] }[] = [
   { key: "ni", name: "Not interested", ack: "\"I hear you when you say you aren't interested. But can I make a suggestion?\"", play: "\"Is it more about the timing, the pricing, or something we went over?\"", hear: ["We're good.", "No thanks.", "We're all set.", "Not looking for anything.", "We get our clients from referrals.", "I'm busy."] },
   { key: "val", name: "Don't see the value", ack: "\"I understand you don't see the value — can I ask a question?\"", play: "\"Do you not see the value in the modern marketing, or the AI?\" Then: \"What's really beneath this all?\"", hear: ["What would this even do for us?", "We're doing fine.", "That's not really our thing.", "Sounds like every other agency."] },
   { key: "cost", name: "Too expensive", ack: "\"I know it's out of your budget right now. But can I make a suggestion?\"", play: "Compare the missed revenue to what they spend now. Then close.", hear: ["That's a lot of money.", "It's not in the budget.", "Can you do it for less?", "Your competitor is cheaper."] },
-  { key: "trust", name: "Don't trust it'll work", ack: "\"You don't trust that we can make this happen — I understand. I'm actually glad you brought this up.\"", play: "Explain the offer: we make their investment back first, or work for free until we do.", hear: ["Everyone says that.", "Sounds too good to be true.", "Can you guarantee results?", "I've heard this pitch before."] },
+  { key: "trust", name: "Don't trust it'll work", ack: "\"You don't trust that we can make this happen — I understand. I'm actually glad you brought this up.\"", play: "Growth: we make their setup back first, or keep working free until we do. Command Center / Enterprise: their own numbers from the Calculator.", hear: ["Everyone says that.", "Sounds too good to be true.", "Can you guarantee results?", "I've heard this pitch before."] },
   { key: "think", name: "Need to think", ack: "\"Totally fair.\"", play: "\"Decisions don't take time — they take information. What are your main concerns?\"", hear: ["Let me sleep on it.", "Call me next quarter.", "Maybe after tax season.", "Now's not a good time."] },
   { key: "who", name: "Need to talk to someone", ack: "\"That's helpful to know.\"", play: "\"Who would I need to involve — can we get them on a call together?\"", hear: ["My partner handles that.", "I'm not the decision maker.", "I'll run it by the other advisors."] },
   { key: "cov", name: "Already have someone", ack: "\"That's great — how's it going?\"", play: "\"What is your current setup not doing that you wish it were?\"", hear: ["We handle it in-house.", "Our home office does our marketing.", "We tried an agency — didn't work.", "My nephew does our website."] },
@@ -895,6 +840,9 @@ export const VISUALS: Record<string, ComponentType> = {
   "leak-fix": LeakFix,
   "offer-timeline": OfferTimeline,
   "offer-compare": OfferCompare,
+  packages: Packages,
+  "who-pays-how": WhoPaysHow,
+  "payment-sim": PaymentSim,
   temperature: Temperature,
   "objection-funnel": ObjectionFunnel,
   "objection-deck": ObjectionDeck,
