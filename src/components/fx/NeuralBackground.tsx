@@ -12,7 +12,6 @@ import { useLocation } from "react-router-dom";
  * Public pages (Pay & Sign, booking) pass force="calm": same lines and glow without the 3D scene.
  * Layouts render it as a direct child of .nl-dark-bg (see index.css: .nl-dark-bg > .nl-bg stays fixed).
  */
-const BLUE = 0xb8ebff, ICE = 0xf2fbff, DEEP = 0x7fd0ff;
 
 export default function NeuralBackground({ force }: { force?: "calm" }) {
   const loc = useLocation();
@@ -100,254 +99,109 @@ function CursorGlow() {
 }
 
 /* ---------------- full WebGL scene ---------------- */
+// Runs in a Web Worker on an OffscreenCanvas where supported (scrolling/taps never wait on it);
+// otherwise the same scene runs on the main thread. Scene code: ./neuralScene.ts.
 function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const stillRef = useRef(still);
-  stillRef.current = still;
+  const [useWorker, setUseWorker] = useState(() =>
+    typeof window !== "undefined" && typeof Worker !== "undefined" && typeof (window as any).OffscreenCanvas !== "undefined"
+    && typeof (HTMLCanvasElement.prototype as any).transferControlToOffscreen === "function");
+  return useWorker
+    ? <WorkerScene key="w" still={still} onFail={() => setUseWorker(false)} />
+    : <MainScene key="m" still={still} onFail={onFail} />;
+}
 
+function sceneOpts() {
+  const phone = window.innerWidth < 768;
+  return { width: window.innerWidth, height: window.innerHeight, dpr: Math.min(window.devicePixelRatio || 1, phone ? 1 : 1.5), phone, glow: !phone };
+}
+
+/** Wires window events (resize, pointer, visibility, scroll) to a scene controller-like sink. */
+function useSceneInputs(send: (type: string, payload: Record<string, unknown>) => void, still: boolean) {
+  useEffect(() => { send("still", { v: still }); }, [still]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    let disposed = false;
-    let cleanup = () => {};
-    (async () => {
-      let THREE: typeof import("three");
-      try { THREE = await import("three"); } catch { onFail(); return; }
-      if (disposed || !mountRef.current) return;
-      const mount = mountRef.current;
-      const phone = window.innerWidth < 768;
-      const mul = phone ? 0.45 : 1;
-      const fpsCap = phone ? 30 : 50;
-      const vis = phone ? 1.45 : 1; // phones skip the CSS glow filter, so lines draw brighter instead
+    let px = 0, py = 0, ptimer = 0, stimer = 0, scrolling = false;
+    const onPointer = (e: PointerEvent) => {
+      px = (e.clientX / window.innerWidth - 0.5) * 2; py = (e.clientY / window.innerHeight - 0.5) * 2;
+      if (!ptimer) ptimer = window.setTimeout(() => { ptimer = 0; send("pointer", { x: px, y: py }); }, 50);
+    };
+    const onResize = () => send("resize", { w: window.innerWidth, h: window.innerHeight });
+    const onVis = () => send("hidden", { v: document.hidden });
+    const onScroll = () => {
+      if (!scrolling) { scrolling = true; send("scrolling", { v: true }); }
+      window.clearTimeout(stimer);
+      stimer = window.setTimeout(() => { scrolling = false; send("scrolling", { v: false }); }, 180);
+    };
+    window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("resize", onResize);
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("scroll", onScroll, { capture: true } as any);
+      window.clearTimeout(ptimer); window.clearTimeout(stimer);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+}
 
-      let renderer: import("three").WebGLRenderer;
-      try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !phone, powerPreference: "low-power" }); }
-      catch { onFail(); return; }
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, phone ? 1 : 1.5));
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setClearColor(0x000000, 0);
-      mount.appendChild(renderer.domElement);
+const idle = (cb: () => void) => {
+  const ric = (window as any).requestIdleCallback as undefined | ((cb: () => void, o?: { timeout: number }) => number);
+  return ric ? ric(cb, { timeout: 1200 }) : window.setTimeout(cb, 300);
+};
 
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
-      camera.position.set(0, 1.2, 8);
-      const add = THREE.AdditiveBlending;
-      const lineMat = (color: number, opacity: number) => new THREE.LineBasicMaterial({ color, transparent: true, opacity, blending: add, depthWrite: false });
-      const disposables: { dispose: () => void }[] = [];
-      const track = <T extends { dispose: () => void }>(x: T) => { disposables.push(x); return x; };
+function WorkerScene({ still, onFail }: { still: boolean; onFail: () => void }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const send = (type: string, payload: Record<string, unknown>) => workerRef.current?.postMessage({ type, ...payload });
+  useSceneInputs(send, still);
+  useEffect(() => {
+    let cancelled = false;
+    idle(() => {
+      if (cancelled || !ref.current) return;
+      let worker: Worker;
+      try {
+        worker = new Worker(new URL("./neuralScene.worker.ts", import.meta.url), { type: "module" });
+        const off = (ref.current as any).transferControlToOffscreen();
+        worker.onmessage = (e) => { if (e.data?.type === "fail") { worker.terminate(); workerRef.current = null; onFail(); } };
+        worker.onerror = () => { worker.terminate(); workerRef.current = null; onFail(); };
+        worker.postMessage({ type: "init", canvas: off, opts: sceneOpts() }, [off]);
+        workerRef.current = worker;
+        worker.postMessage({ type: "still", v: still });
+        if (document.hidden) worker.postMessage({ type: "hidden", v: true });
+      } catch { onFail(); }
+    });
+    return () => { cancelled = true; workerRef.current?.postMessage({ type: "dispose" }); workerRef.current?.terminate(); workerRef.current = null; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return <canvas ref={ref} className="nl-bg-scene absolute inset-0 h-full w-full" />;
+}
 
-      // 2. breathing core: nested icospheres + rings + cube-in-cube
-      const core = new THREE.Group();
-      core.position.set(0, 0.7, -7);
-      scene.add(core);
-      const spheres = [3.4, 2.6, 1.8].map((r, i) => {
-        const geo = track(new THREE.EdgesGeometry(track(new THREE.IcosahedronGeometry(r, 1))));
-        const mat = track(lineMat(i === 2 ? ICE : BLUE, Math.min(1, (0.42 + i * 0.16) * vis)));
-        const mesh = new THREE.LineSegments(geo, mat);
-        core.add(mesh);
-        return { mesh, mat, base: Math.min(0.85, (0.42 + i * 0.16) * vis), off: i * 2000, rx: (i % 2 ? -1 : 1) * 0.0018 * (1 + i * 0.4), ry: 0.0013 * (1 + i * 0.5) };
-      });
-      const rings = [4.4, 5.2].map((r, i) => {
-        const pts: import("three").Vector3[] = [];
-        for (let k = 0; k <= 128; k++) { const a = (k / 128) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0)); }
-        const geo = track(new THREE.BufferGeometry().setFromPoints(pts));
-        const mat = track(lineMat(i ? DEEP : BLUE, 0.12));
-        const line = new THREE.Line(geo, mat);
-        line.rotation.x = 1.1 + i * 0.35; line.rotation.y = i * 0.6;
-        core.add(line);
-        return { line, mat, off: 600 + i * 900 };
-      });
-      const cubes = [1.0, 0.55].map((s, i) => {
-        const geo = track(new THREE.EdgesGeometry(track(new THREE.BoxGeometry(s, s, s))));
-        const mat = track(lineMat(ICE, 0.7 - i * 0.1));
-        const m = new THREE.LineSegments(geo, mat);
-        core.add(m);
-        return m;
-      });
-
-      // 3. floating shards
-      const shards = Array.from({ length: Math.round(16 * mul) }, () => {
-        const r = 0.15 + Math.random() * 0.5;
-        const geo = track(new THREE.EdgesGeometry(track(Math.random() > 0.5 ? new THREE.TetrahedronGeometry(r, 0) : new THREE.OctahedronGeometry(r, 0))));
-        const m = new THREE.LineSegments(geo, track(lineMat(BLUE, Math.min(1, (0.45 + Math.random() * 0.25) * vis))));
-        m.position.set((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 10, -Math.random() * 22 - 2);
-        m.userData = { rx: (Math.random() - 0.5) * 0.008, ry: (Math.random() - 0.5) * 0.008, vx: (Math.random() - 0.5) * 0.004, vy: (Math.random() - 0.5) * 0.004 };
-        scene.add(m);
-        return m;
-      });
-
-      // 4. particle field with proximity lines
-      const pCount = Math.round(90 * mul);
-      const pGeo = track(new THREE.BufferGeometry());
-      const pos = new Float32Array(pCount * 3);
-      const L = Array.from({ length: pCount }, () => ({
-        cx: (Math.random() - 0.5) * 16, cy: (Math.random() - 0.5) * 9, cz: -4 - Math.random() * 10,
-        ax: 0.5 + Math.random() * 1.2, ay: 0.4 + Math.random() * 1, az: 0.3 + Math.random() * 0.6,
-        fx: 0.00012 + Math.random() * 0.0002, fy: 0.0001 + Math.random() * 0.0002, fz: 0.0001 + Math.random() * 0.00015,
-        px: Math.random() * 6.28, py: Math.random() * 6.28, pz: Math.random() * 6.28,
-      }));
-      pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      const points = new THREE.Points(pGeo, track(new THREE.PointsMaterial({ color: ICE, size: phone ? 0.07 : 0.05, transparent: true, opacity: 0.9, blending: add, depthWrite: false })));
-      scene.add(points);
-      const maxLinks = phone ? 40 : 120;
-      const linkPos = new Float32Array(maxLinks * 6);
-      const linkGeo = track(new THREE.BufferGeometry());
-      linkGeo.setAttribute("position", new THREE.BufferAttribute(linkPos, 3));
-      const links = new THREE.LineSegments(linkGeo, track(lineMat(BLUE, Math.min(1, 0.45 * vis))));
-      scene.add(links);
-
-      // 5. electric arcs between drifting anchors
-      const anchors = Array.from({ length: 3 }, () => ({ phase: Math.random() * 6.28, speed: 0.0006 + Math.random() * 0.0008, rx: 4 + Math.random() * 2, ry: 2 + Math.random() * 1.5, z: -3 - Math.random() * 3, p: new THREE.Vector3() }));
-      // 3 pairs × 10 segments, preallocated and updated in place (no per-frame allocation → no GC hitches)
-      const ARC_SEGS = 10, ARC_PAIRS = 3;
-      const arcPos = new Float32Array(ARC_PAIRS * ARC_SEGS * 6);
-      const arcGeo = track(new THREE.BufferGeometry());
-      arcGeo.setAttribute("position", new THREE.BufferAttribute(arcPos, 3));
-      const arcMat = track(lineMat(ICE, 0.38));
-      scene.add(new THREE.LineSegments(arcGeo, arcMat));
-      let arcAt = 0;
-      const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
-
-      // 6. light-streak bursts from the core — a fixed pool of 4 lines, reused
-      const streaks = Array.from({ length: 4 }, () => {
-        const pos = new Float32Array(6);
-        const geo = track(new THREE.BufferGeometry());
-        geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-        const mat = track(lineMat(0xffffff, 0));
-        const line = new THREE.Line(geo, mat);
-        line.position.copy(core.position);
-        line.frustumCulled = false;
-        scene.add(line);
-        return { line, pos, geo, mat, born: -1, dx: 0, dy: 0, dz: 0 };
-      });
-      let nextBurst = performance.now() + 2500;
-
-      // input + lifecycle
-      let mx = 0, my = 0;
-      const onPointer = (e: PointerEvent) => { mx = (e.clientX / window.innerWidth - 0.5) * 2; my = (e.clientY / window.innerHeight - 0.5) * 2; };
-      const onResize = () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); };
-      window.addEventListener("pointermove", onPointer, { passive: true });
-      window.addEventListener("resize", onResize);
-
-      let raf = 0, last = 0, hidden = document.hidden;
-      const onVis = () => { hidden = document.hidden; if (!hidden) { last = 0; raf = requestAnimationFrame(loop); } };
-      document.addEventListener("visibilitychange", onVis);
-
-
-      const step = (now: number) => {
-        // breathing core
-        spheres.forEach((s) => {
-          const ph = ((now + s.off) * Math.PI * 2) / 6000;
-          s.mesh.scale.setScalar(1 + Math.sin(ph) * 0.12);
-          s.mat.opacity = s.base * (1 + Math.sin(ph) * 0.6);
-          s.mesh.rotation.x += s.rx; s.mesh.rotation.y += s.ry;
-        });
-        rings.forEach((r, i) => {
-          const ph = ((now + r.off) * Math.PI * 2) / 6000;
-          r.line.scale.setScalar(1 + Math.sin(ph) * 0.08);
-          r.mat.opacity = Math.min(1, 0.5 * vis * (1 + Math.sin(ph) * 0.5));
-          r.line.rotation.z += i ? -0.0016 : 0.0012;
-        });
-        cubes[0].rotation.x += 0.004; cubes[0].rotation.y += 0.003;
-        cubes[1].rotation.x -= 0.006; cubes[1].rotation.z += 0.005;
-        core.rotation.y += 0.0008;
-        // shards
-        shards.forEach((s) => {
-          s.rotation.x += s.userData.rx; s.rotation.y += s.userData.ry;
-          s.position.x += s.userData.vx; s.position.y += s.userData.vy;
-          if (s.position.x > 10) s.position.x = -10; if (s.position.x < -10) s.position.x = 10;
-          if (s.position.y > 6) s.position.y = -6; if (s.position.y < -6) s.position.y = 6;
-        });
-        // particles + links
-        for (let i = 0; i < pCount; i++) {
-          const p = L[i];
-          pos[i * 3] = p.cx + Math.sin(now * p.fx + p.px) * p.ax;
-          pos[i * 3 + 1] = p.cy + Math.sin(now * p.fy + p.py) * p.ay;
-          pos[i * 3 + 2] = p.cz + Math.sin(now * p.fz + p.pz) * p.az;
-        }
-        pGeo.attributes.position.needsUpdate = true;
-        let n = 0;
-        for (let i = 0; i < pCount && n < maxLinks; i++) {
-          for (let j = i + 1; j < pCount && n < maxLinks; j++) {
-            const dx = pos[i * 3] - pos[j * 3], dy = pos[i * 3 + 1] - pos[j * 3 + 1], dz = pos[i * 3 + 2] - pos[j * 3 + 2];
-            if (dx * dx + dy * dy + dz * dz < 2.2) {
-              linkPos.set([pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2], pos[j * 3], pos[j * 3 + 1], pos[j * 3 + 2]], n * 6);
-              n++;
-            }
-          }
-        }
-        linkGeo.setDrawRange(0, n * 2);
-        linkGeo.attributes.position.needsUpdate = true;
-        // arcs
-        anchors.forEach((a) => { a.phase += a.speed * 16; a.p.set(Math.cos(a.phase) * a.rx, Math.sin(a.phase * 1.3) * a.ry, a.z); });
-        if (now - arcAt > 110) {
-          arcAt = now;
-          let seg = 0;
-          for (let i = 0; i < anchors.length; i++) for (let j = i + 1; j < anchors.length; j++) {
-            const a = anchors[i].p, b = anchors[j].p;
-            if (a.distanceTo(b) >= 6) continue;
-            let px = a.x, py = a.y, pz = a.z;
-            for (let k = 1; k <= ARC_SEGS; k++) {
-              tmpA.lerpVectors(a, b, k / ARC_SEGS);
-              if (k < ARC_SEGS) { tmpA.x += (Math.random() - 0.5) * 0.3; tmpA.y += (Math.random() - 0.5) * 0.3; }
-              arcPos.set([px, py, pz, tmpA.x, tmpA.y, tmpA.z], seg * 6);
-              px = tmpA.x; py = tmpA.y; pz = tmpA.z; seg++;
-            }
-          }
-          arcGeo.setDrawRange(0, seg * 2);
-          arcGeo.attributes.position.needsUpdate = true;
-          arcMat.opacity = Math.min(1, (0.5 + Math.random() * 0.25) * vis);
-        }
-        // bursts
-        if (now > nextBurst) {
-          const count = 3 + Math.floor(Math.random() * 2);
-          for (let i = 0; i < count; i++) {
-            const ang = Math.random() * Math.PI * 2, st = streaks[i];
-            st.born = now; st.dx = Math.cos(ang) * 8; st.dy = Math.sin(ang) * 5; st.dz = Math.random() * 2;
-          }
-          nextBurst = now + 3800 + Math.random() * 1500;
-        }
-        for (const st of streaks) {
-          if (st.born < 0) continue;
-          const age = (now - st.born) / 900;
-          if (age >= 1) { st.born = -1; st.mat.opacity = 0; continue; }
-          const a0 = Math.max(0, age - 0.15);
-          st.pos[0] = st.dx * a0; st.pos[1] = st.dy * a0; st.pos[2] = st.dz * a0;
-          st.pos[3] = st.dx * age; st.pos[4] = st.dy * age; st.pos[5] = st.dz * age;
-          st.geo.attributes.position.needsUpdate = true;
-          st.mat.opacity = (age < 0.2 ? age * 5 : Math.max(0, 1 - (age - 0.2) / 0.8)) * 0.7;
-        }
-        // parallax
-        scene.rotation.y += (mx * 0.05 - scene.rotation.y) * 0.05;
-        scene.rotation.x += (my * 0.03 - scene.rotation.x) * 0.05;
-      };
-
-      const loop = (t: number) => {
-        if (hidden || disposed) return;
-        raf = requestAnimationFrame(loop);
-        if (stillRef.current) { if (last !== -1) { renderer.render(scene, camera); last = -1; } return; }
-        if (last > 0 && t - last < 1000 / fpsCap - 2) return;
-        last = t;
-        step(t);
-        renderer.render(scene, camera);
-      };
-      const begin = () => { if (!disposed) raf = requestAnimationFrame(loop); };
-      const ric = (window as any).requestIdleCallback as undefined | ((cb: () => void, o?: { timeout: number }) => number);
-      if (ric) ric(begin, { timeout: 1200 }); else setTimeout(begin, 300);
-
-      cleanup = () => {
-        cancelAnimationFrame(raf);
-        window.removeEventListener("pointermove", onPointer);
-        window.removeEventListener("resize", onResize);
-        document.removeEventListener("visibilitychange", onVis);
-        disposables.forEach((d) => d.dispose());
-        renderer.dispose();
-        try { mount.removeChild(renderer.domElement); } catch { /* */ }
-      };
-    })();
-    return () => { disposed = true; cleanup(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return <div ref={mountRef} className="nl-bg-scene absolute inset-0" />;
+function MainScene({ still, onFail }: { still: boolean; onFail: () => void }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const ctlRef = useRef<import("./neuralScene").SceneCtl | null>(null);
+  const send = (type: string, p: Record<string, unknown>) => {
+    const c = ctlRef.current; if (!c) return;
+    if (type === "resize") c.resize(p.w as number, p.h as number);
+    else if (type === "pointer") c.pointer(p.x as number, p.y as number);
+    else if (type === "still") c.setStill(!!p.v);
+    else if (type === "hidden") c.setHidden(!!p.v);
+    else if (type === "scrolling") c.setScrolling(!!p.v);
+  };
+  useSceneInputs(send, still);
+  useEffect(() => {
+    let cancelled = false;
+    idle(async () => {
+      try {
+        const [THREE, { createScene }] = await Promise.all([import("three"), import("./neuralScene")]);
+        if (cancelled || !ref.current) return;
+        ctlRef.current = createScene(THREE, ref.current, sceneOpts());
+        ctlRef.current.setStill(still);
+        if (document.hidden) ctlRef.current.setHidden(true);
+      } catch { onFail(); }
+    });
+    return () => { cancelled = true; ctlRef.current?.dispose(); ctlRef.current = null; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return <canvas ref={ref} className="nl-bg-scene absolute inset-0 h-full w-full" />;
 }
 
 function BgStyles() {
@@ -361,7 +215,6 @@ function BgStyles() {
 .nl-bg-paused,.nl-bg-paused *{animation-play-state:paused!important}
 .nl-bg-core{animation:nl-bg-core 6s ease-in-out infinite}
 @keyframes nl-bg-core{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
-@media (min-width:768px){.nl-bg-scene canvas{filter:drop-shadow(0 0 3px rgba(150,220,255,.55))}}
 .nl-bg[data-still="1"] .nl-bg-streak{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.nl-bg-streak,.nl-bg-glow,.nl-bg-glow2,.nl-bg-core{animation:none}}
 `}</style>
