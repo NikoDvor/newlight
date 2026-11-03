@@ -3,13 +3,13 @@ import { useLocation } from "react-router-dom";
 
 /**
  * NeuralBackground — the newlightgen.com background, recolored to light glowing blue on the dark theme.
- * Receding grid floor, breathing wireframe core (nested icospheres + rings + cube-in-cube), floating shards,
+ * Breathing wireframe core (nested icospheres + rings + cube-in-cube), floating shards,
  * electric arcs, particle field with proximity lines, light-streak bursts, flowing current lines,
  * breathing glow and a cursor/touch glow. three.js is loaded on demand.
  *
  * Built-in (not user options): phones draw fewer objects at 1x resolution and 30fps; it pauses while the app
  * is hidden; it freezes on the Calculator's Calculations page so screen-sharing stays crisp.
- * Public pages (Pay & Sign, booking) pass force="calm": same lines, grid and glow without the 3D scene.
+ * Public pages (Pay & Sign, booking) pass force="calm": same lines and glow without the 3D scene.
  * Layouts render it as a direct child of .nl-dark-bg (see index.css: .nl-dark-bg > .nl-bg stays fixed).
  */
 const BLUE = 0x9fe2ff, ICE = 0xe6f8ff, DEEP = 0x5cc2ff;
@@ -28,7 +28,7 @@ export default function NeuralBackground({ force }: { force?: "calm" }) {
       <CurrentLines still={still} />
       {!calm && <div className={`nl-bg-core absolute left-1/2 top-[42%] h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full ${still ? "nl-bg-paused" : ""}`}
         style={{ background: "radial-gradient(circle, hsla(198,100%,62%,.28) 0%, hsla(205,100%,60%,.10) 40%, transparent 70%)" }} />}
-      {calm ? <CssGrid still={still} /> : <Scene still={still} onFail={() => setWebglFailed(true)} />}
+      {!calm && <Scene still={still} onFail={() => setWebglFailed(true)} />}
       {!still && <CursorGlow />}
     </div>
   );
@@ -83,15 +83,6 @@ function CurrentLines({ still }: { still: boolean }) {
   );
 }
 
-/* ---------------- calm grid (CSS perspective floor) ---------------- */
-function CssGrid({ still }: { still: boolean }) {
-  return (
-    <div className="absolute inset-x-0 bottom-0 h-[55vh] [perspective:420px]">
-      <div className={`nl-bg-floor absolute inset-x-[-50%] bottom-[-10%] h-[140%] origin-bottom ${still ? "nl-bg-paused" : ""}`} />
-    </div>
-  );
-}
-
 /* ---------------- cursor / touch glow ---------------- */
 function CursorGlow() {
   const ref = useRef<HTMLDivElement>(null);
@@ -142,18 +133,6 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
       const lineMat = (color: number, opacity: number) => new THREE.LineBasicMaterial({ color, transparent: true, opacity, blending: add, depthWrite: false });
       const disposables: { dispose: () => void }[] = [];
       const track = <T extends { dispose: () => void }>(x: T) => { disposables.push(x); return x; };
-
-      // 1. receding grid floor
-      const gridSize = 40;
-      const makeGrid = () => {
-        const g = new THREE.GridHelper(gridSize, 40, BLUE, BLUE);
-        const m = g.material as import("three").LineBasicMaterial;
-        m.transparent = true; m.opacity = 0.3 * (phone ? 1.15 : 1); m.blending = add; m.depthWrite = false;
-        g.position.y = -2.6; track(g.geometry); track(m); return g;
-      };
-      const grid1 = makeGrid(), grid2 = makeGrid();
-      grid2.position.z = -gridSize;
-      scene.add(grid1, grid2);
 
       // 2. breathing core: nested icospheres + rings + cube-in-cube
       const core = new THREE.Group();
@@ -254,10 +233,6 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
 
 
       const step = (now: number) => {
-        // grid
-        grid1.position.z += 0.05; grid2.position.z += 0.05;
-        if (grid1.position.z > gridSize) grid1.position.z -= gridSize * 2;
-        if (grid2.position.z > gridSize) grid2.position.z -= gridSize * 2;
         // breathing core
         spheres.forEach((s) => {
           const ph = ((now + s.off) * Math.PI * 2) / 6000;
@@ -383,8 +358,6 @@ function BgStyles() {
 .nl-bg-glow{animation:nl-bg-breathe 8s ease-in-out infinite}
 .nl-bg-glow2{animation:nl-bg-breathe 8s ease-in-out -4s infinite}
 @keyframes nl-bg-breathe{0%,100%{opacity:.55}50%{opacity:1}}
-.nl-bg-floor{transform:rotateX(68deg);background-image:linear-gradient(rgba(127,211,255,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(127,211,255,.16) 1px,transparent 1px);background-size:56px 56px;mask-image:linear-gradient(to top,#000 10%,transparent 85%);-webkit-mask-image:linear-gradient(to top,#000 10%,transparent 85%);animation:nl-bg-floor 3.2s linear infinite}
-@keyframes nl-bg-floor{to{background-position:0 56px}}
 .nl-bg-paused,.nl-bg-paused *{animation-play-state:paused!important}
 .nl-bg-core{animation:nl-bg-core 6s ease-in-out infinite}
 @keyframes nl-bg-core{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
@@ -392,7 +365,7 @@ function BgStyles() {
 @media (min-width:768px){.nl-bg-scene canvas{filter:drop-shadow(0 0 3px rgba(150,220,255,.55))}}
 @media (max-width:767px){.nl-bg-scene{-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 85%);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 85%)}}
 .nl-bg[data-still="1"] .nl-bg-streak{animation-play-state:paused}
-@media (prefers-reduced-motion:reduce){.nl-bg-streak,.nl-bg-glow,.nl-bg-glow2,.nl-bg-floor,.nl-bg-core{animation:none}}
+@media (prefers-reduced-motion:reduce){.nl-bg-streak,.nl-bg-glow,.nl-bg-glow2,.nl-bg-core{animation:none}}
 `}</style>
   );
 }

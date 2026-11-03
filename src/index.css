@@ -170,6 +170,21 @@
 .nl-dark-bg > * { position: relative; z-index: 1; }
 /* The app-wide moving background is the one child that must stay fixed behind everything. */
 .nl-dark-bg > .nl-bg { position: fixed; inset: 0; z-index: 0; }
+/* Panels sit "at the face": a solid backing under every bordered card / box / panel so the moving
+   background never shows through. ::before sits behind the element's own (tinted) background, so tints stay. */
+.nl-dark-bg :is([class*="rounded-lg"],[class*="rounded-xl"],[class*="rounded-2xl"],[class*="rounded-3xl"])[class*="border"]:not(.absolute):not(.fixed):not(.sticky):not(button):not(a):not(input):not(textarea):not(select) {
+  position: relative;
+  isolation: isolate;
+}
+.nl-dark-bg :is([class*="rounded-lg"],[class*="rounded-xl"],[class*="rounded-2xl"],[class*="rounded-3xl"])[class*="border"]:not(.absolute):not(.fixed):not(.sticky):not(button):not(a):not(input):not(textarea):not(select)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: hsl(222 38% 6%);
+  pointer-events: none;
+}
 /* Heading overrides for dark bg */
 .nl-dark-bg h1, .nl-dark-bg h2, .nl-dark-bg h3,
 .nl-dark-bg h4, .nl-dark-bg h5, .nl-dark-bg h6 {
