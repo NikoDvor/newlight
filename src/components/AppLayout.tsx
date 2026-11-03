@@ -114,7 +114,7 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <NeuralBackground />
-      <div className="relative z-[1] min-h-screen flex w-full" style={brandStyle}>
+      <div className="nl-shell relative z-[1] min-h-screen flex w-full" style={brandStyle}>
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{

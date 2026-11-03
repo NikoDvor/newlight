@@ -31,6 +31,7 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
 
   const renderer = new THREE.WebGLRenderer({ canvas: canvas as any, alpha: true, antialias: !phone, powerPreference: "low-power" });
   renderer.setPixelRatio(o.dpr);
+  let curW = o.width, curH = o.height;
   renderer.setSize(o.width, o.height, false);
   renderer.setClearColor(0x000000, 0);
 
@@ -241,16 +242,32 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
     if (still) { if (last !== -1) { renderer.render(scene, camera); last = -1; } return; }
     const cap = baseCap;                          // keeps moving at full pace while scrolling
     if (last > 0 && t - last < 1000 / cap - 2) return;
+    if (last > 0) adapt(t - last);
     last = t;
     frame++;
     step(t);
     renderer.render(scene, camera);
   };
+  // Silent quality guard: if frames keep arriving late (busy laptop GPU, big Retina window),
+  // render at a lower resolution — same look, far less work. Never changes the scene itself.
+  let pr = o.dpr, slow = 0, seen = 0;
+  const floor = phone ? 0.8 : 1;
+  function adapt(gap: number) {
+    seen++;
+    if (gap > (1000 / baseCap) * 1.6) slow++;
+    if (seen < 90) return;                        // judge every ~2–3 s
+    if (slow / seen > 0.35 && pr > floor) {
+      pr = Math.max(floor, Math.round((pr - 0.25) * 100) / 100);
+      renderer.setPixelRatio(pr);
+      renderer.setSize(curW, curH, false);
+    }
+    slow = 0; seen = 0;
+  }
   const start = () => { if (!running && !disposed && !hidden) { running = true; last = 0; id = raf(loop); } };
   start();
 
   return {
-    resize(w, h) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false); if (still) renderer.render(scene, camera); },
+    resize(w, h) { curW = w; curH = h; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false); if (still) renderer.render(scene, camera); },
     pointer(x, y) { mx = x; my = y; },
     setStill(v) { still = v; if (!v) last = 0; },
     setHidden(v) { hidden = v; if (!v) start(); },

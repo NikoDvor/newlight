@@ -35,7 +35,7 @@ export function AdminLayout() {
   return (
     <SidebarProvider>
       <NeuralBackground />
-      <div className="relative z-[1] min-h-screen flex w-full">
+      <div className="nl-shell relative z-[1] min-h-screen flex w-full">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{

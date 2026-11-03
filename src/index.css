@@ -165,6 +165,11 @@
 /* Horizontal scrollers (dialer table, chip rows) scroll on the GPU — smooth swipes on phones. */
 .nl-dark-bg .overflow-x-auto { -webkit-overflow-scrolling: touch; }
 
+/* Live blur over the moving background has to be recomputed every frame — the main cause of lag on
+   laptops. Every box already has a solid backing, so the blur added nothing you could see. Pop-ups
+   (rendered outside the app shell) keep their blur. */
+.nl-shell, .nl-shell * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
 /* Boxes sit "at the face": every rounded box, card, tile, button or panel with a background or border
    (by class or inline style) gets a solid backing, so the moving background never shows through.
    ::before sits behind the element's own tinted background, so tints and borders stay. */
