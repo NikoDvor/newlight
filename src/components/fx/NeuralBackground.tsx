@@ -10,7 +10,7 @@ import { useLocation } from "react-router-dom";
  * Built-in (not user options): phones draw fewer objects at 1x resolution and 30fps; it pauses while the app
  * is hidden; it freezes on the Calculator's Calculations page so screen-sharing stays crisp.
  * Public pages (Pay & Sign, booking) pass force="calm": same lines and glow without the 3D scene.
- * Layouts render it as a direct child of .nl-dark-bg (see index.css: .nl-dark-bg > .nl-bg stays fixed).
+ * Layouts render it OUTSIDE the scrolling <main> (iOS composites it separately → scrolling never repaints it).
  */
 
 export default function NeuralBackground({ force }: { force?: "calm" }) {
@@ -21,7 +21,8 @@ export default function NeuralBackground({ force }: { force?: "calm" }) {
   const calm = force === "calm" || webglFailed;
 
   return (
-    <div className="nl-bg pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden data-still={still ? "1" : "0"}>
+    <div className="nl-bg pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden data-still={still ? "1" : "0"}
+      style={{ background: "linear-gradient(170deg, hsl(222 38% 5%) 0%, hsl(220 42% 7%) 30%, hsl(222 40% 5%) 60%, hsl(218 36% 4%) 100%)" }}>
       <BgStyles />
       <Glow still={still} />
       <CurrentLines still={still} />

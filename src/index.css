@@ -155,21 +155,13 @@
 /* ── Global dark cinematic background ── */
 .nl-dark-bg {
   position: relative;
-  background:
-    radial-gradient(ellipse 120% 60% at 20% 10%, hsla(211,96%,60%,.04), transparent 50%),
-    radial-gradient(ellipse 100% 80% at 80% 90%, hsla(197,88%,55%,.03), transparent 50%),
-    linear-gradient(170deg,
-      hsl(222 38% 5%) 0%,
-      hsl(220 42% 7%) 30%,
-      hsl(222 40% 5%) 60%,
-      hsl(218 36% 4%) 100%
-    );
+  background: transparent; /* the fixed NeuralBackground (outside the scroller) paints the base + effects */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   overflow-x: hidden;
   color: hsl(210 40% 90%);
 }
 .nl-dark-bg > * { position: relative; z-index: 1; }
-/* The app-wide moving background is the one child that must stay fixed behind everything. */
-.nl-dark-bg > .nl-bg { position: fixed; inset: 0; z-index: 0; }
 /* Horizontal scrollers (dialer table, chip rows) scroll on the GPU — smooth swipes on phones. */
 .nl-dark-bg .overflow-x-auto { -webkit-overflow-scrolling: touch; transform: translateZ(0); will-change: scroll-position; }
 

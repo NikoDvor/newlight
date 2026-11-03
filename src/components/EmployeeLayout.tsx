@@ -118,11 +118,12 @@ export function EmployeeLayout() {
 
   return (
     <SidebarProvider>
-      <div className={`min-h-screen flex w-full bg-background text-foreground ${impersonating ? "pt-8" : ""}`}>
+      <NeuralBackground />
+      <div className={`relative z-[1] min-h-screen flex w-full text-foreground ${impersonating ? "pt-8" : ""}`}>
         <AdminImpersonationBar />
         <EmployeeSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b border-border/60 bg-background/95 backdrop-blur-xl relative z-10">
+          <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b border-border/60 bg-background relative z-10">
             <div className="flex items-center gap-3 min-w-0">
               <SidebarTrigger className="shrink-0 h-9 w-9 text-muted-foreground hover:text-foreground" />
               <div className="hidden sm:flex items-center gap-2 min-w-0">
@@ -163,7 +164,6 @@ export function EmployeeLayout() {
             </div>
           </header>
           <main className="flex-1 min-w-0 overflow-auto nl-dark-bg relative">
-            <NeuralBackground />
             <AppTour />
             <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1">
                 <PWAInstallBanner />
