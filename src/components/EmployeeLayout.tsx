@@ -119,7 +119,7 @@ export function EmployeeLayout() {
   return (
     <SidebarProvider>
       <NeuralBackground />
-      <div className={`nl-shell relative z-[1] min-h-screen flex w-full text-foreground ${impersonating ? "pt-8" : ""}`}>
+      <div className={`relative z-[1] min-h-screen flex w-full text-foreground ${impersonating ? "pt-8" : ""}`}>
         <AdminImpersonationBar />
         <EmployeeSidebar />
         <div className="flex-1 flex flex-col min-w-0">

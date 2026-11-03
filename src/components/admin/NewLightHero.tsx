@@ -15,12 +15,10 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
       transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
     >
       {/* Layered background — deeper, richer */}
+      {/* Static glow: the moving background already animates; animated blurred orbs and a
+          repainting shimmer on top of it made admin pages lag on laptops. */}
       <div className="absolute inset-0 nl-hero-bg" />
-      <div className="absolute inset-0 nl-hero-grid" />
-      <div className="absolute inset-0 nl-hero-orb nl-hero-orb--a" />
-      <div className="absolute inset-0 nl-hero-orb nl-hero-orb--b" />
-      {/* Extra cinematic glow layer */}
-      <div className="absolute inset-0 nl-hero-shimmer" />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 45% 70% at 88% 0%, hsla(211,96%,60%,.20), transparent 70%), radial-gradient(ellipse 35% 60% at 15% 100%, hsla(197,92%,68%,.13), transparent 70%)" }} />
 
       {/* Content */}
       <div className="relative z-10 px-4 py-6 sm:px-10 sm:py-14 flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">

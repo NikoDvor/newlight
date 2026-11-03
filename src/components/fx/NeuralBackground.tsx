@@ -115,7 +115,9 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
 
 function sceneOpts() {
   const phone = window.innerWidth < 768;
-  return { width: window.innerWidth, height: window.innerHeight, dpr: Math.min(window.devicePixelRatio || 1, phone ? 1 : 1.5), phone, glow: !phone };
+  return { width: window.innerWidth, height: window.innerHeight, dpr: Math.min(window.devicePixelRatio || 1, phone ? 1 : 1.5), phone, glow: !phone,
+    // admin + client only: salesmen screens are left exactly as they were
+    adaptive: !window.location.pathname.startsWith("/employee") };
 }
 
 /** Wires window events (resize, pointer, visibility, scroll) to a scene controller-like sink. */

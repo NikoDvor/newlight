@@ -5,7 +5,7 @@
  */
 type THREEns = typeof import("three");
 
-export interface SceneOpts { width: number; height: number; dpr: number; phone: boolean; glow: boolean }
+export interface SceneOpts { width: number; height: number; dpr: number; phone: boolean; glow: boolean; adaptive?: boolean }
 export interface SceneCtl {
   resize(w: number, h: number): void;
   pointer(x: number, y: number): void;    // -1..1
@@ -242,7 +242,7 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
     if (still) { if (last !== -1) { renderer.render(scene, camera); last = -1; } return; }
     const cap = baseCap;                          // keeps moving at full pace while scrolling
     if (last > 0 && t - last < 1000 / cap - 2) return;
-    if (last > 0) adapt(t - last);
+    if (last > 0 && o.adaptive) adapt(t - last);
     last = t;
     frame++;
     step(t);
