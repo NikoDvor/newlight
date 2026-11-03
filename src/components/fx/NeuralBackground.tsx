@@ -217,12 +217,28 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
 
       // 5. electric arcs between drifting anchors
       const anchors = Array.from({ length: 3 }, () => ({ phase: Math.random() * 6.28, speed: 0.0006 + Math.random() * 0.0008, rx: 4 + Math.random() * 2, ry: 2 + Math.random() * 1.5, z: -3 - Math.random() * 3, p: new THREE.Vector3() }));
-      const arcGroup = new THREE.Group();
-      scene.add(arcGroup);
+      // 3 pairs × 10 segments, preallocated and updated in place (no per-frame allocation → no GC hitches)
+      const ARC_SEGS = 10, ARC_PAIRS = 3;
+      const arcPos = new Float32Array(ARC_PAIRS * ARC_SEGS * 6);
+      const arcGeo = track(new THREE.BufferGeometry());
+      arcGeo.setAttribute("position", new THREE.BufferAttribute(arcPos, 3));
+      const arcMat = track(lineMat(ICE, 0.38));
+      scene.add(new THREE.LineSegments(arcGeo, arcMat));
       let arcAt = 0;
+      const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
 
-      // 6. light-streak bursts from the core
-      const streaks: { line: import("three").Line; born: number; dir: import("three").Vector3; mat: import("three").LineBasicMaterial }[] = [];
+      // 6. light-streak bursts from the core — a fixed pool of 4 lines, reused
+      const streaks = Array.from({ length: 4 }, () => {
+        const pos = new Float32Array(6);
+        const geo = track(new THREE.BufferGeometry());
+        geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+        const mat = track(lineMat(0xffffff, 0));
+        const line = new THREE.Line(geo, mat);
+        line.position.copy(core.position);
+        line.frustumCulled = false;
+        scene.add(line);
+        return { line, pos, geo, mat, born: -1, dx: 0, dy: 0, dz: 0 };
+      });
       let nextBurst = performance.now() + 2500;
 
       // input + lifecycle
@@ -289,34 +305,40 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
         anchors.forEach((a) => { a.phase += a.speed * 16; a.p.set(Math.cos(a.phase) * a.rx, Math.sin(a.phase * 1.3) * a.ry, a.z); });
         if (now - arcAt > 110) {
           arcAt = now;
-          while (arcGroup.children.length) { const c = arcGroup.children.pop() as import("three").Line; c.geometry.dispose(); (c.material as import("three").Material).dispose(); }
+          let seg = 0;
           for (let i = 0; i < anchors.length; i++) for (let j = i + 1; j < anchors.length; j++) {
             const a = anchors[i].p, b = anchors[j].p;
-            if (a.distanceTo(b) < 6) {
-              const pts: import("three").Vector3[] = [];
-              for (let k = 0; k <= 10; k++) { const v = new THREE.Vector3().lerpVectors(a, b, k / 10); if (k > 0 && k < 10) { v.x += (Math.random() - 0.5) * 0.3; v.y += (Math.random() - 0.5) * 0.3; } pts.push(v); }
-              arcGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(ICE, 0.3 + Math.random() * 0.2)));
+            if (a.distanceTo(b) >= 6) continue;
+            let px = a.x, py = a.y, pz = a.z;
+            for (let k = 1; k <= ARC_SEGS; k++) {
+              tmpA.lerpVectors(a, b, k / ARC_SEGS);
+              if (k < ARC_SEGS) { tmpA.x += (Math.random() - 0.5) * 0.3; tmpA.y += (Math.random() - 0.5) * 0.3; }
+              arcPos.set([px, py, pz, tmpA.x, tmpA.y, tmpA.z], seg * 6);
+              px = tmpA.x; py = tmpA.y; pz = tmpA.z; seg++;
             }
           }
+          arcGeo.setDrawRange(0, seg * 2);
+          arcGeo.attributes.position.needsUpdate = true;
+          arcMat.opacity = (0.3 + Math.random() * 0.2) * vis;
         }
         // bursts
         if (now > nextBurst) {
-          for (let i = 0; i < 3 + Math.floor(Math.random() * 2); i++) {
-            const ang = Math.random() * Math.PI * 2;
-            const dir = new THREE.Vector3(Math.cos(ang) * 8, Math.sin(ang) * 5, Math.random() * 2);
-            const mat = lineMat(0xffffff, 1);
-            const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), mat);
-            line.position.copy(core.position);
-            scene.add(line);
-            streaks.push({ line, born: now, dir, mat });
+          const count = 3 + Math.floor(Math.random() * 2);
+          for (let i = 0; i < count; i++) {
+            const ang = Math.random() * Math.PI * 2, st = streaks[i];
+            st.born = now; st.dx = Math.cos(ang) * 8; st.dy = Math.sin(ang) * 5; st.dz = Math.random() * 2;
           }
           nextBurst = now + 3800 + Math.random() * 1500;
         }
-        for (let i = streaks.length - 1; i >= 0; i--) {
-          const s = streaks[i], age = (now - s.born) / 900;
-          if (age >= 1) { scene.remove(s.line); s.line.geometry.dispose(); s.mat.dispose(); streaks.splice(i, 1); continue; }
-          s.line.geometry.setFromPoints([s.dir.clone().multiplyScalar(Math.max(0, age - 0.15)), s.dir.clone().multiplyScalar(age)]);
-          s.mat.opacity = (age < 0.2 ? age * 5 : Math.max(0, 1 - (age - 0.2) / 0.8)) * 0.7;
+        for (const st of streaks) {
+          if (st.born < 0) continue;
+          const age = (now - st.born) / 900;
+          if (age >= 1) { st.born = -1; st.mat.opacity = 0; continue; }
+          const a0 = Math.max(0, age - 0.15);
+          st.pos[0] = st.dx * a0; st.pos[1] = st.dy * a0; st.pos[2] = st.dz * a0;
+          st.pos[3] = st.dx * age; st.pos[4] = st.dy * age; st.pos[5] = st.dz * age;
+          st.geo.attributes.position.needsUpdate = true;
+          st.mat.opacity = (age < 0.2 ? age * 5 : Math.max(0, 1 - (age - 0.2) / 0.8)) * 0.7;
         }
         // parallax
         scene.rotation.y += (mx * 0.05 - scene.rotation.y) * 0.05;
@@ -332,15 +354,15 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
         step(t);
         renderer.render(scene, camera);
       };
-      raf = requestAnimationFrame(loop);
+      const begin = () => { if (!disposed) raf = requestAnimationFrame(loop); };
+      const ric = (window as any).requestIdleCallback as undefined | ((cb: () => void, o?: { timeout: number }) => number);
+      if (ric) ric(begin, { timeout: 1200 }); else setTimeout(begin, 300);
 
       cleanup = () => {
         cancelAnimationFrame(raf);
         window.removeEventListener("pointermove", onPointer);
         window.removeEventListener("resize", onResize);
         document.removeEventListener("visibilitychange", onVis);
-        streaks.forEach((s) => { s.line.geometry.dispose(); s.mat.dispose(); });
-        arcGroup.children.forEach((c) => { (c as import("three").Line).geometry.dispose(); ((c as import("three").Line).material as import("three").Material).dispose(); });
         disposables.forEach((d) => d.dispose());
         renderer.dispose();
         try { mount.removeChild(renderer.domElement); } catch { /* */ }
