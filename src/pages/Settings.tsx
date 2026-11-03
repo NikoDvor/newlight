@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
 import NotificationsPage from "@/pages/Notifications";
+import BackgroundModeSwitch from "@/components/fx/BackgroundModeSwitch";
 
 /* ── Shared helpers ── */
 const Field = ({ label, value, onChange, placeholder = "", type = "text" }: {
@@ -208,6 +209,7 @@ export default function SettingsPage() {
   return (
     <div>
       <PageHeader title="Settings" description="Manage your workspace configuration" />
+      <div className="mb-5 max-w-sm"><BackgroundModeSwitch /></div>
 
       <div className="flex gap-6 min-h-[600px]">
         {/* Settings Sidebar */}

@@ -4,7 +4,7 @@ import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { Bell, Zap } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
-import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
+import NeuralBackground from "@/components/fx/NeuralBackground";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
@@ -78,7 +78,7 @@ export function AdminLayout() {
             </div>
           </header>
           <main className="flex-1 min-w-0 overflow-auto nl-dark-bg relative flex flex-col">
-            <GlobalAtmosphere />
+            <NeuralBackground />
             <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1 flex-1">
                 <PWAInstallBanner />
 

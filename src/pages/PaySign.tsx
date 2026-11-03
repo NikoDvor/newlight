@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 import { BookingSlotPicker } from "@/components/BookingSlotPicker";
+import NeuralBackground from "@/components/fx/NeuralBackground";
 import PackagePayCard, { packagePayDone, type PackagePlanCtx } from "@/components/packages/PackagePayCard";
 import { money } from "@/lib/packages";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -403,7 +404,8 @@ export default function PaySign() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-3xl mx-auto p-4 md:p-10">
+      <NeuralBackground force="calm" />
+      <div className="relative z-[1] max-w-3xl mx-auto p-4 md:p-10">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center">

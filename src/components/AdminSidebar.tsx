@@ -21,6 +21,7 @@ import {
 import { useState } from "react";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
 import { Building2, Calculator, Film } from "lucide-react";
+import BackgroundModeSwitch from "@/components/fx/BackgroundModeSwitch";
 
 interface NavItem { title: string; description: string; url: string; icon: any }
 interface NavGroup {
@@ -285,6 +286,7 @@ export function AdminSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3 relative z-10">
+        <BackgroundModeSwitch compact />
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

@@ -1,3 +1,4 @@
+import NeuralBackground from "@/components/fx/NeuralBackground";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -432,7 +433,8 @@ export default function BookingPage() {
   // ── Booking Page ──
   return (
     <div className="min-h-screen bg-background flex items-start justify-center p-4 pt-8 sm:pt-12">
-      <div className="max-w-lg w-full space-y-6">
+      <NeuralBackground force="calm" />
+      <div className="relative z-[1] max-w-lg w-full space-y-6">
         {/* Branded Header */}
         <div className="text-center space-y-2">
           {branding?.logo_url && (

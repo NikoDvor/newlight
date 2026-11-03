@@ -24,26 +24,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
+import NeuralBackground from "@/components/fx/NeuralBackground";
 
 
-
-function CursorGlow() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current) {
-        // transform (compositor-only) instead of left/top (forces layout).
-        ref.current.style.left = "0px";
-        ref.current.style.top = "0px";
-        ref.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
-      }
-    };
-    window.addEventListener("mousemove", handler, { passive: true });
-    return () => window.removeEventListener("mousemove", handler);
-  }, []);
-  return <div ref={ref} className="nl-cursor-glow" />;
-}
 
 export function AppLayout() {
   const location = useLocation();
@@ -227,9 +210,8 @@ export function AppLayout() {
               )}
             </div>
           </header>
-          <main className="flex-1 min-w-0 overflow-auto nl-dark-bg flex flex-col">
-            <GlobalAtmosphere />
-            <CursorGlow />
+          <main className="flex-1 min-w-0 overflow-auto nl-dark-bg relative flex flex-col">
+            <NeuralBackground />
             <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1 flex-1">
                 <PWAInstallBanner />
                 <PausedBanner clientId={activeClientId} />

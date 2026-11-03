@@ -4,9 +4,9 @@ import { Calculator, Film, Award, BarChart3, CalendarDays, CheckCircle2, Clipboa
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LivingBackground } from "@/components/fx/LivingBackground";
+import NeuralBackground from "@/components/fx/NeuralBackground";
+import BackgroundModeSwitch from "@/components/fx/BackgroundModeSwitch";
 import AppTour from "@/components/tour/AppTour";
-import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getEmployeeRoute, getRoleBadge } from "@/lib/employeeRouting";
 import newlightLogo from "@/assets/newlight-logo.jpg";
@@ -92,6 +92,7 @@ function EmployeeSidebar() {
             ))}
           </SidebarGroupContent>
         </SidebarGroup>
+        <div className="mt-auto pb-2"><BackgroundModeSwitch compact /></div>
       </SidebarContent>
     </Sidebar>
   );
@@ -164,7 +165,7 @@ export function EmployeeLayout() {
             </div>
           </header>
           <main className="flex-1 min-w-0 overflow-auto nl-dark-bg relative">
-            {location.pathname.startsWith("/employee/training") ? <LivingBackground /> : <GlobalAtmosphere />}
+            <NeuralBackground />
             <AppTour />
             <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1">
                 <PWAInstallBanner />
