@@ -12,7 +12,7 @@ import { useLocation } from "react-router-dom";
  * Public pages (Pay & Sign, booking) pass force="calm": same lines and glow without the 3D scene.
  * Layouts render it as a direct child of .nl-dark-bg (see index.css: .nl-dark-bg > .nl-bg stays fixed).
  */
-const BLUE = 0x9fe2ff, ICE = 0xe6f8ff, DEEP = 0x5cc2ff;
+const BLUE = 0xb8ebff, ICE = 0xf2fbff, DEEP = 0x7fd0ff;
 
 export default function NeuralBackground({ force }: { force?: "calm" }) {
   const loc = useLocation();
@@ -67,7 +67,7 @@ function CurrentLines({ still }: { still: boolean }) {
     const n = typeof window !== "undefined" && window.innerWidth < 768 ? 5 : 10;
     return Array.from({ length: n }, (_, i) => ({
       id: i, d: organicPath(), dur: 5 + Math.random() * 5, delay: -((i / n) * 8 + Math.random()),
-      op: 0.4 + Math.random() * 0.3, w: 1.2 + Math.random() * 0.9,
+      op: 0.55 + Math.random() * 0.35, w: 1.2 + Math.random() * 0.9,
     }));
   });
   return (
@@ -140,10 +140,10 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
       scene.add(core);
       const spheres = [3.4, 2.6, 1.8].map((r, i) => {
         const geo = track(new THREE.EdgesGeometry(track(new THREE.IcosahedronGeometry(r, 1))));
-        const mat = track(lineMat(i === 2 ? ICE : BLUE, (0.22 + i * 0.07) * vis));
+        const mat = track(lineMat(i === 2 ? ICE : BLUE, Math.min(1, (0.42 + i * 0.16) * vis)));
         const mesh = new THREE.LineSegments(geo, mat);
         core.add(mesh);
-        return { mesh, mat, base: (0.22 + i * 0.07) * vis, off: i * 2000, rx: (i % 2 ? -1 : 1) * 0.0018 * (1 + i * 0.4), ry: 0.0013 * (1 + i * 0.5) };
+        return { mesh, mat, base: Math.min(0.85, (0.42 + i * 0.16) * vis), off: i * 2000, rx: (i % 2 ? -1 : 1) * 0.0018 * (1 + i * 0.4), ry: 0.0013 * (1 + i * 0.5) };
       });
       const rings = [4.4, 5.2].map((r, i) => {
         const pts: import("three").Vector3[] = [];
@@ -157,7 +157,7 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
       });
       const cubes = [1.0, 0.55].map((s, i) => {
         const geo = track(new THREE.EdgesGeometry(track(new THREE.BoxGeometry(s, s, s))));
-        const mat = track(lineMat(ICE, 0.38 - i * 0.06));
+        const mat = track(lineMat(ICE, 0.7 - i * 0.1));
         const m = new THREE.LineSegments(geo, mat);
         core.add(m);
         return m;
@@ -167,7 +167,7 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
       const shards = Array.from({ length: Math.round(16 * mul) }, () => {
         const r = 0.15 + Math.random() * 0.5;
         const geo = track(new THREE.EdgesGeometry(track(Math.random() > 0.5 ? new THREE.TetrahedronGeometry(r, 0) : new THREE.OctahedronGeometry(r, 0))));
-        const m = new THREE.LineSegments(geo, track(lineMat(BLUE, (0.25 + Math.random() * 0.2) * vis)));
+        const m = new THREE.LineSegments(geo, track(lineMat(BLUE, Math.min(1, (0.45 + Math.random() * 0.25) * vis))));
         m.position.set((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 10, -Math.random() * 22 - 2);
         m.userData = { rx: (Math.random() - 0.5) * 0.008, ry: (Math.random() - 0.5) * 0.008, vx: (Math.random() - 0.5) * 0.004, vy: (Math.random() - 0.5) * 0.004 };
         scene.add(m);
@@ -191,7 +191,7 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
       const linkPos = new Float32Array(maxLinks * 6);
       const linkGeo = track(new THREE.BufferGeometry());
       linkGeo.setAttribute("position", new THREE.BufferAttribute(linkPos, 3));
-      const links = new THREE.LineSegments(linkGeo, track(lineMat(BLUE, 0.28 * vis)));
+      const links = new THREE.LineSegments(linkGeo, track(lineMat(BLUE, Math.min(1, 0.45 * vis))));
       scene.add(links);
 
       // 5. electric arcs between drifting anchors
@@ -243,7 +243,7 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
         rings.forEach((r, i) => {
           const ph = ((now + r.off) * Math.PI * 2) / 6000;
           r.line.scale.setScalar(1 + Math.sin(ph) * 0.08);
-          r.mat.opacity = 0.3 * vis * (1 + Math.sin(ph) * 0.6);
+          r.mat.opacity = Math.min(1, 0.5 * vis * (1 + Math.sin(ph) * 0.5));
           r.line.rotation.z += i ? -0.0016 : 0.0012;
         });
         cubes[0].rotation.x += 0.004; cubes[0].rotation.y += 0.003;
@@ -294,7 +294,7 @@ function Scene({ still, onFail }: { still: boolean; onFail: () => void }) {
           }
           arcGeo.setDrawRange(0, seg * 2);
           arcGeo.attributes.position.needsUpdate = true;
-          arcMat.opacity = (0.3 + Math.random() * 0.2) * vis;
+          arcMat.opacity = Math.min(1, (0.5 + Math.random() * 0.25) * vis);
         }
         // bursts
         if (now > nextBurst) {
@@ -361,9 +361,7 @@ function BgStyles() {
 .nl-bg-paused,.nl-bg-paused *{animation-play-state:paused!important}
 .nl-bg-core{animation:nl-bg-core 6s ease-in-out infinite}
 @keyframes nl-bg-core{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
-.nl-bg-scene{-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 62%,transparent 98%);mask-image:linear-gradient(to bottom,#000 0%,#000 62%,transparent 98%)}
 @media (min-width:768px){.nl-bg-scene canvas{filter:drop-shadow(0 0 3px rgba(150,220,255,.55))}}
-@media (max-width:767px){.nl-bg-scene{-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 85%);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 85%)}}
 .nl-bg[data-still="1"] .nl-bg-streak{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.nl-bg-streak,.nl-bg-glow,.nl-bg-glow2,.nl-bg-core{animation:none}}
 `}</style>
