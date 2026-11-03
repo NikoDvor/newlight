@@ -12,6 +12,7 @@ export interface SceneCtl {
   setStill(v: boolean): void;              // freeze on a still frame (Calculator share page, reduced motion)
   setHidden(v: boolean): void;             // app in background → stop
   setScrolling(v: boolean): void;          // kept for the API; the scene no longer slows while scrolling
+  frames(): number;                        // frames drawn so far (the page checks the scene is really moving)
   dispose(): void;
 }
 
@@ -272,6 +273,7 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
     setStill(v) { still = v; if (!v) last = 0; },
     setHidden(v) { hidden = v; if (!v) start(); },
     setScrolling(v) { scrolling = v; void scrolling; },
+    frames() { return frame; },
     dispose() { disposed = true; caf(id); disposables.forEach((d) => d.dispose()); renderer.dispose(); },
   };
 }

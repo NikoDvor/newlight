@@ -16,7 +16,8 @@ import { useLocation } from "react-router-dom";
 export default function NeuralBackground({ force }: { force?: "calm" }) {
   const loc = useLocation();
   const reduce = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const still = reduce || (/\/calculator\//.test(loc.pathname) && new URLSearchParams(loc.search).get("view") === "calc");
+  void reduce; // the background always moves (it never freezes for the OS "reduce motion" setting)
+  const still = (/\/calculator\//.test(loc.pathname) && new URLSearchParams(loc.search).get("view") === "calc");
   const [webglFailed, setWebglFailed] = useState(false);
   const calm = force === "calm" || webglFailed;
 
@@ -162,6 +163,9 @@ const idle = (cb: () => void) => {
 function WorkerScene({ still, onFail }: { still: boolean; onFail: () => void }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const workerRef = useRef<Worker | null>(null);
+  const watchRef = useRef(0);
+  const stillRef = useRef(still);
+  stillRef.current = still;
   const send = (type: string, payload: Record<string, unknown>) => workerRef.current?.postMessage({ type, ...payload });
   useSceneInputs(send, still);
   useEffect(() => {
@@ -172,7 +176,20 @@ function WorkerScene({ still, onFail }: { still: boolean; onFail: () => void }) 
       try {
         worker = new Worker(new URL("./neuralScene.worker.ts", import.meta.url), { type: "module" });
         const off = (ref.current as any).transferControlToOffscreen();
-        worker.onmessage = (e) => { if (e.data?.type === "fail") { worker.terminate(); workerRef.current = null; onFail(); } };
+        let lastF = -1, lastMove = performance.now() + 5000; // extra grace while the scene first loads
+        const giveUp = () => { window.clearInterval(watch); worker.terminate(); workerRef.current = null; onFail(); };
+        worker.onmessage = (e) => {
+          if (e.data?.type === "fail") giveUp();
+          else if (e.data?.type === "tick") { if (e.data.f !== lastF) { lastF = e.data.f; lastMove = performance.now(); } }
+        };
+        // Watchdog: some browsers accept the off-thread canvas but never animate it (frozen background).
+        // If no new frames arrive for 3.5 s while the page is visible and not meant to be still,
+        // switch to drawing on the main thread — the same scene, guaranteed to move.
+        const watch = window.setInterval(() => {
+          if (document.hidden || stillRef.current) { lastMove = performance.now(); return; }
+          if (performance.now() - lastMove > 3500) giveUp();
+        }, 1000);
+        watchRef.current = watch;
         worker.onerror = () => { worker.terminate(); workerRef.current = null; onFail(); };
         worker.postMessage({ type: "init", canvas: off, opts: sceneOpts() }, [off]);
         workerRef.current = worker;
@@ -180,7 +197,7 @@ function WorkerScene({ still, onFail }: { still: boolean; onFail: () => void }) 
         if (document.hidden) worker.postMessage({ type: "hidden", v: true });
       } catch { onFail(); }
     });
-    return () => { cancelled = true; workerRef.current?.postMessage({ type: "dispose" }); workerRef.current?.terminate(); workerRef.current = null; };
+    return () => { cancelled = true; window.clearInterval(watchRef.current); workerRef.current?.postMessage({ type: "dispose" }); workerRef.current?.terminate(); workerRef.current = null; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return <canvas ref={ref} className="nl-bg-scene absolute inset-0 h-full w-full" />;
 }
@@ -225,7 +242,6 @@ function BgStyles() {
 .nl-bg-core{animation:nl-bg-core 6s ease-in-out infinite}
 @keyframes nl-bg-core{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
 .nl-bg[data-still="1"] .nl-bg-streak{animation-play-state:paused}
-@media (prefers-reduced-motion:reduce){.nl-bg-streak,.nl-bg-glow,.nl-bg-glow2,.nl-bg-core{animation:none}}
 `}</style>
   );
 }

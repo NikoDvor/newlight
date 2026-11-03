@@ -8,7 +8,11 @@ self.onmessage = (e: MessageEvent) => {
   const m = e.data || {};
   try {
     switch (m.type) {
-      case "init": ctl = createScene(THREE, m.canvas, m.opts); break;
+      case "init":
+        ctl = createScene(THREE, m.canvas, m.opts);
+        // heartbeat: lets the page see that frames are really being drawn
+        setInterval(() => { if (ctl) (self as any).postMessage({ type: "tick", f: ctl.frames() }); }, 1000);
+        break;
       case "resize": ctl?.resize(m.w, m.h); break;
       case "pointer": ctl?.pointer(m.x, m.y); break;
       case "still": ctl?.setStill(!!m.v); break;
