@@ -131,6 +131,10 @@ export default function BDRDialer() {
   const [ownerSearch, setOwnerSearch] = useState<string>("");
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+  // Rows render in batches as you scroll (a full list of heavy rows made scrolling choppy).
+  const PAGE = 30;
+  const [renderCount, setRenderCount] = useState(PAGE);
+  const sentinelRef = useRef<HTMLTableRowElement | null>(null);
   const [confirmState, setConfirmState] = useState<
     { title: string; description: string; confirmLabel: string; resolve: (v: boolean) => void } | null
   >(null);
@@ -244,6 +248,17 @@ export default function BDRDialer() {
     });
   }, [modeLeads, activeList, showDialed]);
 
+  useEffect(() => { if (!highlightId) setRenderCount(PAGE); }, [activeList, showDialed]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((es) => {
+      if (es.some((e) => e.isIntersecting)) setRenderCount((n) => n + PAGE);
+    }, { rootMargin: "900px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [renderCount, visibleLeads.length]);
+
   const searchMatches = useMemo(() => {
     const q = ownerSearch.trim().toLowerCase();
     if (!q) return [] as Lead[];
@@ -270,9 +285,10 @@ export default function BDRDialer() {
     }
     setOwnerSearch("");
     setHighlightId(lead.id);
+    setRenderCount(100000); // make sure the row exists before scrolling to it
     setTimeout(() => {
       rowRefs.current[lead.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 50);
+    }, 150);
     setTimeout(() => setHighlightId(null), 2400);
   }, [activeList, navigate]);
 
@@ -693,7 +709,7 @@ export default function BDRDialer() {
                 <tr>
                   <td colSpan={13} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
                 </tr>
-              ) : visibleLeads.map((lead, i) => {
+              ) : visibleLeads.slice(0, renderCount).map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
                 const pinned = false;
                 const det = lead.pool_firm_id ? detailsByLead[lead.id] : undefined;
@@ -702,7 +718,7 @@ export default function BDRDialer() {
                   <tr key={lead.id}
                     ref={(el) => { rowRefs.current[lead.id] = el; }}
                     onClick={isPool ? () => setDetailLead(lead) : undefined}
-                    className={`hover:bg-white/[0.03] transition-colors align-top ${isPool ? "cursor-pointer" : ""} ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
+                    className={`md:hover:bg-white/[0.03] align-top ${isPool ? "cursor-pointer" : ""} ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
                     style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : pinned ? { background: "hsla(38,92%,55%,.08)" } : undefined}>
 
                     <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px]" style={{ background: pinned ? "hsla(38,92%,55%,.10)" : "hsl(215,35%,8%)", boxShadow: pinned ? "inset 3px 0 0 hsl(38,92%,55%)" : undefined }} title={pinned ? `Pinned: ${current}` : undefined}>
@@ -1037,6 +1053,9 @@ export default function BDRDialer() {
                   </tr>
                 );
               })}
+              {visibleLeads.length > renderCount && (
+                <tr ref={sentinelRef}><td colSpan={13} className="py-4 text-center text-[11px] text-white/30">Loading more…</td></tr>
+              )}
             </tbody>
           </table>
         </div>

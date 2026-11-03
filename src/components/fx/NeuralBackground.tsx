@@ -116,6 +116,11 @@ function sceneOpts() {
   return { width: window.innerWidth, height: window.innerHeight, dpr: Math.min(window.devicePixelRatio || 1, phone ? 1 : 1.5), phone, glow: !phone };
 }
 
+/** Freezes the CSS-animated layers (SVG streaks repaint on the main thread) while scrolling. */
+function bgClass(on: boolean) {
+  document.querySelectorAll(".nl-bg").forEach((el) => el.classList.toggle("nl-bg-scrolling", on));
+}
+
 /** Wires window events (resize, pointer, visibility, scroll) to a scene controller-like sink. */
 function useSceneInputs(send: (type: string, payload: Record<string, unknown>) => void, still: boolean) {
   useEffect(() => { send("still", { v: still }); }, [still]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -128,9 +133,9 @@ function useSceneInputs(send: (type: string, payload: Record<string, unknown>) =
     const onResize = () => send("resize", { w: window.innerWidth, h: window.innerHeight });
     const onVis = () => send("hidden", { v: document.hidden });
     const onScroll = () => {
-      if (!scrolling) { scrolling = true; send("scrolling", { v: true }); }
+      if (!scrolling) { scrolling = true; send("scrolling", { v: true }); bgClass(true); }
       window.clearTimeout(stimer);
-      stimer = window.setTimeout(() => { scrolling = false; send("scrolling", { v: false }); }, 220);
+      stimer = window.setTimeout(() => { scrolling = false; send("scrolling", { v: false }); bgClass(false); }, 220);
     };
     // a finger on the screen counts as scrolling (iOS fires scroll late for inner scrollers)
     const onTouchStart = () => onScroll();
@@ -221,6 +226,7 @@ function BgStyles() {
 .nl-bg-core{animation:nl-bg-core 6s ease-in-out infinite}
 @keyframes nl-bg-core{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
 .nl-bg[data-still="1"] .nl-bg-streak{animation-play-state:paused}
+.nl-bg-scrolling .nl-bg-streak{animation-play-state:paused!important}
 @media (prefers-reduced-motion:reduce){.nl-bg-streak,.nl-bg-glow,.nl-bg-glow2,.nl-bg-core{animation:none}}
 `}</style>
   );
