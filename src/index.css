@@ -298,15 +298,23 @@
 
   @media (max-width: 767px) {
 
-    .grid.grid-cols-2:not(.grid-preserve),
+    /* Phones: 2-column grids stay 2 columns (stat tiles side by side); wider grids drop to 2 columns
+       instead of one tall stack. Add .grid-preserve to keep a grid exactly as written. */
     .grid.grid-cols-3:not(.grid-preserve),
     .grid.grid-cols-4:not(.grid-preserve),
     .grid.grid-cols-5:not(.grid-preserve),
     .grid.grid-cols-6:not(.grid-preserve),
     .grid.grid-cols-7:not(.grid-preserve),
     .grid.grid-cols-8:not(.grid-preserve) {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    /* Big numbers in side-by-side phone tiles: scale down so "$1,430,800" fits instead of running out of the tile */
+    .grid:not(.grid-preserve) > * { min-width: 0; }
+    .grid:not(.grid-preserve) .text-2xl { font-size: 1.25rem; line-height: 1.75rem; }
+    .grid:not(.grid-preserve) .text-3xl { font-size: 1.4rem; line-height: 1.9rem; }
+    .grid:not(.grid-preserve) .text-4xl { font-size: 1.6rem; line-height: 2rem; }
+    .grid:not(.grid-preserve) .text-5xl { font-size: 1.8rem; line-height: 2.2rem; }
 
     .card-widget,
     .card-admin,

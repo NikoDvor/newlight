@@ -129,7 +129,7 @@ export default function AdminAutomations() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Automations & Workflows</h1>
           <p className="text-sm text-white/50 mt-1">Orchestration engine connecting all platform systems</p>

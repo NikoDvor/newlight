@@ -265,7 +265,7 @@ export default function ClosePrep() {
   );
 
   return (
-    <div className="max-w-xl mx-auto py-6 px-4 space-y-5">
+    <div className="max-w-3xl mx-auto py-6 px-0 sm:px-4 space-y-5">
       <div>
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-white/45 mb-1">
           <CalIcon className="h-3.5 w-3.5" /> Form 2 · Close Prep
@@ -274,7 +274,7 @@ export default function ClosePrep() {
         <div className="text-sm text-white/60 mt-1 space-x-3">
           {lead.owner_name && <span>{lead.owner_name}</span>}
           {lead.phone && <span>·  {lead.phone}</span>}
-          {lead.email && <span>·  {lead.email}</span>}
+          {lead.email && <span className="break-all">·  {lead.email}</span>}
           {lead.city && <span>·  {lead.city}</span>}
         </div>
       </div>

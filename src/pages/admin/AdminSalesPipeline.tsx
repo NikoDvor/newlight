@@ -409,7 +409,7 @@ export default function AdminSalesPipeline() {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
-      <motion.div className="flex items-start justify-between gap-4" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+      <motion.div className="flex flex-wrap items-start justify-between gap-4" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Sales Pipeline</h1>
           <p className="text-sm text-muted-foreground mt-1">Pipeline · Client Sales State · Quick Actions</p>

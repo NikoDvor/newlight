@@ -76,7 +76,7 @@ export default function AdminClientRecords() {
           dealId: d.id, clientId: d.provisioned_client_id || null,
           business: c?.business_name || lead?.business_name || d.deal_name, owner: c?.owner_name || lead?.owner_name || null,
           rep: nm.get(d.assigned_user) || "—", signedAt: d.paid_signed_at,
-          terms: (d.package ? `${PK[d.package]}${d.billing_cadence === "annual" ? " (annual)" : ""} · ` : "") + [init, tail].filter(Boolean).join(" + "), paid, lastPaid,
+          terms: (d.package ? `${PK[d.package] ?? d.package}${d.billing_cadence === "annual" ? " (annual)" : ""} · ` : "") + [init, tail].filter(Boolean).join(" + "), paid, lastPaid,
           pkg: d.package || null, paused: !!d.work_paused_at,
           subStatus: sub?.subscription_status || null,
           agreementStatus: env?.status || null, hasAgreement: !!d.service_agreement_envelope_id,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Download, ChevronDown, ChevronUp, BookOpen, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -391,16 +391,16 @@ export default function AdminBDRPerformance() {
             </div>
             {bdrRows.map(row => (
               <button key={row.uid} onClick={() => setSelectedBdr(row.uid)}
-                className="w-full text-left rounded-xl px-4 py-3 sm:grid sm:grid-cols-9 sm:gap-2 sm:items-center flex flex-col gap-1 transition-colors hover:bg-primary/5"
+                className="grid-preserve w-full text-left rounded-xl px-4 py-3 grid grid-cols-3 gap-x-3 gap-y-1.5 sm:grid-cols-9 sm:gap-2 sm:items-center transition-colors hover:bg-primary/5"
                 style={cardStyle}>
-                <span className="col-span-2 font-medium text-foreground truncate">{row.name}</span>
-                <span className="text-sm text-foreground">{row.total}</span>
-                <span className="text-sm text-foreground">{row.contacted}</span>
-                <span className="text-sm text-foreground">{row.booked}</span>
-                <span className="text-sm text-foreground">{row.won}</span>
-                <span className="text-sm text-foreground">{row.lost}</span>
-                <span className="text-sm text-foreground">{row.rate}%</span>
-                <span className="text-xs text-muted-foreground truncate">{row.topObj.replace("_", " ")}</span>
+                <span className="col-span-3 sm:col-span-2 font-medium text-foreground truncate">{row.name}</span>
+                <span className="text-sm text-foreground"><MobileLabel>Leads</MobileLabel>{row.total}</span>
+                <span className="text-sm text-foreground"><MobileLabel>Contacted</MobileLabel>{row.contacted}</span>
+                <span className="text-sm text-foreground"><MobileLabel>Booked</MobileLabel>{row.booked}</span>
+                <span className="text-sm text-foreground"><MobileLabel>Won</MobileLabel>{row.won}</span>
+                <span className="text-sm text-foreground"><MobileLabel>Lost</MobileLabel>{row.lost}</span>
+                <span className="text-sm text-foreground"><MobileLabel>Conv</MobileLabel>{row.rate}%</span>
+                <span className="col-span-3 sm:col-span-1 text-xs text-muted-foreground truncate"><MobileLabel>Top objection</MobileLabel>{row.topObj.replace("_", " ")}</span>
               </button>
             ))}
           </div>
@@ -424,20 +424,20 @@ export default function AdminBDRPerformance() {
               const dd = row.dialDays;
               return (
                 <div key={row.uid} className="rounded-xl px-4 py-3" style={cardStyle}>
-                  <div className="sm:grid sm:grid-cols-9 sm:gap-2 sm:items-center flex flex-col gap-1">
-                    <span className="col-span-2 font-medium text-foreground truncate">{row.name}</span>
-                    <span className="text-sm text-foreground">{row.dialCounts.today}</span>
-                    <span className="text-sm text-foreground">{row.dialCounts.week}</span>
-                    <span className="text-sm text-foreground">{row.dialCounts.month}</span>
-                    <span className="text-sm text-foreground">{row.dialCounts.all}</span>
-                    <span className="text-sm text-foreground">{row.metrics.all.schedPct}%</span>
+                  <div className="grid-preserve grid grid-cols-3 gap-x-3 gap-y-1.5 sm:grid-cols-9 sm:gap-2 sm:items-center">
+                    <span className="col-span-3 sm:col-span-2 font-medium text-foreground truncate">{row.name}</span>
+                    <span className="text-sm text-foreground"><MobileLabel>Today</MobileLabel>{row.dialCounts.today}</span>
+                    <span className="text-sm text-foreground"><MobileLabel>Week</MobileLabel>{row.dialCounts.week}</span>
+                    <span className="text-sm text-foreground"><MobileLabel>Month</MobileLabel>{row.dialCounts.month}</span>
+                    <span className="text-sm text-foreground"><MobileLabel>Total</MobileLabel>{row.dialCounts.all}</span>
+                    <span className="text-sm text-foreground"><MobileLabel>Sched %</MobileLabel>{row.metrics.all.schedPct}%</span>
                     <span className="text-xs whitespace-nowrap" title={`${DAILY_DIAL_GOAL}+ dials = hit; 1–${DAILY_DIAL_GOAL - 1} = missed; 0 = not counted`}>
                       <span className="text-emerald-400 font-semibold tabular-nums">{dd.hit}</span>
                       <span className="text-muted-foreground"> hit / </span>
                       <span className="text-[hsl(0,72%,65%)] font-semibold tabular-nums">{dd.missed}</span>
                       <span className="text-muted-foreground"> missed</span>
                     </span>
-                    <span className="text-xs text-muted-foreground truncate">{top ? `${top.outcome} (${top.pct}%)` : "—"}</span>
+                    <span className="col-span-3 sm:col-span-1 text-xs text-muted-foreground truncate"><MobileLabel>Top outcome</MobileLabel>{top ? `${top.outcome} (${top.pct}%)` : "—"}</span>
                   </div>
                    <Button
                      variant="ghost" size="sm"
@@ -618,4 +618,9 @@ function ObjectionDetailSheet({ category, objections, profiles, onClose }: { cat
       </DialogContent>
     </Dialog>
   );
+}
+
+/** Column name shown above a number on phones (the header row is hidden there). */
+function MobileLabel({ children }: { children: ReactNode }) {
+  return <span className="block text-[10px] uppercase tracking-wide text-muted-foreground sm:hidden">{children}</span>;
 }

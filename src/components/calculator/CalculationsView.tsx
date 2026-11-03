@@ -5,6 +5,7 @@ import type { useDiscoveryNumbers } from "@/hooks/useDiscoveryNumbers";
 import { usePackageDefaults } from "@/components/packages/PlanPreview";
 import { PACKAGE_ORDER, buildPlan, defaultPrices, type PackageKey } from "@/lib/packages";
 import GrowthTree from "./GrowthTree";
+import ContentBar from "@/components/layout/ContentBar";
 import { C, CountUp, Delta, GlowSlider, Kick, MiniInput, SaveDot, glass, glassSoft, money, moneyShort, numFmt, pct } from "./kit";
 
 type Calc = ReturnType<typeof useDiscoveryNumbers>;
@@ -168,7 +169,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
       <p className="mt-6 text-center text-[11px] text-white/35">An illustration from the numbers you shared, per year. Not a guarantee of results.</p>
 
       {/* live revenue bar — updates while you slide */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[hsla(188,95%,58%,.3)] bg-[hsla(222,46%,5%,.94)] px-3 py-2.5 shadow-[0_-12px_40px_-12px_hsla(188,95%,58%,.45)] backdrop-blur-md sm:px-6">
+      <ContentBar className="border-t border-[hsla(188,95%,58%,.3)] bg-[hsl(222,46%,5%)] px-3 pt-2.5 shadow-[0_-12px_40px_-12px_hsla(188,95%,58%,.45)] sm:px-6">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[hsl(188,95%,72%)]">This plan brings in</p>
@@ -193,7 +194,7 @@ export default function CalculationsView({ calc, title, onBack }: { calc: Calc; 
             <Send className="h-4 w-4" /><span className="hidden sm:inline">{plan && !planStale ? "Submitted" : "Submit"}</span>
           </button>
         </div>
-      </div>
+      </ContentBar>
     </div>
   );
 }
@@ -210,7 +211,7 @@ function Ring({ progress }: { progress: number }) {
         <defs><linearGradient id="calc-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="hsl(187,90%,55%)" /><stop offset="1" stopColor="hsl(205,100%,90%)" /></linearGradient></defs>
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">
-        <div><CountUp value={progress} format={(n) => `${Math.round(n * 100)}%`} className="text-2xl font-black tabular-nums text-white" /><p className="text-[10px] uppercase tracking-[0.14em] text-white/45">of goal today</p></div>
+        <div><CountUp value={progress} format={(n) => `${Math.round(n * 100)}%`} className="text-2xl font-black tabular-nums text-white" /><p className="mx-auto max-w-[78px] text-[9px] uppercase leading-tight tracking-[0.12em] text-white/45">of goal<br />today</p></div>
       </div>
     </div>
   );

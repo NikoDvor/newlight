@@ -101,15 +101,17 @@ export function Blank({ label, value, onChange, money: isMoney, period, onPeriod
 
 /** Small inline number box used inside the Growth Tree and levers. */
 export function MiniInput({ value, onChange, label, prefix, width = "w-24" }: { value: number; onChange: (v: number) => void; label: string; prefix?: string; width?: string }) {
-  const [draft, setDraft] = useState(String(Math.round(value * 100) / 100));
+  // shows 1,000,000 (with commas) when not being typed in
+  const show = (v: number) => (Math.round(v * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const [draft, setDraft] = useState(show(value));
   const focused = useRef(false);
-  useEffect(() => { if (!focused.current) setDraft(String(Math.round(value * 100) / 100)); }, [value]);
+  useEffect(() => { if (!focused.current) setDraft(show(value)); }, [value]);
   return (
     <span className={`inline-flex items-center rounded-lg border border-white/12 bg-black/30 px-2 py-1 ${width}`}>
       {prefix && <span className="mr-0.5 text-[12px] text-white/40">{prefix}</span>}
       <input aria-label={label} inputMode="decimal" value={draft}
-        onFocus={() => { focused.current = true; }} onBlur={() => { focused.current = false; }}
-        onChange={(e) => { setDraft(e.target.value); const n = parseNum(e.target.value); if (n != null) onChange(n); }}
+        onFocus={() => { focused.current = true; }} onBlur={() => { focused.current = false; setDraft(show(value)); }}
+        onChange={(e) => { const raw = e.target.value.replace(/[^0-9.,]/g, ""); setDraft(raw); const n = parseNum(raw.replace(/,/g, "")); if (n != null) onChange(n); }}
         className="w-full min-w-0 bg-transparent text-right text-[13px] font-semibold tabular-nums text-white outline-none" />
     </span>
   );

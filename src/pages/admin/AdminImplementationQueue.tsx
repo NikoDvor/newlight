@@ -156,7 +156,7 @@ export default function AdminImplementationQueue() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Implementation Queue</h1>
           <p className="text-sm text-white/40">Internal delivery operations — track, assign, and complete client work</p>

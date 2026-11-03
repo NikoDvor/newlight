@@ -102,7 +102,7 @@ export default function AdminMarketingTemplates() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Marketing Content Templates</h1>
           <p className="text-sm text-white/50 mt-1">

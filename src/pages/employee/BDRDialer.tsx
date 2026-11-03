@@ -537,7 +537,7 @@ export default function BDRDialer() {
   return (
     // Spans the full screen width and clips sideways overflow, so a sideways swipe only ever moves the table (never the page).
     <div className="space-y-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10" style={{ overflowX: "clip" }}>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">BDR Dialer</h1>
           <p className="text-xs text-white/50 mt-1">{visibleLeads.length} lead{visibleLeads.length !== 1 ? "s" : ""} {activeList !== ALL_LIST && `in "${activeList}"`}</p>
@@ -582,8 +582,9 @@ export default function BDRDialer() {
 
       {/* Call count summary */}
 
-      <div className="overflow-x-auto -mx-1 px-1">
-        <div className="flex items-stretch gap-2 min-w-max pb-1">
+      {/* Phones: 2 × 2 so nothing runs off the screen; computers: one row */}
+      <div>
+        <div className="grid-preserve grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
             { label: "Today", key: "today" as const, tone: "hsl(211,96%,60%)" },
             { label: "This Week", key: "week" as const, tone: "hsl(152,76%,55%)" },
@@ -591,7 +592,7 @@ export default function BDRDialer() {
             { label: "Total Calls", key: "all" as const, tone: "hsl(262,80%,72%)" },
           ].map(p => (
             <div key={p.key}
-              className="rounded-lg px-3 py-2 flex flex-col justify-between min-w-[100px]"
+              className="rounded-lg px-3 py-2 flex flex-col justify-between min-w-0"
               style={{ background: "hsla(215,35%,10%,.8)", border: `1px solid ${p.tone}33` }}>
               <span className="text-[9px] uppercase tracking-wider leading-tight text-white/55 line-clamp-2">{p.label}</span>
               <span className="text-lg font-bold mt-1" style={{ color: p.tone }}>{callCounts[p.key]}</span>
@@ -601,6 +602,7 @@ export default function BDRDialer() {
       </div>
 
       {/* Stats bar */}
+      {/* 19 outcome counts: one row that scrolls sideways */}
       <div className="overflow-x-auto -mx-1 px-1">
         <div className="flex items-stretch gap-2 min-w-max pb-1">
           {STAT_PILLS.map(p => {

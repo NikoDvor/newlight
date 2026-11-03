@@ -444,7 +444,7 @@ export default function AdminClients() {
 
   const OnboardingStageCell = ({ stage }: { stage: string }) => (
     <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize whitespace-nowrap ${onboardingStageColor(stage)}`}>
-      {stage.replace(/_/g, " ")}
+      {(stage || "not started").replace(/_/g, " ")}
     </span>
   );
 
@@ -770,13 +770,13 @@ export default function AdminClients() {
                       const im = c.implementation_status;
                       if (im === "complete") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Complete</span>;
                       if (im === "in_progress") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-sky))]">In Progress</span>;
-                      if (["waiting_on_client", "access_requested"].includes(im)) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] capitalize">{im.replace(/_/g, " ")}</span>;
-                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{im.replace(/_/g, " ")}</span>;
+                      if (["waiting_on_client", "access_requested"].includes(im)) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] capitalize">{String(im).replace(/_/g, " ")}</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{im ? String(im).replace(/_/g, " ") : "Not started"}</span>;
                     })()}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${statusColor(c.status)}`}>{c.status.replace(/_/g, " ")}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${statusColor(c.status)}`}>{(c.status || "unknown").replace(/_/g, " ")}</span>
                       {c.onboarding_stage === "active" && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Live</span>
                       )}

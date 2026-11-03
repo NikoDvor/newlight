@@ -235,7 +235,7 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
 
       {/* Phone: colored stage tiles — tap to open that stage's leads as a list */}
       <div className="md:hidden space-y-2">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid-preserve grid grid-cols-3 gap-2">
           {columns.map((c) => {
             const on = picked === c.key;
             const f = flaggedIn(c.key);

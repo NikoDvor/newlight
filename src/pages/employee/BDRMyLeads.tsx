@@ -1266,7 +1266,7 @@ export default function BDRMyLeads() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0">
                         <span className="text-[10px] text-muted-foreground">{new Date(lead.created_at).toLocaleDateString()}</span>
                         {history.length > 0 && (
                           <button onClick={(e) => { e.stopPropagation(); setExpandedId(expanded ? null : lead.id); }} className="text-[10px] flex items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors">

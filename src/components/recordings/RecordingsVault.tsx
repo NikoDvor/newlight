@@ -78,7 +78,7 @@ export default function RecordingsVault({ mode, clientId, title, leadId }: { mod
       <div className="flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/35" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by firm or title" className="pl-8" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search firm or title" className="pl-8" />
         </div>
         {mode === "team" && (
           <select value={owner} onChange={(e) => setOwner(e.target.value)} className="rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white">

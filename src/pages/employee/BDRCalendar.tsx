@@ -298,7 +298,7 @@ export default function BDRCalendar({ calendarId }: { calendarId?: string } = {}
           }}><ChevronLeft className="h-4 w-4" /></Button>
           <span className="text-white text-base font-semibold px-1 truncate min-w-0">
             {view === "month"
-              ? cursor.toLocaleDateString([], { month: "long", year: "numeric" })
+              ? cursor.toLocaleDateString([], { month: typeof window !== "undefined" && window.innerWidth < 640 ? "short" : "long", year: "numeric" })
               : `${startOfWeek(cursor).toLocaleDateString([], { month: "short", day: "numeric" })} – ${addDays(startOfWeek(cursor),6).toLocaleDateString([], { month: "short", day: "numeric" })}`}
           </span>
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-white/70 hover:text-white hover:bg-white/5" onClick={() => {

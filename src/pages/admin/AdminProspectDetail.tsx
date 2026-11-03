@@ -126,7 +126,7 @@ export default function AdminProspectDetail() {
         <button onClick={() => navigate("/admin/prospects")} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1 mb-2 transition-colors">
           <ArrowLeft className="h-3 w-3" /> Back to Prospects
         </button>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-white">{prospect.business_name}</h1>
             <p className="text-sm text-white/50 mt-1">{prospect.full_name} · <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-neon))]">{stageLabels[prospect.stage] || prospect.stage}</span></p>

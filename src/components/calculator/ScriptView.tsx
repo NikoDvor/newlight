@@ -119,7 +119,7 @@ export default function ScriptView({ script, calc, title, onBack, onCalculations
       </div>
 
       {/* phone: always-reachable Calculations button */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[hsla(222,44%,5%,.92)] p-3 backdrop-blur-md sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[hsl(222,44%,5%)] px-3 pt-3 sm:hidden" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
         <button onClick={onCalculations} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl text-base font-black uppercase tracking-[0.12em] text-white"
           style={{ background: "linear-gradient(120deg,hsl(217,90%,52%),hsl(197,100%,50%))" }}>
           Calculations <ArrowRight className="h-5 w-5" />
