@@ -25,7 +25,7 @@ function Frame({ children, caption }: { children: ReactNode; caption?: string })
   );
 }
 
-function Tabs<T extends string>({ items, value, onChange }: { items: { k: T; l: string }[]; value: T; onChange: (k: T) => void }) {
+function Tabs<T extends string>({ items, value, onChange }: { items: { k: T; l: string }[]; value: T; onChange: (k: NoInfer<T>) => void }) {
   return (
     <div className="grid gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 grid-preserve" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
       {items.map((it) => (
