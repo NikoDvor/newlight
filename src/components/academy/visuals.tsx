@@ -6,6 +6,7 @@ import { computeDiscovery, EMPTY_INPUTS } from "@/lib/discoveryNumbers";
 import { ACADEMY } from "./ui";
 import { OfferCompare, OfferTimeline, Packages, PaymentSim, WhoPaysHow } from "./packageVisuals";
 import { FeatureBenefitTrial, SalesSystem } from "./salesVisuals";
+import { PipelineJourney } from "./pipelineJourney";
 
 /**
  * Interactive visuals for training chapters, referenced in content as [[visual:key]].
@@ -854,6 +855,7 @@ export const VISUALS: Record<string, ComponentType> = {
   assumptive: Assumptive,
   preclose: Preclose,
   "sales-system": SalesSystem,
+  "pipeline-journey": PipelineJourney,
   fbt: FeatureBenefitTrial,
   "break-even": BreakEven,
   "full-stack": FullStack,

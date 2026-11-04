@@ -53,10 +53,10 @@ export function YourForms() {
       label: "Form 1",
       icon: Users,
       name: "Discovery Form",
-      badge: "Meeting 1",
+      badge: "Books Meeting 1",
       url: cal.booking_slug ? `${origin}/bdr/book/${cal.booking_slug}` : "",
       active: cal.booking_active !== false,
-      hint: "Public discovery booking — share with prospects.",
+      hint: "Your booking link — send it on the call and walk them through booking.",
     },
     {
       kind: "action",
@@ -64,9 +64,9 @@ export function YourForms() {
       label: "Form 2",
       icon: ClipboardCheck,
       name: "Close Prep",
-      badge: "Meeting 2",
+      badge: "Books Meeting 2",
       pickerKind: "close-prep",
-      hint: "Pick the lead you just met with (any stage — Cold leads can skip Form 1).",
+      hint: "Fill it at the end of discovery — package, terms, and book Meeting 2 with them. (Cold leads can skip Form 1.)",
     },
     {
       kind: "action",
@@ -74,9 +74,9 @@ export function YourForms() {
       label: "Form 3",
       icon: ScrollText,
       name: "Pay & Sign",
-      badge: "Meeting 3",
+      badge: "During Meeting 2",
       pickerKind: "pay-sign",
-      hint: "Pick a lead that finished Form 2 — after the closing meeting, send their Pay & Sign link.",
+      hint: "Pick a lead that finished Form 2 — send their Pay & Sign link during the closing meeting and walk them through it.",
     },
   ];
 
@@ -84,7 +84,7 @@ export function YourForms() {
     <Card data-tour="forms" className="border border-primary/20 bg-card/60 backdrop-blur-xl shadow-[0_0_0_1px_hsla(211,96%,60%,0.05),0_8px_32px_-12px_hsla(211,96%,40%,0.25),inset_0_1px_0_hsla(200,100%,80%,0.06)] p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-foreground">Your Forms</h2>
-        <Badge variant="outline" className="text-[10px]">NewLight 5-form structure</Badge>
+        <Badge variant="outline" className="text-[10px]">3 forms · one per step</Badge>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {forms.map((f) => {
@@ -103,7 +103,7 @@ export function YourForms() {
                     onClick={() => setLogOpen(true)}
                     className="mt-1.5 text-[11px] text-primary hover:underline"
                   >
-                    Booked a first meeting elsewhere? Log it
+                    Booked elsewhere, or talking now? Log it
                   </button>
                   {!f.active && (
                     <span className="absolute top-3 right-3 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-0.5 border border-amber-500/30">
