@@ -59,7 +59,7 @@ These are the only rules NewLight requires of you. They exist because of the law
 ## 2. What you can and can't claim
 Our clients are advisors regulated by the SEC (the Marketing Rule) or FINRA. Their compliance teams hear everything.
 
-**You can:** explain NewLight's three steps and the app; explain the packages and prices exactly as written in Training Module 4; explain the Growth guarantee exactly as written ("We make back your investment in 90 days, and if we don't, we keep working until we do"); share the prospect's own numbers back to them.
+**You can:** explain NewLight's three steps and the app; explain the packages and prices exactly as written in Training Module 4; explain the Growth 90-day commitment exactly as written: if the client's setup isn't made back within 90 days, NewLight keeps working at no extra charge until it is. It is continued service, **not a refund and not a promise of results**; share the prospect's own numbers back to them.
 
 **You can't:**
 - promise a number of clients, assets under management (AUM), revenue or return on investment;
