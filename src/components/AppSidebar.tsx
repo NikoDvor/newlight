@@ -174,6 +174,7 @@ const navStructure: NavModule[] = [
       { title: "Team", url: "/team", icon: Users, moduleKey: "team" },
       { title: "Staff Calendars", url: "/staff-calendars", icon: Calendar, moduleKey: "team" },
       { title: "Employee Performance", url: "/employee-performance", icon: TrendingUp, moduleKey: "team" },
+      { title: "Contractor Paperwork", url: "/contractors", icon: FileSignature, internalOnly: true },
       { title: "Meeting Recordings", url: "/recordings", icon: Film },
       { title: "Training Center", url: "/training-center", icon: GraduationCap, moduleKey: "training" },
       { title: "Onboarding", url: "/sops", icon: Footprints, moduleKey: "training" },

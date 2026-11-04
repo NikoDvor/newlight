@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, Navigate, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Calculator, Film, Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints, GraduationCap, Lock, LogOut, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
+import { Calculator, FileSignature, Film, Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints, GraduationCap, Lock, LogOut, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { hasAdminBackup, restoreAdminSession } from "@/lib/impersonation";
 import { AdminImpersonationBar } from "@/components/AdminImpersonationBar";
+import PaperworkBanner from "@/components/employee/PaperworkBanner";
 
 const navGroups: { label?: string; items: { title: string; url: string; icon: any }[] }[] = [
   {
@@ -47,7 +48,7 @@ const navGroups: { label?: string; items: { title: string; url: string; icon: an
     items: [{ title: "Training Center", url: "/employee/training", icon: GraduationCap }],
   },
   {
-    items: [{ title: "My Profile", url: "/employee/profile", icon: UserCircle }],
+    items: [{ title: "My Paperwork", url: "/employee/paperwork", icon: FileSignature }, { title: "My Profile", url: "/employee/profile", icon: UserCircle }],
   },
 ];
 
@@ -167,6 +168,7 @@ export function EmployeeLayout() {
             <AppTour />
             <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1">
                 <PWAInstallBanner />
+                <PaperworkBanner />
 
                 <Outlet />
               </div>

@@ -80,6 +80,12 @@ const adminGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Sales Team",
+    items: [
+      { title: "Contractor Paperwork", description: "Add a commission-only rep, see who has signed their agreement and sent their W-9.", url: "/admin/contractors", icon: FileSignature },
+    ],
+  },
+  {
     label: "System",
     items: [
       { title: "Reports", description: "Review sales, billing, bookings, and reviews agency-wide.", url: "/admin/reports", icon: LineChart },
