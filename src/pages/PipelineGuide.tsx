@@ -102,7 +102,7 @@ export default function PipelineGuide() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 min-w-0 pb-8">
+    <div className="nl-reading max-w-6xl mx-auto space-y-8 min-w-0 pb-8">
       <header className="space-y-3">
         <Button asChild variant="ghost" size="sm" className="-ml-3">
           <Link to={isAdmin ? "/admin/training-center" : "/employee/training"}><ArrowLeft className="mr-2 h-4 w-4" />Training Center</Link>

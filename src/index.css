@@ -17,7 +17,7 @@
     --secondary: 222 25% 14%;
     --secondary-foreground: 210 40% 90%;
     --muted: 222 25% 14%;
-    --muted-foreground: 215 18% 55%;
+    --muted-foreground: 215 22% 72%; /* was 55% — too faint over the moving background */
     --accent: 197 88% 52%;
     --accent-foreground: 0 0% 100%;
     --success: 152 60% 50%;
@@ -90,7 +90,7 @@
     --secondary: 222 25% 16%;
     --secondary-foreground: 210 50% 95%;
     --muted: 222 25% 16%;
-    --muted-foreground: 215 18% 55%;
+    --muted-foreground: 215 22% 72%; /* was 55% — too faint over the moving background */
     --accent: 197 88% 52%;
     --accent-foreground: 0 0% 100%;
     --success: 152 60% 50%;
@@ -164,6 +164,27 @@
 .nl-dark-bg > * { position: relative; z-index: 1; }
 /* Horizontal scrollers (dialer table, chip rows) scroll on the GPU — smooth swipes on phones. */
 .nl-dark-bg .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+
+/* ── Readability pass: text stays readable over the moving background (the background itself is unchanged) ── */
+/* 1. A tight dark edge around all text inside the app — invisible on solid boxes, separates letters from the lines behind. */
+.nl-dark-bg { text-shadow: 0 1px 2px rgb(0 0 0 / 0.9), 0 0 1px rgb(0 0 0 / 0.7); }
+.nl-dark-bg :is(.text-transparent, .bg-clip-text, svg, svg *, input, textarea, select) { text-shadow: none; }
+/* 2. Tables and sideways-scrolling boxes get a solid surface that doesn't slide away when you scroll them. */
+.nl-dark-bg table { background-color: hsl(222 38% 6%); }
+.nl-dark-bg .overflow-x-auto:is([class*="rounded"], [class*="border"]) { background-color: hsl(222 38% 6%); }
+.nl-dark-bg th { color: hsl(210 40% 92%); font-weight: 600; }
+/* 3. Faint white text is brighter, and a touch heavier unless a weight is already set. */
+.nl-dark-bg .text-white\/20 { color: rgb(255 255 255 / 0.45); }
+.nl-dark-bg .text-white\/25 { color: rgb(255 255 255 / 0.5); }
+.nl-dark-bg .text-white\/30 { color: rgb(255 255 255 / 0.58); }
+.nl-dark-bg .text-white\/35 { color: rgb(255 255 255 / 0.62); }
+.nl-dark-bg .text-white\/40 { color: rgb(255 255 255 / 0.66); }
+.nl-dark-bg .text-white\/45 { color: rgb(255 255 255 / 0.7); }
+.nl-dark-bg .text-white\/50 { color: rgb(255 255 255 / 0.74); }
+.nl-dark-bg .text-white\/55 { color: rgb(255 255 255 / 0.78); }
+.nl-dark-bg .text-white\/60 { color: rgb(255 255 255 / 0.82); }
+.nl-dark-bg .text-white\/70 { color: rgb(255 255 255 / 0.88); }
+.nl-dark-bg :is(.text-muted-foreground, [class*="text-white/"]):not([class*="font-"]) { font-weight: 500; }
 
 /* Training pages: a solid reading surface behind the text so the moving background never runs through it */
 .nl-reading { position: relative; isolation: isolate; }
