@@ -118,9 +118,9 @@ function sceneOpts() {
   const phone = window.innerWidth < 768;
   const adaptive = !window.location.pathname.startsWith("/employee");
   // admin/client computers start at 1× resolution (a Retina window at 1.5× was too much for laptop graphics)
-  return { width: window.innerWidth, height: window.innerHeight, dpr: Math.min(window.devicePixelRatio || 1, phone ? 1 : adaptive ? 1 : 1.5), phone, glow: !phone,
+  return { width: window.innerWidth, height: window.innerHeight, dpr: Math.min(window.devicePixelRatio || 1, phone ? 1 : adaptive ? 1 : 1.5), phone, glow: !phone && !adaptive,
     // admin + client only: salesmen screens are left exactly as they were
-    adaptive };
+    adaptive, calm: adaptive && !phone };
 }
 
 /** Wires window events (resize, pointer, visibility, scroll) to a scene controller-like sink. */

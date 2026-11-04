@@ -5,7 +5,7 @@
  */
 type THREEns = typeof import("three");
 
-export interface SceneOpts { width: number; height: number; dpr: number; phone: boolean; glow: boolean; adaptive?: boolean }
+export interface SceneOpts { width: number; height: number; dpr: number; phone: boolean; glow: boolean; adaptive?: boolean; calm?: boolean }
 export interface SceneCtl {
   resize(w: number, h: number): void;
   pointer(x: number, y: number): void;    // -1..1
@@ -26,9 +26,11 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
   const caf: (id: number) => void = typeof g.cancelAnimationFrame === "function" ? (id) => g.cancelAnimationFrame(id) : (id) => g.clearTimeout(id);
 
   const { phone } = o;
-  const mul = phone ? 0.45 : 1;
-  let baseCap = phone ? 30 : 50;
-  const vis = phone ? 1.45 : 1; // phones have no glow pass, so lines draw brighter instead
+  // calm = admin/client computers: ~40% fewer objects, no glow copies, steady 30fps (same scene and colors)
+  const calm = !!o.calm && !phone;
+  const mul = phone ? 0.45 : calm ? 0.6 : 1;
+  let baseCap = phone || calm ? 30 : 50;
+  const vis = phone ? 1.45 : calm ? 1.25 : 1; // no glow pass → lines draw a bit brighter instead
 
   const renderer = new THREE.WebGLRenderer({ canvas: canvas as any, alpha: true, antialias: !phone, powerPreference: "low-power" });
   renderer.setPixelRatio(o.dpr);
@@ -114,7 +116,7 @@ export function createScene(THREE: THREEns, canvas: HTMLCanvasElement | Offscree
   }));
   pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   scene.add(new THREE.Points(pGeo, track(new THREE.PointsMaterial({ color: ICE, size: phone ? 0.07 : 0.05, transparent: true, opacity: 0.9, blending: add, depthWrite: false }))));
-  const maxLinks = phone ? 40 : 120;
+  const maxLinks = phone ? 40 : calm ? 70 : 120;
   const linkPos = new Float32Array(maxLinks * 6);
   const linkGeo = track(new THREE.BufferGeometry());
   linkGeo.setAttribute("position", new THREE.BufferAttribute(linkPos, 3));
