@@ -7,12 +7,15 @@ export type PacketDoc = {
   slug: string;
   version: number;
   title: string;
+  summary?: string | null;
   body: string;
   body_sha256: string;
   signature: null | { id: string; signed_at: string; typed_name: string; doc_version: number; body: string; body_sha256: string };
 };
 export type Packet = {
-  hire: { id: string; full_name: string; business_name: string | null; state_code: string; status: string; w9_received_at: string | null };
+  hire: { id: string; full_name: string; business_name: string | null; state_code: string; status: string; w9_received_at: string | null;
+    mailing_address: string | null; phone: string | null; work_city: string | null; entity_type: string | null; countersigned_at: string | null; countersign_name: string | null };
+  waiting_countersign?: boolean;
   docs: PacketDoc[];
 };
 
@@ -69,7 +72,7 @@ export function AgreementText({ body, className = "" }: { body: string; classNam
 }
 
 /** Opens a clean printable copy (Save as PDF from the print dialog). */
-export function printSignedCopy(opts: { title: string; body: string; typedName: string; signedAt: string; sha256: string; ip?: string | null }) {
+export function printSignedCopy(opts: { title: string; body: string; typedName: string; signedAt: string; sha256: string; ip?: string | null; countersign?: { name: string; at: string } | null }) {
   const html = simpleMarkdownToHtml(opts.body);
   const when = new Date(opts.signedAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" });
   const w = window.open("", "_blank");
@@ -78,7 +81,7 @@ export function printSignedCopy(opts: { title: string; body: string; typedName: 
 <style>body{font:14px/1.55 Georgia,serif;color:#111;max-width:720px;margin:40px auto;padding:0 20px}h1{font-size:22px}h2{font-size:16px;margin-top:22px}
 .sig{margin-top:28px;border-top:2px solid #111;padding-top:12px;font-family:system-ui,sans-serif;font-size:12px}.sig b{font-size:16px;font-family:Georgia,serif}</style></head>
 <body>${html}<div class="sig"><p>Signed electronically by <b>${esc(opts.typedName)}</b></p><p>${esc(when)}${opts.ip ? ` · IP ${esc(opts.ip)}` : ""}</p>
-<p>Document fingerprint (SHA-256): ${esc(opts.sha256)}</p></div><script>window.onload=()=>setTimeout(()=>window.print(),300)</script></body></html>`);
+<p>Document fingerprint (SHA-256): ${esc(opts.sha256)}</p>${opts.countersign ? `<p style="margin-top:14px">Countersigned for Vivid Virtual Creations LLC dba NewLight Marketing by <b>${esc(opts.countersign.name)}</b><br/>${esc(new Date(opts.countersign.at).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" }))}</p>` : ""}</div><script>window.onload=()=>setTimeout(()=>window.print(),300)</script></body></html>`);
   w.document.close();
 }
 
