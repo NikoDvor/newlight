@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
-import { AgreementText, printSignedCopy, type Packet, type PacketDoc } from "@/lib/contractorPaperwork";
+import { AgreementText, fmtDate, money, printSignedCopy, todayISO, type Packet, type PacketDoc } from "@/lib/contractorPaperwork";
 
 /** The rep signs their contractor agreement here. Never blocks training or anything else in the app. */
 export default function MyPaperwork() {
@@ -16,6 +16,10 @@ export default function MyPaperwork() {
     setPacket((data as Packet) ?? null);
   }, []);
   useEffect(() => { load(); }, [load]);
+  const [w9Url, setW9Url] = useState("");
+  useEffect(() => {
+    (supabase as any).from("nl_contractor_settings").select("value").eq("key", "w9_upload_url").maybeSingle().then(({ data }: any) => setW9Url(data?.value ?? ""));
+  }, []);
 
   if (packet === undefined) return <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-white/60" /></div>;
   if (!packet) {
@@ -53,12 +57,63 @@ export default function MyPaperwork() {
           <p className="mt-2 text-sm text-white/85">Received. You're all set to be paid commission.</p>
         ) : (
           <div className="mt-2 space-y-2 text-sm text-white/85">
-            <p>You'll get an email invite from our payout service. Fill in your W-9 and the bank account you want commission paid to <b className="text-white">there</b>.</p>
-            <p className="flex items-start gap-2 text-white/75"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />NewLight's app never asks for your Social Security number or bank details. If anyone asks for them here, by text or by email, don't send them.</p>
+            <p>Fill out the IRS <a className="font-semibold text-[hsl(197,100%,72%)] underline" href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noreferrer">Form W-9</a>, and write down the bank account you want commission sent to (bank name, routing and account number). Upload both {w9Url ? <a className="font-semibold text-[hsl(197,100%,72%)] underline" href={w9Url} target="_blank" rel="noreferrer">through this secure link</a> : "through the secure link NewLight sends you"}. Never by email or text.</p>
+            <p>Commission can't be sent until your W-9 is in.</p>
+            <p className="flex items-start gap-2 text-white/75"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />Your Social Security number and bank details only ever go through that secure link: never into this app, and never by email or text.</p>
           </div>
         )}
       </section>
+
+      <MyPay />
     </div>
+  );
+}
+
+type LedgerEntry = { id: string; client: string; role: string; rate: number; base: number; amount: number; status: string; earned_on: string; due_on: string; note: string | null; payout_id: string | null };
+type LedgerPayout = { id: string; total: number; method: string; sent_on: string; reference: string };
+function MyPay() {
+  const [l, setL] = useState<{ entries: LedgerEntry[]; payouts: LedgerPayout[] } | null>(null);
+  useEffect(() => { supabase.rpc("nl_commission_my_ledger" as any).then(({ data }) => setL((data as any) ?? null)); }, []);
+  if (!l) return null;
+  const today = todayISO();
+  const pending = l.entries.filter((e) => e.status === "earned");
+  const year = new Date().getFullYear();
+  const paidYear = l.payouts.filter((p) => p.sent_on.startsWith(String(year))).reduce((s, p) => s + Number(p.total), 0);
+  return (
+    <section className="rounded-2xl border border-white/12 bg-[hsl(222,40%,8%)] p-4 sm:p-5">
+      <h2 className="text-[15px] font-bold text-white">My pay</h2>
+      <p className="mt-1 text-xs text-white/75">You're paid within 3 business days after your client's payment clears in NewLight's bank. No taxes are taken out; set some aside.</p>
+      <div className="grid-preserve mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-xl border border-white/12 bg-[hsl(222,40%,10%)] p-3"><p className="text-lg font-black tabular-nums text-white">{money(pending.reduce((s, e) => s + Number(e.amount), 0))}</p><p className="text-[11px] font-bold uppercase tracking-wide text-white/75">On its way</p></div>
+        <div className="rounded-xl border border-white/12 bg-[hsl(222,40%,10%)] p-3"><p className="text-lg font-black tabular-nums text-white">{money(paidYear)}</p><p className="text-[11px] font-bold uppercase tracking-wide text-white/75">Paid in {year}</p></div>
+      </div>
+      {l.entries.length === 0 ? <p className="mt-3 text-sm text-white/75">No commissions yet. They show up here as soon as a client of yours pays.</p> : (
+        <div className="mt-3 space-y-1">
+          {l.entries.map((e) => (
+            <div key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-white/85">
+              <span className="min-w-0 basis-full truncate font-semibold text-white sm:flex-1 sm:basis-auto">{e.client}</span>
+              <span>{e.role === "setter" ? "Booked" : "Closed"} · {(e.rate * 100).toFixed(0)}%</span>
+              <span>{e.status === "paid" ? "Paid" : e.status === "reversed" ? "Cancelled (client refund)" : e.earned_on > today ? `Client money clears ${fmtDate(e.earned_on)}` : `Coming by ${fmtDate(e.due_on)}`}</span>
+              <b className={e.amount < 0 ? "text-[hsl(0,80%,72%)]" : "text-white"}>{money(Number(e.amount))}</b>
+              {e.note && <span className="w-full text-white/70">{e.note}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {l.payouts.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-white/75">Payments sent to you</p>
+          <div className="mt-1 space-y-1">
+            {l.payouts.map((p) => (
+              <div key={p.id} className="flex flex-wrap items-center gap-x-3 rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-white/85">
+                <span className="flex-1">{fmtDate(p.sent_on)} · {p.method === "ach" ? "ACH" : "Wire"} · ref {p.reference}</span>
+                <b className="text-white">{money(Number(p.total))}</b>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Download, FileSignature, Loader2, Plus, Undo2 } from "lucide-react";
 import { toast } from "sonner";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { AgreementText, STATUS_COLOR, STATUS_LABEL, defaultCommissionTerms, printSignedCopy, type HireStatus } from "@/lib/contractorPaperwork";
 
-type StateRow = { state_code: string; state_name: string; allowed: boolean; note: string | null };
+type StateRow = { state_code: string; state_name: string; allowed: boolean; note: string | null; report_note?: string | null; tax_note?: string | null };
 type Hire = { id: string; email: string; full_name: string; business_name: string | null; state_code: string; commission_terms: string; status: HireStatus; user_id: string | null; w9_received_at: string | null; created_at: string; ended_at: string | null };
 type Sig = { id: string; hire_id: string; doc_title: string; doc_version: number; body_snapshot: string; body_sha256: string; typed_name: string; signed_at: string; ip: string | null; user_agent: string | null };
 type Doc = { id: string; slug: string; version: number; title: string; body_md: string; active: boolean; created_at: string };
@@ -20,6 +21,7 @@ const db = supabase as any;
 
 export default function AdminContractors() {
   const { user, isAdmin } = useWorkspace();
+  const { pathname } = useLocation();
   const [hires, setHires] = useState<Hire[]>([]);
   const [sigs, setSigs] = useState<Sig[]>([]);
   const [states, setStates] = useState<StateRow[]>([]);
@@ -74,7 +76,10 @@ export default function AdminContractors() {
           <h1 className="flex items-center gap-2 text-2xl font-bold text-white"><FileSignature className="h-6 w-6" /> Contractor Paperwork</h1>
           <p className="mt-1 max-w-2xl text-sm text-white/80">Commission-only sales reps (1099). They sign their agreement in the app; their W-9 and bank details go to your payout service, never into this app.</p>
         </div>
-        <Button onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> Add contractor</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild><Link to={(pathname.startsWith("/admin") ? "/admin" : "") + "/commissions"}>Commissions &amp; payouts</Link></Button>
+          <Button onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> Add contractor</Button>
+        </div>
       </div>
 
       <div className="grid-preserve grid grid-cols-3 gap-2 sm:gap-3">
@@ -93,7 +98,8 @@ export default function AdminContractors() {
           <TabsTrigger value="states">States</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="people" className="mt-4">
+        <TabsContent value="people" className="mt-4 space-y-4">
+          <W9LinkCard />
           {loading ? <Loader2 className="h-5 w-5 animate-spin text-white/60" /> : hires.length === 0 ? (
             <div className="rounded-2xl border border-white/12 bg-[hsl(222,40%,8%)] p-8 text-center">
               <p className="font-bold text-white">No contractors yet</p>
@@ -221,6 +227,7 @@ function AddDialog({ states, userId, existing, onClose, onSaved }: { states: Sta
             {st?.note && (
               <p className="mt-1.5 flex items-start gap-1.5 text-xs text-[hsl(35,92%,70%)]"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{st.note}</p>
             )}
+            {st?.allowed && st.report_note && <p className="mt-1.5 text-xs text-white/80"><b className="text-white">Your to-do:</b> {st.report_note} Do it on the state's website with their W-9 (never in this app).</p>}
           </Field>
           <Field label="Commission">
             <div className="grid-preserve grid grid-cols-2 gap-2">
@@ -297,6 +304,30 @@ function StatesEditor({ states, onSaved }: { states: StateRow[]; onSaved: () => 
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/** Where reps send their W-9 and payout bank details: a secure upload link you control (never this app, never email). */
+function W9LinkCard() {
+  const [url, setUrl] = useState("");
+  const [saved, setSaved] = useState("");
+  useEffect(() => {
+    db.from("nl_contractor_settings").select("value").eq("key", "w9_upload_url").maybeSingle().then(({ data }: any) => { setUrl(data?.value ?? ""); setSaved(data?.value ?? ""); });
+  }, []);
+  const save = async () => {
+    const { error } = await db.from("nl_contractor_settings").upsert({ key: "w9_upload_url", value: url.trim(), updated_at: new Date().toISOString() });
+    if (error) return toast.error(error.message);
+    setSaved(url.trim()); toast.success("Saved. Reps see this link on their paperwork page.");
+  };
+  return (
+    <div className="rounded-2xl border border-white/12 bg-[hsl(222,40%,8%)] p-4">
+      <p className="font-bold text-white">Secure link for W-9s and bank details</p>
+      <p className="mt-1 text-xs text-white/80">Make a file-request (upload-only) link into a folder only you can open, with two-step login turned on (for example a Dropbox File Request or a Google Drive folder). Reps upload their W-9 and payout bank details there. Then save that bank info as a payee in your bank, and click "W-9 received" on the rep.</p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
+        <Button onClick={save} disabled={url.trim() === saved || !/^https:\/\//.test(url.trim())}>Save link</Button>
       </div>
     </div>
   );

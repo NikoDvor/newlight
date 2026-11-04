@@ -214,6 +214,7 @@ const ClosePrep = lazy(() => import("./pages/employee/ClosePrep"));
 const EmployeePaySign = lazy(() => import("./pages/employee/EmployeePaySign"));
 const MyPaperwork = lazy(() => import("./pages/employee/MyPaperwork"));
 const AdminContractors = lazy(() => import("./pages/admin/AdminContractors"));
+const AdminCommissions = lazy(() => import("./pages/admin/AdminCommissions"));
 const BDRBookingPublic = lazy(() => import("./pages/BDRBookingPublic"));
 const AdminBDRPerformance = lazy(() => import("./pages/admin/AdminBDRPerformance"));
 const AdminBdrMeetingAnalytics = lazy(() => import("./pages/admin/AdminBdrMeetingAnalytics"));
@@ -349,6 +350,7 @@ const App = () => {
                 <Route path="meeting-intelligence" element={<AdminMeetingIntelligence />} />
                 <Route path="employee-performance" element={<AdminEmployeePerformance />} />
                 <Route path="contractors" element={<AdminContractors />} />
+                <Route path="commissions" element={<AdminCommissions />} />
                 <Route path="clients/:clientId/proposal-wizard" element={<AdminProposalWizard />} />
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="packages-pricing" element={<AdminPackagesPricing />} />
@@ -528,6 +530,7 @@ const App = () => {
                 <Route path="/staff-calendars/:calendarId" element={<PermissionGuard moduleKey="team"><AdminStaffCalendarView /></PermissionGuard>} />
                 <Route path="/employee-performance" element={<PermissionGuard moduleKey="team"><AdminEmployeePerformance /></PermissionGuard>} />
                 <Route path="/contractors" element={<AdminContractors />} />
+                <Route path="/commissions" element={<AdminCommissions />} />
                 <Route path="/training-center" element={<PermissionGuard moduleKey="training"><PlaceholderPage title="Training" description="Training for your team is coming soon." /></PermissionGuard>} />
                 <Route path="/revenue-expansion" element={<PermissionGuard moduleKey="intelligence"><AdminRevenueExpansion /></PermissionGuard>} />
                 <Route path="/audit-logs" element={<PermissionGuard moduleKey="intelligence"><AdminAuditLogs /></PermissionGuard>} />

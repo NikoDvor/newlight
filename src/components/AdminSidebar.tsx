@@ -83,6 +83,7 @@ const adminGroups: NavGroup[] = [
     label: "Sales Team",
     items: [
       { title: "Contractor Paperwork", description: "Add a commission-only rep, see who has signed their agreement and sent their W-9.", url: "/admin/contractors", icon: FileSignature },
+      { title: "Commissions & Payouts", description: "Who is owed what and by when, record the wires you send, match your bank statement, year-end 1099 totals.", url: "/admin/commissions", icon: Wallet },
     ],
   },
   {

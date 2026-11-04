@@ -16,6 +16,13 @@ export type Packet = {
   docs: PacketDoc[];
 };
 
+export const money = (n: number) => (n < 0 ? "-" : "") + "$" + Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const fmtDate = (d: string) => new Date(d + (d.length === 10 ? "T12:00:00" : "")).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+export const todayISO = () => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`; };
+/** Federal 1099-NEC threshold by year paid (OBBBA: $2,000 from 2026, indexed from 2027 — update when the IRS publishes it). */
+export const NEC_THRESHOLD: Record<number, number> = { 2025: 600, 2026: 2000 };
+export const necThreshold = (y: number) => NEC_THRESHOLD[y] ?? 2000;
+
 export type HireStatus = "invited" | "signed" | "active" | "ended";
 export const STATUS_LABEL: Record<HireStatus, string> = {
   invited: "Needs to sign",
@@ -35,7 +42,7 @@ export function defaultCommissionTerms(ratePct: number) {
   return [
     `- **Rate:** ${ratePct}% of the **setup fee** paid by each client the Contractor brings in.`,
     `- Commission is on the setup fee **only**: never on monthly fees, retainers, revenue commissions the client pays the Company, ad budgets, or the extra 10% charged on payment plans.`,
-    `- **Payment plans:** half of the commission is earned after each of the two setup payments is received.`,
+    `- **Payment plans:** half of the commission is earned when each of the two setup payments clears.`,
     `- **Annual plans:** commission is figured on the regular setup amount for that package.`,
     `- If the setup fee is negotiated, commission is on the amount the client actually pays.`,
   ].join("\n");
