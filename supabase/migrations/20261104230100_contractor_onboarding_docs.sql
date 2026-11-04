@@ -7,7 +7,7 @@ from (values
  'The written payment terms freelancer-protection laws require.',
 $doc$# Payment Terms Addendum
 
-This addendum is part of the Independent Sales Contractor Agreement between the parties below. It puts in writing the terms that freelance-worker protection laws require (including New York's Freelance Isn't Free Act and similar city and state laws). If anything here conflicts with the agreement, this addendum controls.
+This addendum is part of the Independent Sales Contractor Agreement between the parties below. It puts in writing the terms that freelance-worker protection laws require (including New York's Freelance Isn't Free Act and similar city and state laws). If anything here conflicts with the agreement, this addendum controls, except the commission rates, which are always the ones in Exhibit A.
 
 ## 1. The parties
 - **Company:** Vivid Virtual Creations LLC, doing business as NewLight Marketing. Mailing address: {{company_address}}.
@@ -21,9 +21,8 @@ This addendum is part of the Independent Sales Contractor Agreement between the 
 The Contractor chooses which services to perform, when and how.
 
 ## 3. Value, rate and method of payment
-- **Booking:** 15% of the setup fee the client actually pays.
-- **Closing:** 20% of the setup fee the client actually pays.
-- The full commission terms, with examples, are in Exhibit A of the agreement. Example: a client pays a $10,000 setup fee → $1,500 for the booking, $2,000 for the close.
+- **Rate:** a percentage of the setup fee the client actually pays, as set out in Exhibit A of the agreement. The standard rates are **15% for a booking** and **20% for a close**.
+- Example at the standard rates: a client pays a $10,000 setup fee → $1,500 for the booking, $2,000 for the close.
 - The total value can't be known in advance because it depends on clients the Contractor brings in; it is calculated exactly as described here.
 
 ## 4. When payment is due
@@ -102,7 +101,7 @@ Seattle's Independent Contractor Protections Ordinance (Seattle Municipal Code 1
 | Independent contractor | {{contractor_business}} ({{contractor_name}}) |
 | Work to be performed | Booking first meetings with business owners and closing sales of NewLight's marketing services, by phone and video |
 | Where the work is performed | Wherever the contractor chooses (contractor's location: {{work_location}}) |
-| Rate and basis of pay | Commission only: 15% (booking) or 20% (closing) of the setup fee the client actually pays |
+| Rate and basis of pay | Commission only: a percentage of the setup fee the client actually pays, at the rates in Exhibit A (standard: 15% booking, 20% closing) |
 | How pay is calculated | As set out in Exhibit A and the Payment Terms Addendum |
 | Expenses reimbursed | None. The contractor pays their own costs |
 | Deductions or fees | None, except reversals of commission on client payments refunded or charged back within 120 days |
@@ -126,8 +125,8 @@ The Company does **not**:
 - set quality standards beyond the Company's written specifications (accurate claims, the law, and logging sales so they can be paid), or oversee how the work is done;
 - pay a salary or hourly rate (the Contractor is paid only a fixed commission rate);
 - end this agreement during its term except for breach or failure to meet the specifications;
-- provide more than minimal training (product and compliance information only);
-- provide tools or benefits;
+- require any training beyond product and compliance information (any other training the Company offers is optional);
+- provide tools or benefits, other than access to the Company's own software and lead information needed to log sales and serve clients;
 - dictate when the work is performed;
 - combine its business operations with the Contractor's.
 
