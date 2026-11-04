@@ -84,6 +84,7 @@ const adminGroups: NavGroup[] = [
     items: [
       { title: "Contractor Paperwork", description: "Add a commission-only rep, see who has signed their agreement and sent their W-9.", url: "/admin/contractors", icon: FileSignature },
       { title: "Commissions & Payouts", description: "Who is owed what and by when, record the wires you send, match your bank statement, year-end 1099 totals.", url: "/admin/commissions", icon: Wallet },
+      { title: "Legal Vault", description: "Every signed agreement, payout, state filing and company document in one place, with legal hold and a change log.", url: "/admin/legal-vault", icon: ShieldCheck },
     ],
   },
   {

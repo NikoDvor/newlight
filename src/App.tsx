@@ -126,7 +126,6 @@ const AdminImplementationDetail = lazy(() => import("./pages/admin/AdminImplemen
 const AdminOnboardingCommandCenter = lazy(() => import("./pages/admin/AdminOnboardingCommandCenter"));
 const AdminSalesControlCenter = lazy(() => import("./pages/admin/AdminSalesControlCenter"));
 const AdminRetention = lazy(() => import("./pages/admin/AdminRetention"));
-const AdminSignedDocuments = lazy(() => import("./pages/admin/AdminSignedDocuments"));
 const AdminMarketingReview = lazy(() => import("./pages/admin/AdminMarketingReview"));
 const AdminMarketingTemplates = lazy(() => import("./pages/admin/AdminMarketingTemplates"));
 const AdminRiskProfiles = lazy(() => import("./pages/admin/AdminRiskProfiles"));
@@ -215,6 +214,8 @@ const EmployeePaySign = lazy(() => import("./pages/employee/EmployeePaySign"));
 const MyPaperwork = lazy(() => import("./pages/employee/MyPaperwork"));
 const AdminContractors = lazy(() => import("./pages/admin/AdminContractors"));
 const AdminCommissions = lazy(() => import("./pages/admin/AdminCommissions"));
+const LegalVault = lazy(() => import("./pages/admin/LegalVault"));
+const SellGate = lazy(() => import("./components/employee/SellGate"));
 const BDRBookingPublic = lazy(() => import("./pages/BDRBookingPublic"));
 const AdminBDRPerformance = lazy(() => import("./pages/admin/AdminBDRPerformance"));
 const AdminBdrMeetingAnalytics = lazy(() => import("./pages/admin/AdminBdrMeetingAnalytics"));
@@ -351,6 +352,7 @@ const App = () => {
                 <Route path="employee-performance" element={<AdminEmployeePerformance />} />
                 <Route path="contractors" element={<AdminContractors />} />
                 <Route path="commissions" element={<AdminCommissions />} />
+                <Route path="legal-vault" element={<LegalVault />} />
                 <Route path="clients/:clientId/proposal-wizard" element={<AdminProposalWizard />} />
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="packages-pricing" element={<AdminPackagesPricing />} />
@@ -392,7 +394,7 @@ const App = () => {
                 <Route path="client-intelligence/wins" element={<AdminWinTracking />} />
                 <Route path="client-intelligence/optimization" element={<AdminOptimizationFlags />} />
                 <Route path="client-intelligence/retention" element={<AdminRetention />} />
-                <Route path="client-intelligence/signed-documents" element={<AdminSignedDocuments />} />
+                <Route path="client-intelligence/signed-documents" element={<LegalVault />} />
                 <Route path="marketing-review" element={<AdminMarketingReview />} />
                 <Route path="marketing-templates" element={<AdminMarketingTemplates />} />
                 <Route path="risk-profiles" element={<AdminRiskProfiles />} />
@@ -425,7 +427,7 @@ const App = () => {
                 <Route path="my-stats" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyStats /></ClientFlagGate>} />
                 <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
-                <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
+                <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><SellGate><BDRDialer /></SellGate></ClientFlagGate>} />
 
 
 
@@ -531,13 +533,14 @@ const App = () => {
                 <Route path="/employee-performance" element={<PermissionGuard moduleKey="team"><AdminEmployeePerformance /></PermissionGuard>} />
                 <Route path="/contractors" element={<AdminContractors />} />
                 <Route path="/commissions" element={<AdminCommissions />} />
+                <Route path="/legal-vault" element={<LegalVault />} />
                 <Route path="/training-center" element={<PermissionGuard moduleKey="training"><PlaceholderPage title="Training" description="Training for your team is coming soon." /></PermissionGuard>} />
                 <Route path="/revenue-expansion" element={<PermissionGuard moduleKey="intelligence"><AdminRevenueExpansion /></PermissionGuard>} />
                 <Route path="/audit-logs" element={<PermissionGuard moduleKey="intelligence"><AdminAuditLogs /></PermissionGuard>} />
                 <Route path="/team-management" element={<TeamManagement />} />
                 <Route path="/bdr-team-pipeline" element={<ClientFlagGate flag="has_sales_team"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="/bdr-lead-sourcing" element={<ClientFlagGate flag="has_sales_team"><BDRLeadSourcing /></ClientFlagGate>} />
-                <Route path="/bdr-dialer" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><BDRDialer /></ClientFlagGate></PermissionGuard>} />
+                <Route path="/bdr-dialer" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><SellGate><BDRDialer /></SellGate></ClientFlagGate></PermissionGuard>} />
                 <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar"><CalendarIntegrations /></PermissionGuard>} />
                 <Route path="/setup-center" element={<SetupCenter />} />
                 <Route path="/service-manager" element={<PermissionGuard moduleKey="services"><ServiceManager /></PermissionGuard>} />

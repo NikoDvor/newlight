@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import ContractorAlerts from "@/components/admin/ContractorAlerts";
 import { AgreementText, STATUS_COLOR, STATUS_LABEL, defaultCommissionTerms, printSignedCopy, type HireStatus } from "@/lib/contractorPaperwork";
 
 type StateRow = { state_code: string; state_name: string; allowed: boolean; note: string | null; report_note?: string | null; tax_note?: string | null; report_days?: number | null };
@@ -83,6 +84,8 @@ export default function AdminContractors() {
           <Button onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> Add contractor</Button>
         </div>
       </div>
+
+      <ContractorAlerts />
 
       <div className="grid-preserve grid grid-cols-3 gap-2 sm:gap-3">
         {(["invited", "signed", "active"] as HireStatus[]).map((k) => (
@@ -159,16 +162,49 @@ function AddDialog({ states, userId, existing, onClose, onSaved }: { states: Sta
   const ok = name.trim().length > 2 && /.+@.+\..+/.test(email) && !!st && st.allowed && terms.trim().length > 10 && !dup;
 
   const pickRate = (r: number) => { setRate(r); setTerms(defaultCommissionTerms(r)); };
+  const [result, setResult] = useState<{ msg: string; link?: string } | null>(null);
   const save = async () => {
     setBusy(true);
-    const { error } = await db.from("nl_contractor_hires").insert({
-      full_name: name.trim(), email: email.trim().toLowerCase(), business_name: biz.trim() || null, state_code: state, commission_terms: terms.trim(), created_by: userId,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Added. They'll see the agreement when they log in with that email.");
-    onSaved();
+    try {
+      const em = email.trim().toLowerCase();
+      // 1. Check the email first so an existing account's roles are never touched.
+      const st = await db.rpc("nl_contractor_email_status", { p_email: em });
+      if (st.error) { toast.error(st.error.message); return; }
+      const roles: string[] = st.data?.roles ?? [];
+      if (roles.includes("admin") || roles.includes("operator")) { toast.error("That email belongs to an admin account. Use the rep's own email."); return; }
+      // 2. Save the contractor.
+      const { error } = await db.from("nl_contractor_hires").insert({
+        full_name: name.trim(), email: em, business_name: biz.trim() || null, state_code: state, commission_terms: terms.trim(), created_by: userId,
+      });
+      if (error) { toast.error(error.message); return; }
+      // 3. New person: send the app invite as a salesman. Existing account: nothing to send.
+      if (st.data?.has_account) {
+        setResult({ msg: `${name.trim()} already has an app account. Their paperwork is waiting under My Paperwork & Pay the next time they log in.` });
+        return;
+      }
+      const inv = await supabase.functions.invoke("invite-user", { body: { email: em, role: "marketing_staff" } });
+      if (inv.error || inv.data?.error) {
+        setResult({ msg: `Saved, but the app invite didn't send (${inv.data?.error || inv.error?.message || "unknown error"}). Invite ${em} on the Team page as a salesman.` });
+        return;
+      }
+      if (inv.data?.user_id) await db.from("employee_profiles").update({ full_name: name.trim() }).eq("user_id", inv.data.user_id);
+      setResult(inv.data?.invite_email_sent === false && inv.data?.setup_link
+        ? { msg: "Saved. The invite email couldn't be sent, so send them this one-time setup link yourself:", link: inv.data.setup_link }
+        : { msg: `Saved and invited. ${name.trim()} gets an email to set up their login, then sees their paperwork.` });
+    } finally { setBusy(false); }
   };
+  if (result) {
+    return (
+      <Dialog open onOpenChange={(o) => { if (!o) onSaved(); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Contractor added</DialogTitle></DialogHeader>
+          <p className="text-sm text-white/85">{result.msg}</p>
+          {result.link && <Input readOnly value={result.link} onFocus={(e) => e.currentTarget.select()} />}
+          <Button onClick={onSaved}>Done</Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -200,7 +236,7 @@ function AddDialog({ states, userId, existing, onClose, onSaved }: { states: Sta
             <Textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={8} className="mt-2 font-mono text-xs" />
             <p className="mt-1 text-xs text-white/70">This becomes Exhibit A of their agreement. You can change the wording before you save; it's locked once they sign.</p>
           </Field>
-          <p className="rounded-lg border border-white/12 bg-white/[0.04] p-2.5 text-xs text-white/80">They need an app account with this same email. If they don't have one yet, add them on the Team page.</p>
+          <p className="rounded-lg border border-white/12 bg-white/[0.04] p-2.5 text-xs text-white/80">If they don't have an app account yet, saving sends them an invite to set one up as a salesman. Use their personal email.</p>
           <Button onClick={save} disabled={!ok || busy} className="w-full">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Add contractor</Button>
         </div>
       </DialogContent>
@@ -260,6 +296,37 @@ function AgreementEditor({ docs, userId, onSaved }: { docs: Doc[]; userId?: stri
           </div>
         </>
       ) : <AgreementText body={current.body_md} />}
+    </div>
+  );
+}
+
+function EndAgreement({ hire: h, onDone }: { hire: Hire; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const end = async () => {
+    setBusy(true);
+    try {
+      const { data: uid, error } = await db.rpc("nl_contractor_end", { p_hire_id: h.id, p_reason: reason });
+      if (error) { toast.error(error.message); return; }
+      if (uid) {
+        const r = await supabase.functions.invoke("admin-user-actions", { body: { action: "suspend", target_user_id: uid } });
+        if (r.error || r.data?.error) toast.error(`Agreement ended and territories closed, but their login couldn't be switched off (${r.data?.error || r.error?.message}). Suspend them on the Team page.`);
+        else toast.success(`${h.full_name}: agreement ended, territories closed, login switched off.`);
+      } else toast.success(`${h.full_name}: agreement ended. They never logged in, so there's no login to switch off.`);
+      await db.from("nl_contractor_hires").update({ offboarding: { ...(h.offboarding ?? {}), access: new Date().toISOString() } }).eq("id", h.id);
+      onDone();
+    } finally { setBusy(false); }
+  };
+  if (!open) return <Button size="sm" variant="ghost" className="text-[hsl(0,80%,72%)]" onClick={() => setOpen(true)}>End the agreement…</Button>;
+  return (
+    <div className="space-y-2 rounded-lg border border-[hsla(0,80%,66%,.45)] p-3">
+      <p className="text-white">This ends the agreement today, closes their territories and switches off their login. Commission on clients they signed keeps being paid as client money clears. Their records stay in the Legal Vault.</p>
+      <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (for your records)" className="h-9" />
+      <div className="flex gap-2">
+        <Button size="sm" variant="destructive" onClick={end} disabled={busy}>{busy && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}End agreement</Button>
+        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+      </div>
     </div>
   );
 }
@@ -343,6 +410,7 @@ function HireDialog({ hire: h, sigs, docs, states, userId, onChanged, onClose }:
                   );
                 })}
                 {visible.length === 0 && <p>Nothing yet.</p>}
+                {need.some((d) => d.slug === "seattle-pre-work-notice") && <p className="text-[hsl(35,92%,70%)]">Seattle rep: before they start, also email them the City's official Notice of Rights for independent contractors (seattle.gov/laborstandards), and file a copy in the Legal Vault.</p>}
               </Row>
               <Row done={!!h.countersigned_at} title="3. You countersign">
                 {h.countersigned_at ? <p>Countersigned by {h.countersign_name} on {new Date(h.countersigned_at).toLocaleDateString()}. The rep can download the fully signed copy.</p> : agreementSig ? (
@@ -384,7 +452,7 @@ function HireDialog({ hire: h, sigs, docs, states, userId, onChanged, onClose }:
               <div className="mt-2 space-y-2 text-xs text-white/85">
                 {[
                   ["notice", "Sent written notice by email (14 days, or immediately for a serious breach)"],
-                  ["access", "Removed their app access (Team page) the day it ends"],
+                  ["access", "App login switched off and territories closed (done automatically when you end it below)"],
                   ["data", "Rep confirmed in writing they deleted NewLight data"],
                   ["final", "Final commission statement sent; later commissions still paid as client money clears"],
                 ].map(([k, label]) => (
@@ -394,7 +462,7 @@ function HireDialog({ hire: h, sigs, docs, states, userId, onChanged, onClose }:
                   </label>
                 ))}
                 <p className="text-white/70">Never make final pay depend on them signing a release.</p>
-                <Button size="sm" variant="ghost" className="text-[hsl(0,80%,72%)]" onClick={() => upd({ status: "ended", ended_at: new Date().toISOString() }, `${h.full_name}'s agreement marked ended`).then(onClose)}>Mark agreement ended</Button>
+                <EndAgreement hire={h} onDone={() => { onChanged(); onClose(); }} />
               </div>
             </details>
           ) : <p className="text-white/80">Agreement ended {h.ended_at ? new Date(h.ended_at).toLocaleDateString() : ""}. Keep these records for 6 years.</p>}

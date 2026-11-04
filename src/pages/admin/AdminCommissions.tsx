@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import ContractorAlerts from "@/components/admin/ContractorAlerts";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
 import { fmtDate, money, necThreshold, todayISO } from "@/lib/contractorPaperwork";
 
@@ -80,6 +81,8 @@ export default function AdminCommissions() {
         </div>
         <Button onClick={() => setAddSale(true)}><Plus className="mr-1.5 h-4 w-4" /> New sale</Button>
       </div>
+
+      <ContractorAlerts only={["payout:"]} />
 
       <div className="grid-preserve grid grid-cols-3 gap-2 sm:gap-3">
         <Stat label="Ready to send" value={money(totalReady)} color="hsl(152 60% 58%)" />
