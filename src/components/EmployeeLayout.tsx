@@ -48,7 +48,7 @@ const navGroups: { label?: string; items: { title: string; url: string; icon: an
     items: [{ title: "Training Center", url: "/employee/training", icon: GraduationCap }],
   },
   {
-    items: [{ title: "My Paperwork", url: "/employee/paperwork", icon: FileSignature }, { title: "My Profile", url: "/employee/profile", icon: UserCircle }],
+    items: [{ title: "My Paperwork & Pay", url: "/employee/paperwork", icon: FileSignature }, { title: "My Profile", url: "/employee/profile", icon: UserCircle }],
   },
 ];
 

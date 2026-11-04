@@ -21,7 +21,7 @@ export const APP_TOUR: Step[] = [
   { route: "/employee/generic", target: '[data-tour="board"]', title: "Your board", body: "Every lead by stage: Cold → Warm → Hot → Won. Red flags tell you what needs you. Tap a lead to open its profile." },
   { route: "/employee/generic", target: '[data-tour="forms"]', title: "Your Forms", body: "Form 1 is your booking link. Form 2 is Close Prep. Form 3 is Pay & Sign. Only forms move a lead up." },
   { route: "/employee/lead-sourcing", target: '[data-tour="pull"]', title: "Pull leads", body: "Pick a territory, a firm type and how many. They land in your Dialer and My Leads right away." },
-  { route: "/employee/dialer", title: "The Dialer", body: "Each row is a firm. Tap a row for every decision maker with their own numbers. Calls you make here count toward your 250. Pick an outcome after every call, then Mark Dialed." },
+  { route: "/employee/dialer", title: "The Dialer", body: "Each row is a firm. Tap a row for every decision maker with their own numbers. Calls you make here count in your daily total. Pick an outcome after every call, then Mark Dialed." },
   { route: "/employee/leads", title: "My Leads", body: "Every lead you own. Buttons on each lead: Numbers (Discovery), + Meeting, Booked elsewhere, Close Prep." },
   { route: "/employee/calendar", title: "My Calendar", body: "Your meetings. Open one to switch it to 'away from our Zoom', add attendees, or log the outcome." },
   { route: "/employee/my-stats", title: "My Stats", body: "Dials, meetings, close rates and meeting effort — next to the team average." },

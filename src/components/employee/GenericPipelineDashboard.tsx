@@ -313,18 +313,15 @@ export function GenericPipelineDashboard({ section = "home" }: { section?: "home
       <Reveal><YourForms /></Reveal>
 
 
-      {/* 0.5 DIALS — daily goal tracking (250/day expectation from Role module) */}
+      {/* 0.5 DIALS — the rep's own pace vs. what top reps do (not a requirement: reps are independent contractors) */}
       <Reveal delay={0.05}>
       {(() => {
         const hit = dialCounts.today >= DAILY_DIAL_GOAL;
-        const behind = dialCounts.today < DAILY_DIAL_GOAL * 0.75;
         const remaining = Math.max(0, DAILY_DIAL_GOAL - dialCounts.today);
         const pct = Math.min(100, Math.round((dialCounts.today / DAILY_DIAL_GOAL) * 100));
         const tone = hit
           ? { border: "hsl(142,72%,42%)", bg: "hsla(142,72%,42%,.08)", text: "text-emerald-400", bar: "hsl(142,72%,42%)", glow: "0 0 0 1px hsla(142,72%,42%,0.25), 0 12px 40px -12px hsla(142,72%,42%,0.35)" }
-          : !behind
-          ? { border: "hsl(45,95%,55%)", bg: "hsla(45,95%,55%,.08)", text: "text-[hsl(45,95%,60%)]", bar: "hsl(45,95%,55%)", glow: "0 0 0 1px hsla(45,95%,55%,0.28), 0 12px 40px -12px hsla(45,95%,55%,0.35)" }
-          : { border: "hsl(0,72%,55%)", bg: "hsla(0,72%,55%,.08)", text: "text-[hsl(0,72%,65%)]", bar: "hsl(0,72%,55%)", glow: "0 0 0 1px hsla(0,72%,55%,0.28), 0 12px 40px -12px hsla(0,72%,55%,0.4)" };
+          : { border: "hsl(45,95%,55%)", bg: "hsla(45,95%,55%,.08)", text: "text-[hsl(45,95%,60%)]", bar: "hsl(45,95%,55%)", glow: "0 0 0 1px hsla(45,95%,55%,0.28), 0 12px 40px -12px hsla(45,95%,55%,0.35)" };
         return (
           <Card
             className="border p-4 backdrop-blur-xl relative overflow-hidden"
@@ -347,12 +344,12 @@ export function GenericPipelineDashboard({ section = "home" }: { section?: "home
                     <span className={`text-2xl font-bold tabular-nums ${tone.text}`}>
                       <PulseNumber value={dialCounts.today} />
                     </span>
-                    <span className="text-xs text-muted-foreground">/ {DAILY_DIAL_GOAL} goal</span>
+                    <span className="text-xs text-muted-foreground">/ {DAILY_DIAL_GOAL} top-rep pace</span>
                   </div>
                 </div>
               </div>
               <div className={`text-sm font-semibold ${tone.text}`}>
-                {hit ? `✓ Goal hit — ${dialCounts.today - DAILY_DIAL_GOAL} over` : `${remaining} dials to go`}
+                {hit ? `✓ Top-rep pace — ${dialCounts.today - DAILY_DIAL_GOAL} over` : `${remaining} to top-rep pace`}
               </div>
               <div className="flex gap-4 text-xs">
                 <div><span className="text-muted-foreground">Week</span> <span className="text-foreground font-semibold ml-1 tabular-nums"><PulseNumber value={dialCounts.week} /></span></div>

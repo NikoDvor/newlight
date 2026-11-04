@@ -23,7 +23,7 @@ const HAPPY: Step[] = [
   { t: "Form 1 — first meeting booked", where: "Your Forms → Form 1", tap: "They book on your link while you're on the phone", stage: "warm", hi: ["f1", "board", "tiles"], tiles: [1, 0, 1, 0, 0, 0],
     d: "The card appears in Warm. Booked another way, or ran discovery on the call? My Leads → Booked elsewhere (→ We're talking now)." },
   { t: "Meeting 1 ends", where: "My Pipeline", tap: "Nothing yet — it's waiting on you", stage: "warm", hi: ["outcome", "tiles"], tiles: [1, 1, 1, 0, 0, 0],
-    d: "The moment a meeting ends without an outcome, it shows here and on your team leader's screen as overdue." },
+    d: "The moment a meeting ends without an outcome, it shows here and on NewLight's admin screen as overdue." },
   { t: "Log the outcome", where: "Needs an outcome → Log outcome", tap: "Attended → Won → Fill out Form 2", stage: "warm", hi: ["outcome"], tiles: [1, 0, 1, 0, 0, 0],
     outcome: { kind: "Discovery", att: "Attended", res: "Won", btn: "Fill out Form 2" },
     d: "Two questions: did it happen, and how did it go. Won on a discovery takes you straight into Form 2." },

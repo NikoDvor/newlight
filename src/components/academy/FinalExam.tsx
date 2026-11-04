@@ -70,7 +70,7 @@ export default function FinalExam({ data, onDone }: { data: AcademyData; onDone?
             <div className="mx-auto mt-4 max-w-md rounded-xl border border-[hsla(197,100%,55%,.4)] bg-[hsla(197,100%,55%,.08)] p-4 text-left">
               <div className="flex gap-3">
                 <Video className="h-5 w-5 shrink-0 text-[hsl(197,100%,65%)]" />
-                <p className="text-[14px] leading-relaxed text-white">You'll now meet with your team leader over Zoom for the final step.</p>
+                <p className="text-[14px] leading-relaxed text-white">Want feedback before your first real calls? Book an optional practice call with NewLight over Zoom.</p>
               </div>
             </div>
           </>
@@ -107,7 +107,7 @@ export default function FinalExam({ data, onDone }: { data: AcademyData; onDone?
         </div>
       )}
       {passedBefore && (
-        <p className="mt-4 text-[13px] text-white/75">You passed on {new Date(passedBefore.completed_at).toLocaleDateString()}. You'll meet with your team leader over Zoom for the final step.</p>
+        <p className="mt-4 text-[13px] text-white/75">You passed on {new Date(passedBefore.completed_at).toLocaleDateString()}. Want feedback? Book an optional practice call with NewLight over Zoom.</p>
       )}
       <Button className="mt-5 w-full sm:w-auto" disabled={phase === "loading"} onClick={start}>
         {phase === "loading" ? "Building your test…" : passedBefore ? "Take it again" : data.certs.length ? "Retake the test" : "Start the test"}

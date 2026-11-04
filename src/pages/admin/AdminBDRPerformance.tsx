@@ -417,7 +417,7 @@ export default function AdminBDRPerformance() {
             <div className="hidden sm:grid grid-cols-9 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
               <span className="col-span-2">BDR</span>
               <span>Today</span><span>Week</span><span>Month</span><span>Total</span>
-              <span>Sched % (Total)</span><span>Days Hit / Missed</span><span>Top Outcome</span>
+              <span>Sched % (Total)</span><span>250+ days / other</span><span>Top Outcome</span>
             </div>
             {bdrCallRows.map(row => {
               const top = row.metrics.all.breakdown[0];
@@ -433,9 +433,9 @@ export default function AdminBDRPerformance() {
                     <span className="text-sm text-foreground"><MobileLabel>Sched %</MobileLabel>{row.metrics.all.schedPct}%</span>
                     <span className="text-xs whitespace-nowrap" title={`${DAILY_DIAL_GOAL}+ dials = hit; 1–${DAILY_DIAL_GOAL - 1} = missed; 0 = not counted`}>
                       <span className="text-emerald-400 font-semibold tabular-nums">{dd.hit}</span>
-                      <span className="text-muted-foreground"> hit / </span>
+                      <span className="text-muted-foreground"> at 250+ / </span>
                       <span className="text-[hsl(0,72%,65%)] font-semibold tabular-nums">{dd.missed}</span>
-                      <span className="text-muted-foreground"> missed</span>
+                      <span className="text-muted-foreground"> other</span>
                     </span>
                     <span className="col-span-3 sm:col-span-1 text-xs text-muted-foreground truncate"><MobileLabel>Top outcome</MobileLabel>{top ? `${top.outcome} (${top.pct}%)` : "—"}</span>
                   </div>

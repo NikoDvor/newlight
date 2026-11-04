@@ -95,9 +95,9 @@ function CertPath() {
     <Frame>
       <FlowSteps steps={[
         { title: "Chapter quizzes", sub: "Modules 5, 7 and 8" },
-        { title: "Final Certification", sub: "Module 10 · pass with 80% · unlimited retakes" },
-        { title: "Live test", sub: "With your team leader over Zoom", tone: "sdr" },
-        { title: "Selling", sub: "You're cleared", tone: "won" },
+        { title: "Final Certification", sub: "Optional · Module 10 · 80% earns the badge" },
+        { title: "Practice call", sub: "Optional · with NewLight over Zoom", tone: "sdr" },
+        { title: "Selling", sub: "Whenever you're ready", tone: "won" },
       ]} />
     </Frame>
   );
@@ -112,7 +112,7 @@ function JobFlow() {
       </div>
       <FlowSteps steps={[
         { title: "Pull leads", sub: "From the pool" },
-        { title: "Dial", sub: "250 a day" },
+        { title: "Dial", sub: "Your own pace" },
         { title: "Book", sub: "Form 1" },
         { title: "Discovery", sub: "Their numbers", tone: "sdr" },
         { title: "Close", sub: "Form 2", tone: "sdr" },
@@ -125,10 +125,10 @@ function JobFlow() {
 function DailyMix() {
   const [hover, setHover] = useState<"new" | "follow" | null>(null);
   return (
-    <Frame caption="250 dials a day = 150 new + 100 follow-ups.">
+    <Frame caption="What top reps do on a calling day: about 250 dials = 150 new + 100 follow-ups. Your pace is up to you.">
       <div className="flex items-end justify-between mb-2">
         <div className="text-3xl font-bold tabular-nums text-white">250</div>
-        <div className="text-[11px] text-white/50">dials / day</div>
+        <div className="text-[11px] text-white/50">top-rep calling day</div>
       </div>
       <div className="flex h-10 w-full overflow-hidden rounded-lg">
         <motion.button type="button" onClick={() => setHover("new")}
@@ -157,7 +157,7 @@ function DailyMix() {
 
 function KpiFunnel() {
   const rows = [
-    { l: "Dials", w: 100, note: "250 / day" },
+    { l: "Dials", w: 100, note: "your pace" },
     { l: "Conversations", w: 72 },
     { l: "First meetings (Form 1)", w: 50 },
     { l: "Close Preps (Form 2)", w: 32 },
