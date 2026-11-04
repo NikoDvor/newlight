@@ -5922,6 +5922,8 @@ export type Database = {
           sent_at: string | null
           share_token: string
           status: Database["public"]["Enums"]["envelope_status"]
+          terms_sha256: string | null
+          terms_version: string | null
           title: string
           updated_at: string
           viewed_at: string | null
@@ -5943,6 +5945,8 @@ export type Database = {
           sent_at?: string | null
           share_token?: string
           status?: Database["public"]["Enums"]["envelope_status"]
+          terms_sha256?: string | null
+          terms_version?: string | null
           title: string
           updated_at?: string
           viewed_at?: string | null
@@ -5964,6 +5968,8 @@ export type Database = {
           sent_at?: string | null
           share_token?: string
           status?: Database["public"]["Enums"]["envelope_status"]
+          terms_sha256?: string | null
+          terms_version?: string | null
           title?: string
           updated_at?: string
           viewed_at?: string | null
@@ -9030,6 +9036,191 @@ export type Database = {
           score?: number
           user_id?: string
           weak_modules?: Json | null
+        }
+        Relationships: []
+      }
+      nl_contractor_docs: {
+        Row: {
+          active: boolean
+          body_md: string
+          created_at: string
+          created_by: string | null
+          id: string
+          slug: string
+          title: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          body_md: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          slug: string
+          title: string
+          version: number
+        }
+        Update: {
+          active?: boolean
+          body_md?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          slug?: string
+          title?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      nl_contractor_hires: {
+        Row: {
+          business_name: string | null
+          commission_terms: string
+          created_at: string
+          created_by: string | null
+          email: string
+          ended_at: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          state_code: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          w9_received_at: string | null
+          w9_received_by: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          commission_terms: string
+          created_at?: string
+          created_by?: string | null
+          email: string
+          ended_at?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          state_code: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          w9_received_at?: string | null
+          w9_received_by?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          commission_terms?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          ended_at?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          state_code?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          w9_received_at?: string | null
+          w9_received_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_contractor_hires_state_code_fkey"
+            columns: ["state_code"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_states"
+            referencedColumns: ["state_code"]
+          },
+        ]
+      }
+      nl_contractor_signatures: {
+        Row: {
+          body_sha256: string
+          body_snapshot: string
+          doc_id: string
+          doc_slug: string
+          doc_title: string
+          doc_version: number
+          esign_consent: boolean
+          hire_id: string
+          id: string
+          ip: string | null
+          signed_at: string
+          typed_name: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          body_sha256: string
+          body_snapshot: string
+          doc_id: string
+          doc_slug: string
+          doc_title: string
+          doc_version: number
+          esign_consent: boolean
+          hire_id: string
+          id?: string
+          ip?: string | null
+          signed_at?: string
+          typed_name: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          body_sha256?: string
+          body_snapshot?: string
+          doc_id?: string
+          doc_slug?: string
+          doc_title?: string
+          doc_version?: number
+          esign_consent?: boolean
+          hire_id?: string
+          id?: string
+          ip?: string | null
+          signed_at?: string
+          typed_name?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_contractor_signatures_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_contractor_signatures_hire_id_fkey"
+            columns: ["hire_id"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_hires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_contractor_states: {
+        Row: {
+          allowed: boolean
+          note: string | null
+          state_code: string
+          state_name: string
+          updated_at: string
+        }
+        Insert: {
+          allowed?: boolean
+          note?: string | null
+          state_code: string
+          state_name: string
+          updated_at?: string
+        }
+        Update: {
+          allowed?: boolean
+          note?: string | null
+          state_code?: string
+          state_name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -16511,6 +16702,21 @@ export type Database = {
       nl_contact_rank: {
         Args: { _owner: boolean; _title: string }
         Returns: number
+      }
+      nl_contractor_my_packet: { Args: never; Returns: Json }
+      nl_contractor_render: {
+        Args: { p_date?: string; p_doc_id: string; p_hire_id: string }
+        Returns: string
+      }
+      nl_contractor_sign: {
+        Args: {
+          p_body_sha256: string
+          p_consent: boolean
+          p_doc_id: string
+          p_typed_name: string
+          p_user_agent: string
+        }
+        Returns: string
       }
       nl_dialer_lead_details: { Args: { _lead_ids: string[] }; Returns: Json }
       nl_jbool: { Args: { v: Json }; Returns: boolean }

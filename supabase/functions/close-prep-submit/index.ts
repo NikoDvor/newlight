@@ -6,7 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { createZoomMeeting } from "../_shared/zoom.ts";
 import { attendeeEmail, type MeetingAttendee } from "../_shared/meetingAttendees.ts";
-import { esc, fmtMoney, buildServiceAgreementHtml, applyPlanTerms } from "../_shared/service-agreement-html.ts";
+import { esc, fmtMoney, buildServiceAgreementHtml, applyPlanTerms, AGREEMENT_VERSION } from "../_shared/service-agreement-html.ts";
 import { mergeDefaults, defaultPrices, needsApproval, buildPlan, pacificDate, type PackageKey } from "../_shared/packages.ts";
 import { sendEmail as nlSendEmail, emailHtml as nlEmailHtml, OPS_EMAIL as NL_OPS_EMAIL, APP_BASE_URL as NL_APP_BASE } from "../_shared/nlBilling.ts";
 
@@ -410,6 +410,7 @@ Deno.serve(async (req) => {
       governingState: agencySettings?.governing_state || "California",
       venueCounty: agencySettings?.venue_county || "Santa Barbara County",
       dataRetentionDays: 365,
+      noticeEmail: agencySettings?.notice_email || null,
     });
     const finalAgreementHtml = planInfo ? applyPlanTerms(summaryHtml, {
       packageKey: pkgKey!, packageLabel: planInfo.pkg.label, steps: planInfo.pkg.steps, cadence,
@@ -418,6 +419,9 @@ Deno.serve(async (req) => {
       paymentPlan, paymentPlanTotal: planInfo.preview.paymentPlanTotal, annualFirst: planInfo.preview.annualFirst, annualRenewal: planInfo.preview.annualRenewal,
       minAdBudget: planInfo.pkg.min_ad_budget,
     }) : summaryHtml;
+    // Stamp the exact agreement text: version + SHA-256 (hex) of the HTML string that gets signed.
+    const termsDigest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(finalAgreementHtml));
+    const termsSha256 = Array.from(new Uint8Array(termsDigest)).map((b) => b.toString(16).padStart(2, "0")).join("");
     const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(finalAgreementHtml)))}`;
     const termsSummaryHtml = buildTermsSummaryHtml({ businessName: lead.business_name, priceLine: priceLineForDoc, retainerKpi: kpi });
     const termsSummaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(termsSummaryHtml)))}`;
@@ -437,6 +441,8 @@ Deno.serve(async (req) => {
         recipient_email: lead.email || null,
         created_by: userId,
         attorney_reviewed: false,
+        terms_version: AGREEMENT_VERSION,
+        terms_sha256: termsSha256,
       } as any)
       .select("id, share_token")
       .single();

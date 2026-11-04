@@ -22,6 +22,13 @@
       "when": 1792093227110,
       "tag": "0002_fix_public_bdr_calendar_slug_cast",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793821790122,
+      "tag": "0003_envelope_terms_version_hash",
+      "breakpoints": true
     }
   ]
 }
