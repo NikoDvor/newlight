@@ -9047,11 +9047,15 @@ export type Database = {
           id: string
           lead_id: string
           leads_per_client: number | null
+          ltv_retention: number | null
+          ltv_years: number | null
           model_close_rate: number | null
           model_leads: number | null
           model_ticket: number | null
+          new_clients_12m: number | null
           new_leads: number | null
           new_leads_period: string
+          their_number: number | null
           updated_at: string
           updated_by: string | null
           user_id: string
@@ -9069,11 +9073,15 @@ export type Database = {
           id?: string
           lead_id: string
           leads_per_client?: number | null
+          ltv_retention?: number | null
+          ltv_years?: number | null
           model_close_rate?: number | null
           model_leads?: number | null
           model_ticket?: number | null
+          new_clients_12m?: number | null
           new_leads?: number | null
           new_leads_period?: string
+          their_number?: number | null
           updated_at?: string
           updated_by?: string | null
           user_id: string
@@ -9091,11 +9099,15 @@ export type Database = {
           id?: string
           lead_id?: string
           leads_per_client?: number | null
+          ltv_retention?: number | null
+          ltv_years?: number | null
           model_close_rate?: number | null
           model_leads?: number | null
           model_ticket?: number | null
+          new_clients_12m?: number | null
           new_leads?: number | null
           new_leads_period?: string
+          their_number?: number | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string
@@ -10051,6 +10063,120 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_training_backup_20261102: {
+        Row: {
+          audience: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261103: {
+        Row: {
+          audience: string | null
+          backed_up_at: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          backed_up_at?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          backed_up_at?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261104: {
+        Row: {
+          audience: string | null
+          backed_up_at: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          backed_up_at?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          backed_up_at?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
       nl_training_certifications: {
         Row: {
           certificate_number: string | null
@@ -10432,6 +10558,78 @@ export type Database = {
           },
         ]
       }
+      nl_training_modules_backup_20261103: {
+        Row: {
+          created_at: string | null
+          has_quiz: boolean | null
+          id: string | null
+          is_locked: boolean | null
+          module_description: string | null
+          module_number: number | null
+          module_title: string | null
+          tagline: string | null
+          track_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          has_quiz?: boolean | null
+          id?: string | null
+          is_locked?: boolean | null
+          module_description?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          tagline?: string | null
+          track_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          has_quiz?: boolean | null
+          id?: string | null
+          is_locked?: boolean | null
+          module_description?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          tagline?: string | null
+          track_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_modules_backup_20261104: {
+        Row: {
+          created_at: string | null
+          has_quiz: boolean | null
+          id: string | null
+          is_locked: boolean | null
+          module_description: string | null
+          module_number: number | null
+          module_title: string | null
+          tagline: string | null
+          track_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          has_quiz?: boolean | null
+          id?: string | null
+          is_locked?: boolean | null
+          module_description?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          tagline?: string | null
+          track_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          has_quiz?: boolean | null
+          id?: string | null
+          is_locked?: boolean | null
+          module_description?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          tagline?: string | null
+          track_id?: string | null
+        }
+        Relationships: []
+      }
       nl_training_progress: {
         Row: {
           attempts: number
@@ -10558,6 +10756,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nl_training_questions_backup_20261103: {
+        Row: {
+          chapter_id: string | null
+          correct_index: number | null
+          created_at: string | null
+          explanation: string | null
+          id: string | null
+          is_unlock_question: boolean | null
+          module_id: string | null
+          options: Json | null
+          question_text: string | null
+          question_type: string | null
+          quiz_level: number | null
+          unlock_category: string | null
+          unlock_level: string | null
+        }
+        Insert: {
+          chapter_id?: string | null
+          correct_index?: number | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string | null
+          is_unlock_question?: boolean | null
+          module_id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          question_type?: string | null
+          quiz_level?: number | null
+          unlock_category?: string | null
+          unlock_level?: string | null
+        }
+        Update: {
+          chapter_id?: string | null
+          correct_index?: number | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string | null
+          is_unlock_question?: boolean | null
+          module_id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          question_type?: string | null
+          quiz_level?: number | null
+          unlock_category?: string | null
+          unlock_level?: string | null
+        }
+        Relationships: []
       }
       nl_training_tracks: {
         Row: {
