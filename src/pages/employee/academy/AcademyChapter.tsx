@@ -79,7 +79,7 @@ export default function AcademyChapter() {
   const xpGained = XP.chapter + (result ? Math.round((result.pct / 100) * XP.quizMax) : 0);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="nl-reading mx-auto max-w-2xl">
       <AcademyStyles />
       {/* Top: back + segmented progress line */}
       <div className="sticky top-0 z-20 -mx-4 sm:mx-0 px-4 sm:px-0 pt-1 pb-3 bg-gradient-to-b from-[hsl(222,38%,5%)] via-[hsla(222,38%,5%,.92)] to-transparent">

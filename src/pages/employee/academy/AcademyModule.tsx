@@ -31,7 +31,7 @@ export default function AcademyModule() {
   const next = data.modules.find((x) => x.module_number === num + 1);
 
   return (
-    <div className="mx-auto max-w-3xl pb-16">
+    <div className="nl-reading mx-auto max-w-3xl pb-16">
       <AcademyStyles />
       <Link to={base} className="inline-flex items-center gap-1 text-[12px] text-white/55 hover:text-white"><ArrowLeft className="h-3.5 w-3.5" />Training</Link>
 

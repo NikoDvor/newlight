@@ -165,6 +165,16 @@
 /* Horizontal scrollers (dialer table, chip rows) scroll on the GPU — smooth swipes on phones. */
 .nl-dark-bg .overflow-x-auto { -webkit-overflow-scrolling: touch; }
 
+/* Training pages: a solid reading surface behind the text so the moving background never runs through it */
+.nl-reading { position: relative; isolation: isolate; }
+.nl-reading::before {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  inset: -12px -16px -16px; border-radius: 22px;
+  background: hsl(222 38% 6%);
+  box-shadow: 0 0 0 1px hsla(211, 96%, 60%, 0.08), 0 30px 80px -30px hsla(211, 96%, 40%, 0.35);
+}
+@media (min-width: 640px) { .nl-reading::before { inset: -20px -28px -24px; } }
+
 /* Live blur over the moving background has to be recomputed every frame — the main cause of lag on
    laptops. Every box already has a solid backing, so the blur added nothing you could see. Pop-ups
    (rendered outside the app shell) keep their blur. */

@@ -21,7 +21,7 @@ export default function AcademyHub() {
   const totalPct = Math.round(data.modules.reduce((s, m) => s + moduleStats(data, m).pct, 0) / Math.max(1, data.modules.length));
 
   return (
-    <div className="mx-auto max-w-3xl pb-16">
+    <div className="nl-reading mx-auto max-w-3xl pb-16">
       <AcademyStyles />
       <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
         <Kicker>Sales training</Kicker>
