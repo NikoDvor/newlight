@@ -98,7 +98,7 @@ export default function PackagePayCard({ token, deal, plan, enabled, onChanged }
             </li>
           ))}
         </ul>
-        {pv.guaranteeEnds && <p className="mt-2 text-[11px] text-muted-foreground"><ShieldCheck className="inline h-3 w-3 mr-1" />90-day guarantee from your first payment. Ongoing billing starts the 1st after day 90 and once you've made your setup back.</p>}
+        {pv.guaranteeEnds && <p className="mt-2 text-[11px] text-muted-foreground"><ShieldCheck className="inline h-3 w-3 mr-1" />Growth commitment: if your setup isn't made back within 90 days of your first payment, we keep working at no extra charge until it is. This is continued service, not a refund or a promise of results. Ongoing billing starts the 1st after day 90 and once your setup has been made back.</p>}
       </div>
 
       {!isWireFirst && !paid && !clearing && (

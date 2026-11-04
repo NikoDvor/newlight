@@ -47,7 +47,7 @@ function GuaranteeTracker({ deal, madeBack, dark }: { deal: any; madeBack: numbe
   return (
     <div className={`rounded-xl border p-4 ${dark ? "border-white/10 bg-white/[0.03]" : "border-border bg-card"}`}>
       <div className="flex items-center justify-between gap-3">
-        <div className={`text-sm font-semibold ${strong} flex items-center gap-2`}><Trophy className="h-4 w-4 text-amber-400" />90-day guarantee</div>
+        <div className={`text-sm font-semibold ${strong} flex items-center gap-2`}><Trophy className="h-4 w-4 text-amber-400" />90-day commitment (continued service)</div>
         <div className={`text-xs ${muted}`}>
           {!started ? "Starts at the first payment" : done ? `Made it back · billing from ${fmtD(deal.billing_start_date)}` : day <= 90 ? `Day ${day} of 90` : `Day ${day} — working free until made back`}
         </div>
