@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { computeDiscovery, EMPTY_INPUTS } from "@/lib/discoveryNumbers";
 import { ACADEMY } from "./ui";
 import { OfferCompare, OfferTimeline, Packages, PaymentSim, WhoPaysHow } from "./packageVisuals";
+import { FeatureBenefitTrial, SalesSystem } from "./salesVisuals";
 
 /**
  * Interactive visuals for training chapters, referenced in content as [[visual:key]].
@@ -852,6 +853,8 @@ export const VISUALS: Record<string, ComponentType> = {
   mining: Mining,
   assumptive: Assumptive,
   preclose: Preclose,
+  "sales-system": SalesSystem,
+  fbt: FeatureBenefitTrial,
   "break-even": BreakEven,
   "full-stack": FullStack,
   "option-close": OptionClose,

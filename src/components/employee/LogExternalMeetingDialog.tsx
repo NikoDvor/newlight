@@ -40,6 +40,7 @@ export default function LogExternalMeetingDialog({
   const [teamSize, setTeamSize] = useState("");
   const [compliance, setCompliance] = useState<"" | "yes" | "no">("");
   const [notes, setNotes] = useState("");
+  const [where, setWhere] = useState<"" | "Phone" | "In person" | "Zoom" | "Their calendar">("");
   const [attendees, setAttendees] = useState<AttendeeDraft[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -49,7 +50,7 @@ export default function LogExternalMeetingDialog({
     setName(lead?.owner_name || "");
     setEmail(lead?.email || "");
     setPhone(lead?.phone || "");
-    setWhen(""); setDuration("60"); setSalesTeam(""); setTeamSize(""); setCompliance(""); setNotes(""); setAttendees([]);
+    setWhen(""); setDuration("60"); setSalesTeam(""); setTeamSize(""); setCompliance(""); setNotes(""); setWhere(""); setAttendees([]);
     setSaving(false);
   }, [open, lead?.id]);
 
@@ -57,7 +58,10 @@ export default function LogExternalMeetingDialog({
     name.trim().length >= 2 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) &&
     phone.replace(/\D/g, "").length >= 10 &&
-    !!when && (!!lead || business.trim().length > 0);
+    !!when && !!where && (!!lead || business.trim().length > 0);
+
+  // "Talking now": the owner had time on the booking call, so discovery is happening right now.
+  const localNow = () => { const d = new Date(); d.setSeconds(0, 0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
 
   const submit = async () => {
     if (!valid || saving) return;
@@ -74,7 +78,7 @@ export default function LogExternalMeetingDialog({
         _modules: form1Modules(salesTeam, compliance),
         _has_sales_team: salesTeam === "" ? null : salesTeam === "yes",
         _sales_team_size: salesTeam === "yes" ? teamSize || null : null,
-        _notes: [notes.trim(), compliance ? `Compliance restrictions: ${compliance}` : ""].filter(Boolean).join("\n") || null,
+        _notes: [`Where: ${where}`, notes.trim(), compliance ? `Compliance restrictions: ${compliance}` : ""].filter(Boolean).join("\n") || null,
       });
       if (error) throw new Error(error.message);
       if (attendees.length && data?.event_id) {
@@ -106,10 +110,10 @@ export default function LogExternalMeetingDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o && !saving) onClose(); }}>
       <DialogContent className="max-w-md max-h-[88dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Log meeting booked elsewhere</DialogTitle>
+          <DialogTitle>Log first meeting</DialogTitle>
           <DialogDescription>
-            First meeting booked in person, by phone, or on their calendar. Counts as Form 1 (lead → Warm). Away from our Zoom,
-            so the client isn't emailed or texted. Their login goes out with Form 2.
+            Booked or held outside your booking link — by phone, in person, on Zoom, or on their calendar. Also use this when the
+            owner had time on the call and you ran discovery right then. Counts as Form 1 (lead → Warm). Then log the outcome like any meeting.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -134,6 +138,18 @@ export default function LogExternalMeetingDialog({
               <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
           </div>
+          <div>
+            <Label className="text-xs">Where is it happening? <span className="text-red-500">*</span></Label>
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              {(["Phone", "In person", "Zoom", "Their calendar"] as const).map((w) => (
+                <Button key={w} type="button" variant="outline" size="sm" onClick={() => setWhere(w)}
+                  className={where === w ? "border-primary bg-primary/15" : "text-muted-foreground"}>{w}</Button>
+              ))}
+            </div>
+          </div>
+          <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => setWhen(localNow())}>
+            We're talking now — set to right now
+          </Button>
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
               <Label className="text-xs">Date &amp; time <span className="text-red-500">*</span></Label>
@@ -165,7 +181,7 @@ export default function LogExternalMeetingDialog({
           </div>
           <div>
             <Label className="text-xs">Notes (optional)</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Where / how is the meeting happening?" />
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Anything the closer should know" />
           </div>
           <AttendeesEditor leadId={lead?.id || null} value={attendees} onChange={setAttendees} away />
           <Button className="w-full" disabled={!valid || saving} onClick={submit}>
