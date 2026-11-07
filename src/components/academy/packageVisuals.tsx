@@ -52,7 +52,6 @@ function AvgSlider({ avg, setAvg }: { avg: number; setAvg: (n: number) => void }
     <div>
       <div className="mb-1 flex justify-between text-[11px] text-white/60"><span>Their average client value (per year)</span><span className="font-semibold text-white tabular-nums">{money(avg)}</span></div>
       <Slider value={[avg]} min={2000} max={40000} step={500} onValueChange={(v) => setAvg(v[0])} />
-      {avg < DEFAULT_PACKAGES.growth.min_avg_client && <p className="mt-1 text-[11px] text-[hsl(205,100%,85%)]">Below {money(DEFAULT_PACKAGES.growth.min_avg_client)} — Growth prices use {money(DEFAULT_PACKAGES.growth.min_avg_client)} as the floor.</p>}
     </div>
   );
 }
@@ -69,13 +68,13 @@ const PKG_INFO: Record<PackageKey, { who: string; get: string[]; guarantee: stri
     who: "Firms that already get meetings but lose too many of them.",
     get: ["Step 3 — their own Command Center app", "Client onboarding pipeline, every stage", "Leaks and objections flagged, strategy adjusted"],
     guarantee: "No",
-    ongoing: "Monthly retainer",
+    ongoing: "Monthly retainer: 1 average client a month",
   },
   enterprise: {
     who: "Firms that want the whole system and to own their market.",
     get: ["Steps 1 + 2 + 3 — everything", "Exclusive metro market — we won't work with their competitors there", "A dedicated strategist"],
     guarantee: "No",
-    ongoing: "Monthly retainer",
+    ongoing: "Monthly retainer: 2 average clients a month",
   },
 };
 
@@ -94,10 +93,10 @@ export function Packages() {
           <ul className="mt-3 space-y-1.5">
             {info.get.map((g) => <li key={g} className="flex gap-2 text-[13px] text-white"><span className="mt-[7px] h-px w-3 shrink-0" style={{ background: BLUE, boxShadow: `0 0 6px ${BLUE}` }} />{g}</li>)}
           </ul>
-          {k === "growth" && <div className="mt-4"><AvgSlider avg={avg} setAvg={setAvg} /></div>}
+          <div className="mt-4"><AvgSlider avg={avg} setAvg={setAvg} /></div>
           <div className="mt-4 grid grid-cols-2 gap-2 grid-preserve">
-            <Stat l="Setup" v={money(p.setup)} sub={k === "growth" ? "= 1 average client" : "one time"} />
-            <Stat l={k === "growth" ? "Monthly (after 90 days)" : "Monthly"} v={money(p.monthly)} sub={k === "growth" ? "= ½ average client" : "from day one"} />
+            <Stat l="Setup" v={money(p.setup)} sub={k === "growth" ? "= 1 average client" : "one time, fixed"} />
+            <Stat l={k === "growth" ? "Monthly (after 90 days)" : "Monthly"} v={money(p.monthly)} sub={k === "growth" ? "= ½ average client" : k === "command_center" ? "= 1 average client, from day one" : "= 2 average clients, from day one"} />
             <Stat l="90-day guarantee" v={info.guarantee} />
             <Stat l="Ongoing" v={k === "growth" ? "Retainer or commission" : "Retainer only"} sub={info.ongoing} />
           </div>
@@ -149,7 +148,7 @@ export function OfferTimeline() {
 export function OfferCompare() {
   const [avg, setAvg] = useState(10000);
   const [clients, setClients] = useState(12);
-  const a = Math.max(avg, DEFAULT_PACKAGES.growth.min_avg_client);
+  const a = avg;
   const retainer = a * 0.5 * 12;
   const commission = clients * avg * 0.25;
   const max = Math.max(retainer, commission, 1);
@@ -241,7 +240,7 @@ export function PaymentSim() {
     <Frame caption="Default prices. The same engine builds the real schedule in Form 2 and on the client's Pay & Sign page.">
       <div className="space-y-3">
         <Tabs items={PKG_TABS} value={k} onChange={(v) => { setK(v); if (v !== "growth") setOngoing("retainer"); }} />
-        {k === "growth" && <AvgSlider avg={avg} setAvg={setAvg} />}
+        <AvgSlider avg={avg} setAvg={setAvg} />
         <Tabs items={[{ k: "full" as Way, l: "Monthly" }, { k: "plan" as Way, l: "Payment plan" }, { k: "annual" as Way, l: "Annual" }]} value={way} onChange={setWay} />
         {k === "growth" && way !== "annual" && (
           <Tabs items={[{ k: "retainer" as Ongoing, l: "Retainer" }, { k: "commission" as Ongoing, l: "Commission" }]} value={ongoing} onChange={setOngoing} />

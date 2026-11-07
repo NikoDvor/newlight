@@ -197,10 +197,8 @@ function Simulator({ defs }: { defs: Record<PackageKey, PackageDefaults> }) {
 /* ---------- defaults ---------- */
 const FIELDS: { k: keyof PackageDefaults; label: string; only?: PackageKey[]; suffix?: string }[] = [
   { k: "setup_fee", label: "Setup fee ($)", only: ["command_center", "enterprise"] },
-  { k: "monthly_fee", label: "Monthly fee ($)", only: ["command_center", "enterprise"] },
   { k: "setup_multiplier", label: "Setup = × average client", only: ["growth"] },
-  { k: "monthly_multiplier", label: "Retainer = × average client / month", only: ["growth"] },
-  { k: "min_avg_client", label: "Minimum average client ($)", only: ["growth"] },
+  { k: "monthly_multiplier", label: "Monthly = × average client" },
   { k: "commission_rate", label: "Commission year 1 (%)", only: ["growth"] },
   { k: "commission_rate_ongoing", label: "Commission after (%)", only: ["growth"] },
   { k: "guarantee_days", label: "Guarantee (days)", only: ["growth"] },
@@ -245,7 +243,7 @@ function Defaults({ defs, onSaved }: { defs: Record<PackageKey, PackageDefaults>
                 </label>
               ))}
             </div>
-            <p className="mt-3 text-[11px] text-white/40">{k === "growth" ? `At a $10,000 average client: setup ${money(ex.setup)}, retainer ${money(ex.monthly)}/mo.` : `Setup ${money(ex.setup)} + ${money(ex.monthly)}/mo.`} Built-in default: {k === "growth" ? "1× / ½× average client" : `${money(DEFAULT_PACKAGES[k].setup_fee)} + ${money(DEFAULT_PACKAGES[k].monthly_fee)}/mo`}.</p>
+            <p className="mt-3 text-[11px] text-white/40">At a $10,000 average client: setup {money(ex.setup)}, monthly {money(ex.monthly)}. Built-in default: {k === "growth" ? "1× / ½× average client" : `${money(DEFAULT_PACKAGES[k].setup_fee)} + ${DEFAULT_PACKAGES[k].monthly_multiplier}× average client a month`}. No price floor.</p>
             <Button size="sm" className="mt-3 w-full" disabled={saving === k} onClick={() => save(k)}>
               {saving === k ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Save className="h-3.5 w-3.5 mr-1" />Save {d.label}</>}
             </Button>
@@ -302,12 +300,13 @@ function WireSettings() {
 /* ---------- rules ---------- */
 function Rules({ defs }: { defs: Record<PackageKey, PackageDefaults> }) {
   const g = defs.growth, c = defs.command_center, e = defs.enterprise;
-  const cc = defaultPrices(c, 0), en = defaultPrices(e, 0);
+  const cc = defaultPrices(c, 10000), en = defaultPrices(e, 10000);
   const sections: { h: string; items: string[] }[] = [
     { h: "Packages", items: [
-      `${g.label} (${g.steps}): setup = ${g.setup_multiplier}× their average client (minimum average ${money(g.min_avg_client)}). Then a retainer of ${g.monthly_multiplier}× average client a month, or commission ${g.commission_rate}% of new-client revenue in year 1, ${g.commission_rate_ongoing}% after. ${g.guarantee_days}-day guarantee. Ad budget minimum ${money(g.min_ad_budget)}/mo.`,
-      `${c.label} (${c.steps}): ${money(cc.setup)} setup + ${money(cc.monthly)}/mo. No guarantee, no commission.`,
-      `${e.label} (${e.steps}): ${money(en.setup)} setup + ${money(en.monthly)}/mo. Includes an exclusive metro market and a dedicated strategist. No guarantee, no commission, no ad minimum.`,
+      `${g.label} (${g.steps}): setup = ${g.setup_multiplier}× their average client. Then a retainer of ${g.monthly_multiplier}× average client a month, or commission ${g.commission_rate}% of new-client revenue in year 1, ${g.commission_rate_ongoing}% after. ${g.guarantee_days}-day guarantee. Ad budget minimum ${money(g.min_ad_budget)}/mo.`,
+      `${c.label} (${c.steps}): ${money(cc.setup)} setup + ${c.monthly_multiplier}× their average client a month (${money(cc.monthly)}/mo at a $10,000 average client). No guarantee, no commission.`,
+      `${e.label} (${e.steps}): ${money(en.setup)} setup + ${e.monthly_multiplier}× their average client a month (${money(en.monthly)}/mo at a $10,000 average client). Includes an exclusive metro market and a dedicated strategist. No guarantee, no commission, no ad minimum.`,
+      "Average client value = their yearly revenue ÷ number of clients (Discovery numbers). There is no price floor. The monthly is worked out once at signing and stays a fixed dollar amount.",
     ] },
     { h: "Guarantee (Growth)", items: [
       "Starts on the day of the first payment.",

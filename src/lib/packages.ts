@@ -3,11 +3,13 @@
  * Pure TypeScript (no imports): this exact file is copied to supabase/functions/_shared/packages.ts
  * so the app, Pay & Sign and the billing runner always agree. Keep the two copies identical.
  *
- * Packages (decided Nov 1–2, 2026):
- *   growth          Step 2.  Setup = 1 × average client value (min avg $6,000). 90-day guarantee.
+ * Packages (decided Nov 1–2, 2026; monthly re-based on average client value Nov 7, 2026; no price floors):
+ *   growth          Step 2.  Setup = 1 × average client value. 90-day guarantee.
  *                   Then ½ average client per month (retainer) OR commission 25% yr-1 / 10% after.
- *   command_center  Step 3.  $25,000 setup + $8,000/mo. No guarantee, no commission.
- *   enterprise      Steps 1+2+3 (+ exclusive metro market + dedicated strategist). $40,000 + $16,000/mo.
+ *   command_center  Step 3.  $25,000 setup + 1 × average client value per month. No guarantee, no commission.
+ *   enterprise      Steps 1+2+3 (+ exclusive metro market + dedicated strategist). $40,000 setup + 2 × average client value per month.
+ *   "Average client value" = the firm's yearly revenue ÷ its number of clients (Discovery numbers). The monthly amount is
+ *   worked out once at signing and is then a FIXED dollar amount (it never moves with the client's revenue or AUM).
  *
  * Billing rules:
  *   - Monthly charges on the 1st (Pacific). First charge = partial month (start → month end) + next full month.
@@ -46,19 +48,19 @@ export interface PackageDefaults {
 export const DEFAULT_PACKAGES: Record<PackageKey, PackageDefaults> = {
   growth: {
     key: "growth", label: "Growth", steps: "Step 2 — paid traffic turned into booked appointments",
-    setup_fee: null, monthly_fee: null, setup_multiplier: 1, monthly_multiplier: 0.5, min_avg_client: 6000,
+    setup_fee: null, monthly_fee: null, setup_multiplier: 1, monthly_multiplier: 0.5, min_avg_client: 0,
     commission_rate: 25, commission_rate_ongoing: 10, annual_discount_pct: 20, payment_plan_markup_pct: 10,
     discount_approval_pct: 15, guarantee_days: 90, min_ad_budget: 3000,
   },
   command_center: {
     key: "command_center", label: "Command Center", steps: "Step 3 — the app + pipeline that turns meetings into clients",
-    setup_fee: 25000, monthly_fee: 8000, setup_multiplier: 0, monthly_multiplier: 0, min_avg_client: 0,
+    setup_fee: 25000, monthly_fee: null, setup_multiplier: 0, monthly_multiplier: 1, min_avg_client: 0,
     commission_rate: 0, commission_rate_ongoing: 0, annual_discount_pct: 20, payment_plan_markup_pct: 10,
     discount_approval_pct: 15, guarantee_days: 0, min_ad_budget: null,
   },
   enterprise: {
     key: "enterprise", label: "Enterprise", steps: "Steps 1 + 2 + 3 — everything, plus an exclusive market and a dedicated strategist",
-    setup_fee: 40000, monthly_fee: 16000, setup_multiplier: 0, monthly_multiplier: 0, min_avg_client: 0,
+    setup_fee: 40000, monthly_fee: null, setup_multiplier: 0, monthly_multiplier: 2, min_avg_client: 0,
     commission_rate: 0, commission_rate_ongoing: 0, annual_discount_pct: 20, payment_plan_markup_pct: 10,
     discount_approval_pct: 15, guarantee_days: 0, min_ad_budget: null,
   },
@@ -70,13 +72,15 @@ export const round2 = (n: number) => Math.round(n * 100) / 100;
 export const money = (n: number | null | undefined, cents = false) =>
   n == null ? "—" : "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 });
 
-/** Default setup + monthly for a package (growth uses the average client value, floored). */
+/**
+ * Default setup + monthly for a package. A fixed fee (setup_fee / monthly_fee) wins; otherwise the amount is
+ * average client value × the multiplier. min_avg_client is an optional floor (0 = none, the default).
+ */
 export function defaultPrices(d: PackageDefaults, avgClient: number | null): { setup: number; monthly: number } {
-  if (d.key === "growth") {
-    const avg = Math.max(d.min_avg_client, Number(avgClient || 0));
-    return { setup: round2(avg * d.setup_multiplier), monthly: round2(avg * d.monthly_multiplier) };
-  }
-  return { setup: Number(d.setup_fee || 0), monthly: Number(d.monthly_fee || 0) };
+  const avg = Math.max(Number(d.min_avg_client || 0), Number(avgClient || 0));
+  const setup = d.setup_fee != null ? Number(d.setup_fee) : avg * Number(d.setup_multiplier || 0);
+  const monthly = d.monthly_fee != null ? Number(d.monthly_fee) : avg * Number(d.monthly_multiplier || 0);
+  return { setup: round2(setup), monthly: round2(monthly) };
 }
 
 export interface PlanInput {
@@ -252,6 +256,8 @@ export function mergeDefaults(rows: Partial<PackageDefaults>[] | null | undefine
     const k = r.key as PackageKey;
     for (const [f, v] of Object.entries(r)) if (v !== null && v !== undefined && f in out[k]) (out[k] as any)[f] = typeof (out[k] as any)[f] === "number" ? Number(v) : v;
     if (r.setup_fee === null && k === "growth") out[k].setup_fee = null;
+    // The monthly for every package is now a multiple of the average client; a fixed monthly can't be stored as an override.
+    out[k].monthly_fee = null;
   }
   return out;
 }

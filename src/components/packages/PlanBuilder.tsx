@@ -96,7 +96,6 @@ export default function PlanBuilder({ defs, value, onChange, showSignDate = fals
   const plan = useMemo(() => planFromState(defs, value), [defs, value]);
   const approval = needsApproval(pkg, value.setup, value.pkg === "growth" && value.ongoing === "commission" ? dflt.monthly : value.monthly, dflt);
   const isGrowth = value.pkg === "growth";
-  const belowFloor = isGrowth && value.avgClient > 0 && value.avgClient < pkg.min_avg_client;
 
 
   return (
@@ -112,17 +111,19 @@ export default function PlanBuilder({ defs, value, onChange, showSignDate = fals
         ))}
       </div>
 
-      {/* Average client (Growth) */}
-      {isGrowth && (
+      {/* Average client value: sets the default price of every package */}
+      {(
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
           <label className="text-[11px] uppercase tracking-wider text-white/50">Their average client value (per year)</label>
           <Input type="number" min={0} value={value.avgClient || ""} onChange={(e) => set({ avgClient: Number(e.target.value || 0) })}
             placeholder="e.g. 10000" className="mt-1.5 bg-white/5 border-white/10 text-white" />
           <p className="mt-1 text-[11px] text-white/45">
             {lockAvgFromDiscovery ? `From their Discovery numbers: ${money(lockAvgFromDiscovery)}. ` : "Revenue ÷ number of clients. "}
-            Setup = 1 average client · retainer = ½ average client a month · minimum average {money(pkg.min_avg_client)}.
+            {isGrowth ? "Setup = 1 average client · retainer = ½ average client a month."
+              : value.pkg === "command_center" ? `Setup ${money(pkg.setup_fee)} · monthly = 1 average client.`
+              : `Setup ${money(pkg.setup_fee)} · monthly = 2 average clients.`} The monthly is then a fixed amount for the whole term.
           </p>
-          {belowFloor && <p className="mt-1 text-[11px] text-[hsl(42,100%,65%)]">Below the minimum — prices use {money(pkg.min_avg_client)}.</p>}
+          {!value.avgClient && <p className="mt-1 text-[11px] text-[hsl(42,100%,65%)]">Enter their average client value to set the price.</p>}
         </div>
       )}
 
