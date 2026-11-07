@@ -267,9 +267,17 @@ Deno.serve(async (req) => {
         const obj = event.data.object;
         const piId = typeof obj.payment_intent === "string" ? obj.payment_intent : obj.payment_intent?.id;
         let label = "";
+        let reversed = 0;
         if (piId) {
           const { data: row } = await supabase.from("nl_billing_schedule").select("id, label, deal_id, amount").eq("stripe_payment_intent_id", piId).maybeSingle();
-          if (row) label = `${row.label} ($${Number(row.amount).toFixed(2)}, deal ${row.deal_id})`;
+          if (row) {
+            label = `${row.label} ($${Number(row.amount).toFixed(2)}, deal ${row.deal_id})`;
+            // Full refund or any dispute: take back the rep commission automatically. Partial refunds stay manual.
+            if (event.type === "charge.dispute.created" || obj.refunded === true) {
+              const { data: n } = await supabase.rpc("nl_commission_reverse_for_schedule", { p_schedule_id: row.id, p_reason: event.type === "charge.refunded" ? "Client payment refunded" : "Client opened a chargeback" });
+              reversed = Number(n || 0);
+            }
+          }
         }
         await supabase.from("audit_logs").insert({
           action: event.type === "charge.refunded" ? "stripe_charge_refunded" : "stripe_dispute_opened",
@@ -279,7 +287,7 @@ Deno.serve(async (req) => {
         });
         await sendAdhocEmail([OPS_EMAIL_TO],
           `ACTION NEEDED — ${event.type === "charge.refunded" ? "refund" : "dispute"} on ${label || "a payment"}`,
-          `<p>Stripe reported a ${event.type === "charge.refunded" ? "refund" : "chargeback"}. ${label ? `Payment: ${label}.` : ""} Reverse the rep commission in Commissions if one was earned on it. Stripe charge: ${obj.id}.</p>`);
+          `<p>Stripe reported a ${event.type === "charge.refunded" ? "refund" : "chargeback"}. ${label ? `Payment: ${label}.` : ""} ${reversed ? `Rep commission lines reversed automatically: ${reversed}.` : "Check Commissions and reverse any rep commission earned on it (partial refunds are not reversed automatically)."} Stripe charge: ${obj.id}.</p>`);
         break;
       }
 

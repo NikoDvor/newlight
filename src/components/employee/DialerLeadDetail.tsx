@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Phone, Mail, Linkedin, Ban, Loader2, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { callingHoursBlock } from "@/lib/callingHours";
 
 /* ─── Types matching nl_dialer_lead_details RPC payload ─── */
 export interface DialerFirm {
@@ -203,7 +204,15 @@ export default function DialerLeadDetail({ open, onOpenChange, leadId, businessN
       ) : (
         <a
           href={`tel:${phone}`}
-          onClick={() => startCall(contact, phone, kind)}
+          onClick={(e) => {
+            const block = callingHoursBlock(firm?.state);
+            if (block) {
+              e.preventDefault();
+              toast({ title: "Can't call right now", description: block, variant: "destructive" });
+              return;
+            }
+            startCall(contact, phone, kind);
+          }}
           className="font-mono inline-flex items-center gap-1 hover:underline text-xs"
           style={{ color: "hsl(211,96%,68%)" }}
         >
