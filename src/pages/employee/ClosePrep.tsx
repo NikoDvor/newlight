@@ -139,7 +139,7 @@ export default function ClosePrep() {
   const meetingStart = away ? (awayWhen ? new Date(awayWhen).toISOString() : "") : selectedSlot;
   const canSubmit =
     !!lead && !!meetingStart && cdValid && !!plan && plan.setup > 0 &&
-    (plan.pkg !== "growth" || plan.avgClient > 0) &&
+    plan.avgClient > 0 &&
     (isCommission ? plan.commissionRate > 0 : plan.monthly > 0);
 
   const submit = async () => {
@@ -150,7 +150,7 @@ export default function ClosePrep() {
         lead_id: lead.id,
         event_id: new URLSearchParams(window.location.search).get("event") || null,
         package: plan!.pkg,
-        avg_client_value: plan!.pkg === "growth" ? plan!.avgClient : null,
+        avg_client_value: plan!.avgClient,
         billing_cadence: plan!.cadence,
         payment_plan: plan!.cadence === "monthly" && plan!.paymentPlan,
         initial_fee: plan!.setup,

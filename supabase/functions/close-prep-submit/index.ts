@@ -154,6 +154,21 @@ Deno.serve(async (req) => {
     // Annual and the fixed packages are always retainer; commission is a Growth-only option.
     const pricing_model = pricing_model_in === "commission" && pkgKey !== "command_center" && pkgKey !== "enterprise" && cadence !== "annual" ? "commission" : "retainer";
     const isCommission = pricing_model === "commission";
+    // Server-side price sanity: never trust numbers from the browser.
+    if (pkgKey) {
+      const bad = (v: unknown, max: number) => v != null && v !== "" && (!Number.isFinite(Number(v)) || Number(v) < 0 || Number(v) > max);
+      if (!(Number(avg_client_value) > 0) || bad(avg_client_value, 100_000_000) || bad(initial_fee, 5_000_000) || bad(recurring_fee, 1_000_000)
+          || bad(commission_rate, 100) || bad(commission_rate_ongoing, 100)) {
+        return new Response(JSON.stringify({ error: "Enter valid pricing, including the client's average client value." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!(Number(initial_fee) > 0) || (isCommission ? !(Number(commission_rate) > 0) : !(Number(recurring_fee) > 0))) {
+        return new Response(JSON.stringify({ error: "Setup fee and the ongoing fee or commission must be above zero." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
     const kpi = typeof retainer_kpi === "string" && retainer_kpi.trim() ? retainer_kpi.trim() : null;
 
     const supabase = createClient(
@@ -349,7 +364,10 @@ Deno.serve(async (req) => {
       const dflt = defaultPrices(pkg, Number(avg_client_value || 0));
       const setupN = Number(initial_fee || 0), monthlyN = Number(recurring_fee || (isCommission ? 0 : 0));
       const custom = Math.abs(setupN - dflt.setup) > 0.5 || (!isCommission && Math.abs(monthlyN - dflt.monthly) > 0.5);
-      const approval = needsApproval(pkg, setupN, isCommission ? dflt.monthly : monthlyN, dflt) ? "pending" : "not_needed";
+      const lowCommission = isCommission && (
+        Number(commission_rate ?? 0) < pkg.commission_rate * (1 - pkg.discount_approval_pct / 100) ||
+        Number(commission_rate_ongoing ?? 0) < pkg.commission_rate_ongoing * (1 - pkg.discount_approval_pct / 100));
+      const approval = (lowCommission || needsApproval(pkg, setupN, isCommission ? dflt.monthly : monthlyN, dflt)) ? "pending" : "not_needed";
       const preview = buildPlan({ pkg, setup: setupN, monthly: monthlyN, cadence, paymentPlan, ongoing: isCommission ? "commission" : "retainer",
         commissionRate: commission_rate != null ? Number(commission_rate) : undefined, commissionRateOngoing: commission_rate_ongoing != null ? Number(commission_rate_ongoing) : undefined, signDate: pacificDate() });
       planInfo = { pkg, dflt, custom, approval, preview };

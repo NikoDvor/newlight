@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarSlotPicker } from "@/components/CalendarSlotPicker";
-import { BookingWorkspaceProvisioner } from "@/components/BookingWorkspaceProvisioner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -409,22 +408,6 @@ export default function BookingPage() {
           {confirmationMsg && <p className="text-sm text-muted-foreground">{confirmationMsg}</p>}
           <p className="text-xs text-muted-foreground">A confirmation will be sent to <strong>{email}</strong>.</p>
 
-          {/* Auto-provision workspace for the booker */}
-          {bookedAppt && client && (
-            <BookingWorkspaceProvisioner
-              appointmentId={bookedAppt.id}
-              contactName={name}
-              contactEmail={email}
-              contactPhone={phone}
-              companyName={company || undefined}
-              logoUrl={branding?.logo_url || undefined}
-              primaryColor={branding?.primary_color || primaryColor}
-              secondaryColor={branding?.secondary_color || undefined}
-              industry={client.industry || undefined}
-              location={client.primary_location || undefined}
-              clientId={client.id}
-            />
-          )}
         </motion.div>
       </div>
     );
