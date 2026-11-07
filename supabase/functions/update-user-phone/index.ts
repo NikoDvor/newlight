@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { targetIsPrivileged } from "../_shared/privileged.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,15 @@ Deno.serve(async (req) => {
     if (!userId) return json({ error: "user_id is required" }, 400);
     if (newPhone && !/^\+[1-9]\d{7,14}$/.test(newPhone)) {
       return json({ error: "Phone must be E.164 format (e.g. +15551234567)" }, 400);
+    }
+
+    // Operators may only edit non-staff users (their own record excepted).
+    if (userId !== caller.id) {
+      const { data: callerAdminRow } = await adminClient
+        .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").limit(1).maybeSingle();
+      if (!callerAdminRow && await targetIsPrivileged(adminClient, userId)) {
+        return json({ error: "Only admins can update an admin or operator" }, 403);
+      }
     }
 
     const { data: targetResp, error: targetErr } = await adminClient.auth.admin.getUserById(userId);

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { targetIsPrivileged } from "../_shared/privileged.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +40,8 @@ Deno.serve(async (req) => {
 
     const checkScope = async (targetId: string) => {
       if (isAdmin) return true;
+      // Scoped managers can never act on admin/operator accounts.
+      if (await targetIsPrivileged(admin, targetId)) return false;
       const { data: targetRoles } = await admin
         .from("user_roles")
         .select("client_id")

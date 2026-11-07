@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { requireClientAccess, authJson } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,21 +30,15 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-
-  const authClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: userData, error: userErr } = await authClient.auth.getUser();
-  if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
-
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
     const body = await req.json().catch(() => ({}));
     const { client_id } = body;
     if (!client_id) return json({ error: "client_id required" }, 400);
+
+    const access = await requireClientAccess(req, supabase, client_id, anonKey, supabaseUrl);
+    if (!access.ok) return authJson(access, corsHeaders);
 
     const { data: client, error: clientErr } = await supabase
       .from("clients")

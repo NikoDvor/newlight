@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { requireStaff, authJson } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,7 +30,17 @@ Deno.serve(async (req) => {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const { invoice_id, amount, description, client_email, success_url, cancel_url } = body ?? {};
+  const { invoice_id, description, client_email, success_url, cancel_url } = body ?? {};
+
+  // Admin/operator only. The amount is ALWAYS the invoice total from the database, never the request body.
+  const supabaseAuth = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const caller = await requireStaff(req, supabaseAuth);
+  if (!caller.ok) return authJson(caller, corsHeaders);
+  if (!invoice_id || typeof invoice_id !== "string") return json({ error: "invoice_id is required" }, 400);
+  const { data: invRow } = await supabaseAuth.from("invoices").select("id, total_amount, invoice_status").eq("id", invoice_id).maybeSingle();
+  if (!invRow) return json({ error: "Invoice not found" }, 404);
+  if (invRow.invoice_status === "paid") return json({ error: "Invoice is already paid" }, 409);
+  const amount = Number(invRow.total_amount);
 
   if (!invoice_id || typeof invoice_id !== "string") {
     return json({ error: "invoice_id is required" }, 400);

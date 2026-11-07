@@ -1,5 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 
+function b64url(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function hmac(secret: string, data: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  return b64url(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data)));
+}
+
 Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -20,9 +34,21 @@ Deno.serve(async (req) => {
     return Response.redirect(`${siteUrl}/seo?gsc_error=missing_params`, 302);
   }
 
-  let state: { client_id: string; user_id: string };
+  // Verify HMAC signature and 15-minute expiry (state is created by gsc-oauth-start). Fails closed.
+  const stateSecret = Deno.env.get("GSC_STATE_SECRET") || Deno.env.get("CRON_SECRET") || "";
+  let state: { client_id: string; user_id: string; exp: number };
   try {
-    state = JSON.parse(decodeURIComponent(stateRaw));
+    if (!stateSecret) throw new Error("no secret");
+    const [payload, sig] = stateRaw.split(".");
+    if (!payload || !sig) throw new Error("malformed");
+    const expected = await hmac(stateSecret, payload);
+    if (expected.length !== sig.length) throw new Error("bad sig");
+    let diff = 0;
+    for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
+    if (diff !== 0) throw new Error("bad sig");
+    const pad = payload.replace(/-/g, "+").replace(/_/g, "/");
+    state = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pad + "=".repeat((4 - (pad.length % 4)) % 4)), (c) => c.charCodeAt(0))));
+    if (!state.client_id || typeof state.exp !== "number" || Date.now() > state.exp) throw new Error("expired");
   } catch {
     return Response.redirect(`${siteUrl}/seo?gsc_error=invalid_state`, 302);
   }

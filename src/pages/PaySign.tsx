@@ -98,7 +98,6 @@ function StepIndicator({ current, paid, signed, scheduled }: { current: StepKey;
   );
 }
 
-const ANNUAL_PRICE = 29997;
 
 export default function PaySign() {
   const { token } = useParams<{ token: string }>();
@@ -107,8 +106,6 @@ export default function PaySign() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  const [payBusy, setPayBusy] = useState(false);
-  const [cadence, setCadence] = useState<"monthly" | "annual">("monthly");
   const [signBusy, setSignBusy] = useState(false);
   const [sigMode, setSigMode] = useState<"type" | "draw">("type");
   const [typedSig, setTypedSig] = useState("");
@@ -247,7 +244,7 @@ export default function PaySign() {
   // Package deals: the pay step is done once paid/clearing, or (wire first) once a method is saved — they can sign while the wire travels.
   const isPaid = invoicePaid || (isPkg && packagePayDone(ctx?.package_plan));
   const initialFeeDue = Number(ctx?.deal?.initial_fee ?? 0);
-  const amountDue = initialFeeDue + (cadence === "annual" ? ANNUAL_PRICE : 0);
+  const amountDue = initialFeeDue;
   const scheduledAt: string | null = ctx?.onboarding_meeting?.starts_at || null;
   const scheduled = !!scheduledAt;
   const bothDone = isPaid && signed;
@@ -279,20 +276,6 @@ export default function PaySign() {
     : !signed
     ? "sign"
     : "schedule";
-
-  const handlePay = async () => {
-    if (!token) return;
-    setPayBusy(true);
-    const { data, error } = await supabase.functions.invoke("pay-sign-context", {
-      body: { share_token: token, action: "create_payment", billing_cadence: cadence },
-    });
-    setPayBusy(false);
-    if (error || data?.error) {
-      toast.error(error?.message || data?.error || "Failed to start payment");
-      return;
-    }
-    window.location.href = data.url;
-  };
 
   const startDraw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     drawing.current = true;
@@ -580,40 +563,9 @@ export default function PaySign() {
               {isPaid && <span className="text-xs px-2 py-1 rounded bg-emerald-500/15 text-emerald-500">Paid</span>}
             </div>
             {!isPaid && (
-              <>
-                <div className="grid gap-3 sm:grid-cols-2 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setCadence("monthly")}
-                    className={cn(
-                      "text-left rounded-lg border p-4 transition-colors",
-                      cadence === "monthly" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40",
-                    )}
-                  >
-                    <p className="text-sm font-semibold">Pay monthly</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ${initialFeeDue.toLocaleString()} today, then your regular monthly billing.
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCadence("annual")}
-                    className={cn(
-                      "text-left rounded-lg border p-4 transition-colors",
-                      cadence === "annual" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40",
-                    )}
-                  >
-                    <p className="text-sm font-semibold">Pay ${ANNUAL_PRICE.toLocaleString()}/year</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Includes the app, complimentary. Charged today alongside your ${initialFeeDue.toLocaleString()} setup fee.
-                    </p>
-                  </button>
-                </div>
-                <Button onClick={handlePay} disabled={payBusy || !(initialFeeDue > 0) || !reviewed} className="w-full sm:w-auto">
-                  {payBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                  Pay ${amountDue.toLocaleString()} with card
-                </Button>
-              </>
+              <p className="text-sm text-muted-foreground">
+                Payment details for this agreement come from your NewLight rep. Please contact them if you don't see a payment option.
+              </p>
             )}
           </Card>
         )}

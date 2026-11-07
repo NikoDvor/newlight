@@ -1,8 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { cronAuthorized, requireClientAccess, authJson } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 function json(data: unknown, status = 200) {
@@ -62,35 +63,21 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-  const token = authHeader.slice(7);
-
-  let isService = token === serviceKey;
-  if (!isService) {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      if (payload?.role === "service_role") isService = true;
-    } catch (_) { /* not a JWT */ }
-  }
-  if (!isService) {
-    const authClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await authClient.auth.getUser();
-    if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
-  }
-
-
+  const supabase = createClient(supabaseUrl, serviceKey);
+  const fromCron = (await cronAuthorized(req, supabase));
+  if (!fromCron && !req.headers.get("Authorization")?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
   if (!lovableKey) return json({ error: "AI gateway not configured" }, 500);
-
-  const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
     const body = await req.json().catch(() => ({}));
     const { client_id } = body || {};
     if (!client_id) return json({ error: "client_id required" }, 400);
+
+    if (!fromCron) {
+      const access = await requireClientAccess(req, supabase, client_id, anonKey, supabaseUrl);
+      if (!access.ok) return authJson(access, corsHeaders);
+    }
 
     const { data: client, error: clientErr } = await supabase
       .from("clients")

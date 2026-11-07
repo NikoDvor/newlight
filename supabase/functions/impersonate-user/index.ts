@@ -1,6 +1,8 @@
 // Generates a magic-link token_hash for a target user so an admin can swap
-// their Supabase session into that user. Requires the caller to be an admin.
+// their Supabase session into that user. Admins may impersonate anyone; operators only non-staff users.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireStaff } from "../_shared/auth.ts";
+import { targetIsPrivileged, securityAudit } from "../_shared/privileged.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,27 +18,13 @@ Deno.serve(async (req) => {
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const jwt = authHeader.replace(/^Bearer\s+/i, "");
-    if (!jwt) return json({ error: "missing_auth" }, 401);
-
-    // Verify caller is an admin
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${jwt}` } },
-    });
-    const { data: { user: caller }, error: callerErr } = await userClient.auth.getUser();
-    if (callerErr || !caller) return json({ error: "invalid_session" }, 401);
-
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const { data: roles } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", caller.id);
-    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "operator");
-    if (!isAdmin) return json({ error: "forbidden" }, 403);
+    const caller = await requireStaff(req, admin);
+    if (!caller.ok) return json({ error: caller.status === 401 ? "invalid_session" : "forbidden" }, caller.status);
 
     const { targetUserId, targetEmail } = await req.json().catch(() => ({}));
     if (!targetUserId && !targetEmail) return json({ error: "missing_target" }, 400);
+    if (targetUserId && targetUserId === caller.userId) return json({ error: "cannot_impersonate_self" }, 400);
 
     // Resolve target email
     let email = targetEmail as string | undefined;
@@ -54,6 +42,14 @@ Deno.serve(async (req) => {
     if (linkErr || !link?.properties?.hashed_token) {
       return json({ error: "link_failed", detail: linkErr?.message }, 500);
     }
+
+    // Resolved target id (works for email-only requests too). Operators may only impersonate non-staff users.
+    const resolvedId: string = (link as any).user?.id ?? targetUserId ?? "";
+    if (resolvedId && resolvedId === caller.userId) return json({ error: "cannot_impersonate_self" }, 400);
+    if (!caller.isAdmin && (!resolvedId || await targetIsPrivileged(admin, resolvedId))) {
+      return json({ error: "forbidden_target" }, 403);
+    }
+    await securityAudit(admin, caller.userId, "user_impersonated", { target_user_id: resolvedId, target_email: email, caller_role: caller.isAdmin ? "admin" : "operator" });
 
     return json({
       token_hash: link.properties.hashed_token,

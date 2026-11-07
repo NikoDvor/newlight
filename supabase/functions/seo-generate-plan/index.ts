@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { cronAuthorized, requireStaff, requireClientAccess, authJson } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -590,30 +591,20 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  const cronSecret = Deno.env.get("CRON_SECRET");
 
-  // AUTH: cron secret header OR valid user JWT
-  const cronHeader = req.headers.get("x-cron-secret");
-  const authHeader = req.headers.get("Authorization");
-
-  let authorized = false;
-  if (cronSecret && cronHeader && cronHeader === cronSecret) {
-    authorized = true;
-  } else if (authHeader?.startsWith("Bearer ")) {
-    const authClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await authClient.auth.getUser();
-    if (!userErr && userData.user) authorized = true;
-  }
-  if (!authorized) return json({ error: "Unauthorized" }, 401);
-
+  // AUTH: cron secret header OR a signed-in user (checked per request type below)
   const supabase = createClient(supabaseUrl, serviceKey);
+  const fromCron = (await cronAuthorized(req, supabase));
+  if (!fromCron && !req.headers.get("Authorization")?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
   try {
     const body = await req.json().catch(() => ({}));
 
     if (body?.refresh_all === true) {
+      if (!fromCron) {
+        const staff = await requireStaff(req, supabase);
+        if (!staff.ok) return authJson(staff, corsHeaders);
+      }
       const { data: clientsList, error: listErr } = await supabase
         .from("clients")
         .select("id")
@@ -644,7 +635,7 @@ Deno.serve(async (req) => {
       }
 
       await supabase.from("seo_run_log").insert({
-        triggered_by: cronHeader && cronSecret && cronHeader === cronSecret ? "cron" : "manual",
+        triggered_by: fromCron ? "cron" : "manual",
         clients_processed: processed,
         total_keywords: totalKeywords,
         total_content: totalContent,
@@ -665,6 +656,11 @@ Deno.serve(async (req) => {
 
     const clientId = body.client_id;
     if (!clientId) return json({ error: "client_id required" }, 400);
+
+    if (!fromCron) {
+      const access = await requireClientAccess(req, supabase, clientId, anonKey, supabaseUrl);
+      if (!access.ok) return authJson(access, corsHeaders);
+    }
 
     const result = await generateForClient(supabase, clientId, lovableKey);
 

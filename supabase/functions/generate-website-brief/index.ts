@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { requireClientAccess, authJson } from "../_shared/auth.ts";
 
 
 const corsHeaders = {
@@ -18,6 +19,9 @@ Deno.serve(async (req) => {
 
     const { client_id } = await req.json();
     if (!client_id) return new Response(JSON.stringify({ error: "client_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    const access = await requireClientAccess(req, supabase, client_id, Deno.env.get("SUPABASE_ANON_KEY")!, Deno.env.get("SUPABASE_URL")!);
+    if (!access.ok) return authJson(access, corsHeaders);
 
     // Pull client data
     const { data: client, error: clientError } = await supabase

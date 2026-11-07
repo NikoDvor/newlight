@@ -1,3 +1,4 @@
+import { seedSetupItemsForClient } from "./setup-items-seeder.ts";
 // Shared helper: when a deal transitions to paid_signed, fire SMS + email to the ops team.
 // Uses conditional update so only the one transition actually notifies.
 
@@ -104,6 +105,14 @@ export async function notifyPaidSignedIfTransition(supabase: any, dealId: string
     if (leadErr) {
       console.error("[paid-signed lead update error]", leadErr);
     }
+  }
+
+  // Stand up the client's Setup Portal checklist now that they are paid and signed (idempotent).
+  try {
+    const { data: pc } = await supabase.from("crm_deals").select("provisioned_client_id").eq("id", dealId).maybeSingle();
+    if (pc?.provisioned_client_id) await seedSetupItemsForClient(supabase, pc.provisioned_client_id);
+  } catch (e) {
+    console.error("[paid-signed setup seeding failed (non-blocking)]", (e as Error)?.message);
   }
 
   // Resolve display bits

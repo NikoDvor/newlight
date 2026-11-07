@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { cronAuthorized, requireClientAccess, authJson } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -144,29 +145,22 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
   const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
-  const cronSecret = Deno.env.get("CRON_SECRET");
-
-  const cronHeader = req.headers.get("x-cron-secret");
-  const authHeader = req.headers.get("Authorization");
-
-  let authorized = false;
-  if (cronSecret && cronHeader && cronHeader === cronSecret) {
-    authorized = true;
-  } else if (authHeader?.startsWith("Bearer ")) {
-    const authClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await authClient.auth.getUser();
-    if (!userErr && userData.user) authorized = true;
-  }
-  if (!authorized) return json({ error: "Unauthorized" }, 401);
-
   const supabase = createClient(supabaseUrl, serviceKey);
+  const fromCron = (await cronAuthorized(req, supabase));
+  if (!fromCron) {
+    // Non-cron callers are authenticated below once client_id is known.
+    if (!req.headers.get("Authorization")?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+  }
 
   const body = await req.json().catch(() => ({}));
   const clientId = body.client_id;
 
   if (!clientId) return json({ error: "client_id required" }, 400);
+
+  if (!fromCron) {
+    const access = await requireClientAccess(req, supabase, clientId, anonKey, supabaseUrl);
+    if (!access.ok) return authJson(access, corsHeaders);
+  }
 
   const result = await syncGscForClient(supabase, clientId, googleClientId, googleClientSecret);
 

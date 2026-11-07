@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { targetIsPrivileged, securityAudit } from "../_shared/privileged.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,6 +46,7 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", caller.id)
       .in("role", ["admin", "operator"])
+      .limit(1)
       .maybeSingle();
 
     if (!callerRole) {
@@ -57,7 +59,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { email, role, client_id } = await req.json();
+    const { email, role, client_id, replace_roles } = await req.json();
 
     if (!email || !role) {
       return new Response(
@@ -69,10 +71,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Only admins can assign admin role
-    if (role === "admin" && callerRole.role !== "admin") {
+    // Only admins can assign admin or operator roles (or replace a user's roles)
+    const { data: callerAdminRow } = await adminClient
+      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").limit(1).maybeSingle();
+    const callerIsAdmin = !!callerAdminRow;
+    if ((role === "admin" || role === "operator" || replace_roles === true) && !callerIsAdmin) {
       return new Response(
-        JSON.stringify({ error: "Only admins can assign admin role" }),
+        JSON.stringify({ error: "Only admins can assign admin or operator roles" }),
         {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -159,6 +164,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Operators may not modify existing admin/operator accounts.
+    if (!callerIsAdmin && alreadyExisted && await targetIsPrivileged(adminClient, userId)) {
+      return new Response(
+        JSON.stringify({ error: "Only admins can modify admin or operator accounts" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Assign role — scope by client_id for client roles
     const clientRoles = ["client_owner", "client_team", "read_only"];
     const isClientRole = clientRoles.includes(role);
@@ -171,26 +184,38 @@ Deno.serve(async (req) => {
         .delete()
         .eq("user_id", userId)
         .eq("client_id", targetClientId);
-    } else if (!isClientRole) {
-      // Admin/operator: remove all existing roles
+    } else if (!isClientRole && replace_roles === true && callerIsAdmin) {
+      // Explicit role change by an admin: replace all existing roles
       await adminClient
         .from("user_roles")
         .delete()
         .eq("user_id", userId);
     }
 
-    const { error: roleError } = await adminClient
-      .from("user_roles")
-      .insert({
-        user_id: userId,
-        role,
-        client_id: targetClientId,
-      });
+    // Add the role (never removes other roles); skip if the user already has it
+    let existingRoleQuery = adminClient.from("user_roles").select("id").eq("user_id", userId).eq("role", role);
+    existingRoleQuery = targetClientId ? existingRoleQuery.eq("client_id", targetClientId) : existingRoleQuery.is("client_id", null);
+    const { data: existingRole } = await existingRoleQuery.limit(1);
+    const { error: roleError } = (existingRole ?? []).length > 0
+      ? { error: null }
+      : await adminClient
+        .from("user_roles")
+        .insert({
+          user_id: userId,
+          role,
+          client_id: targetClientId,
+        });
 
     if (roleError) {
       return new Response(JSON.stringify({ error: roleError.message }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (["admin", "operator"].includes(role) || replace_roles === true) {
+      await securityAudit(adminClient, caller.id, "role_granted", {
+        target_user_id: userId, target_email: email, role, replace_roles: replace_roles === true, caller_role: callerIsAdmin ? "admin" : "operator",
       });
     }
 

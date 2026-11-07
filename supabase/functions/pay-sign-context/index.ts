@@ -3,7 +3,6 @@
 // No JWT required — the share_token itself is the capability.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 import { notifyPaidSignedIfTransition } from "../_shared/paid-signed-notify.ts";
-import { seedSetupItemsForClient } from "../_shared/setup-items-seeder.ts";
 import { createZoomMeeting } from "../_shared/zoom.ts";
 import { sendPaymentConfirmation, sendWelcomeDocument, sendOnboardingRescheduleNotice } from "../_shared/pay-sign-notify.ts";
 import { getStripe, ensureStripeCustomer } from "../_shared/stripe-billing.ts";
@@ -619,6 +618,10 @@ Deno.serve(async (req) => {
     if (deal.price_approval_status === "pending" || deal.price_approval_status === "rejected") {
       return json({ error: "This price is waiting for NewLight approval. Your rep will be in touch." }, 409);
     }
+    // Payment is only allowed on a live agreement: not declined, expired or cancelled.
+    if (["declined", "expired", "cancelled", "voided"].includes(String(envelope.status))) {
+      return json({ error: "This agreement is no longer active. Ask your rep for a new link." }, 409);
+    }
     const stripe = await getStripe();
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
@@ -668,130 +671,6 @@ Deno.serve(async (req) => {
     return json({ url: session.url, amount: first.amount });
   }
 
-  if (action === "create_payment") {
-    if (!deal) return json({ error: "No deal linked to envelope" }, 400);
-    // Package deals are charged only through plan_pay / save_method (nl_billing_schedule). This legacy flat-price path must never run for them.
-    if (deal.package) return json({ error: "Use the package payment flow for this agreement" }, 400);
-    const initialFee = Number(deal.initial_fee ?? 0);
-    if (!(initialFee > 0)) return json({ error: "No initial fee set on the deal" }, 400);
-
-    // Payment cadence chosen on Form 3. "annual" is a flat, all-inclusive first-year
-    // rate of $29,997 (app add-on complimentary) and replaces the setup-fee-plus-monthly
-    // structure for that first year. The setup fee is never discounted on the monthly path.
-    const annualSelected = body.billing_cadence === "annual";
-    const ANNUAL_PRICE = 29997;
-    const chargeTotal = annualSelected ? ANNUAL_PRICE : initialFee;
-
-    const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecret) return json({ error: "Stripe not configured" }, 503);
-
-    // Create invoice row if none exists
-    let invId = deal.payment_invoice_id as string | null;
-    if (!invId) {
-      // invoices.billing_account_id is NOT NULL — resolve or create the client's billing account
-      let billingAccountId: string | null = null;
-      const { data: existingBa } = await supabase
-        .from("billing_accounts")
-        .select("id")
-        .eq("client_id", deal.client_id)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (existingBa?.id) {
-        billingAccountId = existingBa.id;
-      } else {
-        const { data: newBa, error: baErr } = await supabase
-          .from("billing_accounts")
-          .insert({ client_id: deal.client_id })
-          .select("id")
-          .single();
-        if (baErr) return json({ error: baErr.message }, 500);
-        billingAccountId = newBa.id;
-      }
-
-      const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
-      const { data: newInv, error: invErr } = await supabase
-        .from("invoices")
-        .insert({
-          client_id: deal.client_id,
-          billing_account_id: billingAccountId,
-          invoice_number: invoiceNumber,
-          provisioned_client_id: (deal as any).provisioned_client_id ?? null,
-          invoice_type: annualSelected ? "annual" : "initial_fee",
-          invoice_status: "pending",
-          subtotal_amount: chargeTotal,
-          tax_amount: 0,
-          total_amount: chargeTotal,
-          amount_paid: 0,
-          issued_at: new Date().toISOString(),
-        } as any)
-        .select("id")
-        .single();
-      if (invErr) return json({ error: invErr.message }, 500);
-      invId = newInv.id;
-      await supabase.from("crm_deals").update({ payment_invoice_id: invId }).eq("id", deal.id);
-    }
-
-    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-    let originBase = "";
-    try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
-    const successUrl = `${originBase}/pay-sign/${share_token}?payment=success&session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${originBase}/pay-sign/${share_token}?payment=cancelled`;
-
-    const stripe = await getStripe();
-    if (!stripe) return json({ error: "Stripe not configured" }, 503);
-
-    // Always create/reuse a Stripe Customer so the card can be reused later
-    // (retainer subscription or monthly off-session commission charges).
-    const customerId = await ensureStripeCustomer(stripe, supabase, {
-      clientId: deal.client_id,
-      email: envelope.recipient_email,
-      name: client?.name || deal.deal_name,
-    });
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: annualSelected
-        ? [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: { name: "Annual Plan — 12 months (app included)" },
-              unit_amount: ANNUAL_PRICE * 100,
-            },
-            quantity: 1,
-          },
-        ]
-        : [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: { name: `${client?.name || deal.deal_name || "NewLight"} — Initial Fee` },
-              unit_amount: Math.round(initialFee * 100),
-            },
-            quantity: 1,
-          },
-        ],
-      ...(customerId ? { customer: customerId } : { customer_email: envelope.recipient_email || undefined }),
-      payment_intent_data: { setup_future_usage: "off_session" },
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
-        invoice_id: invId!,
-        deal_id: deal.id,
-        envelope_id: envelope.id,
-        ...(annualSelected ? { annual: "true" } : {}),
-      },
-    });
-
-    await supabase.from("invoices")
-      .update({ payment_link_url: session.url, stripe_checkout_session_id: session.id })
-      .eq("id", invId!);
-
-    return json({ url: session.url, session_id: session.id, invoice_id: invId, amount: chargeTotal });
-  }
-
   // Package deals: browser return from Stripe (the webhook does the same; markRowPaid is idempotent).
   if ((action === "mark_paid" || action === "confirm_method") && deal?.package) {
     const stripe = await getStripe();
@@ -819,114 +698,6 @@ Deno.serve(async (req) => {
     return json({ ok: true, paid: false, processing: true }); // bank debit clearing — webhook finishes it
   }
 
-  if (action === "mark_paid") {
-    // Manual mark-paid path for admin polling; verifies via session id if provided
-    const session_id = body.session_id;
-    if (!deal?.payment_invoice_id) return json({ error: "No invoice linked" }, 400);
-    if (!session_id) return json({ error: "session_id required" }, 400);
-
-    const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecret) return json({ error: "Stripe not configured" }, 503);
-
-    const { Stripe } = await import("https://esm.sh/stripe@14.21.0?target=deno");
-    const stripe = new Stripe(stripeSecret, { apiVersion: "2024-04-10" });
-    const sess = await stripe.checkout.sessions.retrieve(session_id);
-    if (sess.payment_status !== "paid") return json({ error: "Session not paid", payment_status: sess.payment_status }, 409);
-
-    await supabase.from("invoices").update({
-      invoice_status: "paid",
-      amount_paid: (sess.amount_total ?? 0) / 100,
-      paid_at: new Date().toISOString(),
-      payment_method: "stripe",
-    }).eq("id", deal.payment_invoice_id);
-
-    // Annual cadence chosen at checkout — stamp it on the deal (webhook does this
-    // too; both paths are idempotent).
-    if (sess.metadata?.annual === "true" || sess.metadata?.annual_switch === "true") {
-      const { data: curDeal } = await supabase
-        .from("crm_deals").select("billing_cadence").eq("id", deal.id).maybeSingle();
-      if (curDeal?.billing_cadence !== "annual") {
-        const annualStart = new Date();
-        const nextCharge = new Date(annualStart.getTime());
-        nextCharge.setUTCDate(nextCharge.getUTCDate() + 365);
-        await supabase.from("crm_deals").update({
-          billing_cadence: "annual",
-          annual_started_at: annualStart.toISOString(),
-          next_charge_at: nextCharge.toISOString(),
-          app_store_complimentary: true,
-        }).eq("id", deal.id);
-      }
-    }
-
-    // Reflect payment reality on the client record. Target the REAL per-business
-    // workspace provisioned at booking time; fall back to deal.client_id (the ops
-    // workspace) only for older deals or leads created outside the booking flow.
-    const paidClientId = (deal as any).provisioned_client_id || deal.client_id;
-    if (paidClientId) {
-      await supabase.from("clients")
-        .update({ payment_status: "paid" })
-        .eq("id", paidClientId);
-    }
-
-    // Additive: deal.client_id is the NewLight ops workspace (kept as-is above).
-    // The REAL per-business workspace is reached via the originating BDR lead's
-    // provisioned_client_id — mark that client paid too. Silently skipped when
-    // no BDR lead exists or the link was never recorded (non-BDR clients).
-    try {
-      const { data: bdrLead } = await supabase
-        .from("nl_bdr_leads")
-        .select("provisioned_client_id")
-        .eq("crm_deal_id", deal.id)
-        .limit(1)
-        .maybeSingle();
-      if (bdrLead?.provisioned_client_id) {
-        await supabase.from("clients")
-          .update({ payment_status: "paid" })
-          .eq("id", bdrLead.provisioned_client_id);
-      }
-    } catch (e: any) {
-      console.error("[pay-sign-context] provisioned client payment update failed (non-blocking):", e?.message);
-    }
-
-
-
-    const originHdr = req.headers.get("origin") || req.headers.get("referer") || "";
-    let base = ""; try { base = originHdr ? new URL(originHdr).origin : ""; } catch { base = ""; }
-    const paySignLink = base ? `${base}/pay-sign/${share_token}` : `/pay-sign/${share_token}`;
-
-    // Payment confirmations (idempotent per invoice)
-    const paymentNotify = await sendPaymentConfirmation(supabase, deal.id, {
-      invoiceId: deal.payment_invoice_id,
-      payerEmail: sess.customer_details?.email || envelope.recipient_email || null,
-      paySignUrl: paySignLink,
-    });
-
-    // If envelope also signed, transition deal to paid_signed and notify ops; else just mark paid.
-    let newStatus = "paid";
-    let notify: any = null;
-    let setupSeed: any = null;
-    if (envelope.status === "signed") {
-      notify = await notifyPaidSignedIfTransition(supabase, deal.id, { paySignUrl: paySignLink, envelopeId: envelope.id });
-      newStatus = "paid_signed";
-
-      // Stand up the client's Setup Portal checklist as soon as they're paid + signed.
-      const seedClientId = (deal as any).provisioned_client_id || null;
-      if (seedClientId) {
-        try {
-          setupSeed = await seedSetupItemsForClient(supabase, seedClientId);
-        } catch (e: any) {
-          console.error("[pay-sign-context] setup item seeding failed (non-blocking):", e?.message);
-        }
-      }
-    } else {
-      await supabase.from("crm_deals").update({ pay_sign_status: "paid" }).eq("id", deal.id);
-    }
-
-    return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus, notify, payment_notify: paymentNotify, setup_seed: setupSeed });
-  }
-
-  // Rep/admin-triggered: send the client the "review, sign & pay" email.
-  // Repeatable on purpose — a rep may need to resend.
   if (action === "send_pay_sign_email") {
     if (!deal) return json({ error: "No deal linked to this envelope" }, 404);
     if (deal.price_approval_status === "pending") return json({ error: "This custom price needs admin approval before the Pay & Sign link can be sent." }, 409);

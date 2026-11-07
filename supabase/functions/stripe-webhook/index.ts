@@ -1,11 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
-import { notifyPaidSignedIfTransition } from "../_shared/paid-signed-notify.ts";
-import { sendPaymentConfirmation } from "../_shared/pay-sign-notify.ts";
 import {
   ensureStripeCustomer,
   savePaymentMethodFromSession,
-  createRetainerSubscription,
-  applyAnnualSwitch,
 } from "../_shared/stripe-billing.ts";
 import { markRowPaid, failRow } from "../_shared/nlBilling.ts";
 
@@ -83,7 +79,6 @@ Deno.serve(async (req) => {
       case "checkout.session.completed": {
         const session = event.data.object;
         const customerId = session.customer;
-        const subscriptionId = session.subscription;
         const clientEmail = session.customer_details?.email || session.customer_email;
         const paySignInvoiceId = session.metadata?.invoice_id as string | undefined;
 
@@ -117,7 +112,11 @@ Deno.serve(async (req) => {
                 if (pm) await supabase.from("crm_deals").update({ recurring_method_saved_at: new Date().toISOString() }).eq("id", deal.id);
               }
               const piId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
-              if (session.payment_status === "paid") {
+              const collected = (session.amount_total ?? 0) / 100;
+              if (session.payment_status === "paid" && Math.abs(collected - Number(row.amount)) > 0.01) {
+                await supabase.from("audit_logs").insert({ client_id: realClientId ?? null, action: "stripe_amount_mismatch", module: "billing", status: "error", metadata: { session_id: session.id, schedule_id: row.id, collected, expected: Number(row.amount) } });
+                await sendAdhocEmail([OPS_EMAIL_TO], "ACTION NEEDED — payment amount mismatch", `<p>Stripe collected $${collected.toFixed(2)} but "${row.label}" is $${Number(row.amount).toFixed(2)}. Not marked paid. Session ${session.id}.</p>`);
+              } else if (session.payment_status === "paid") {
                 await supabase.from("nl_billing_schedule").update({ stripe_payment_intent_id: piId ?? null, attempts: 1, last_attempt_at: new Date().toISOString() }).eq("id", row.id);
                 if (row.status !== "paid") await markRowPaid(supabase, row, deal, { via: "stripe" });
               } else {
@@ -140,7 +139,10 @@ Deno.serve(async (req) => {
               .eq("id", adhocInvoiceId)
               .maybeSingle();
 
-            if (inv && inv.invoice_status !== "paid") {
+            if (inv && session.payment_status === "paid" && Math.abs(amountPaid - Number(inv.total_amount || 0)) > 0.01) {
+              await supabase.from("audit_logs").insert({ client_id: inv.client_id ?? null, action: "stripe_amount_mismatch", module: "billing", status: "error", metadata: { session_id: session.id, invoice_id: adhocInvoiceId, collected: amountPaid, expected: Number(inv.total_amount || 0) } });
+              await sendAdhocEmail([OPS_EMAIL_TO], "ACTION NEEDED — payment amount mismatch", `<p>Stripe collected $${amountPaid.toFixed(2)} for an invoice of $${Number(inv.total_amount || 0).toFixed(2)}. Not marked paid. Session ${session.id}.</p>`);
+            } else if (inv && inv.invoice_status !== "paid") {
               await supabase.from("invoices").update({
                 invoice_status: "paid",
                 amount_paid: amountPaid,
@@ -179,310 +181,56 @@ Deno.serve(async (req) => {
         }
 
 
-        // ---- Annual plan switch ($29,997 one-time, dashboard or Form 3) ----
-        if (session.metadata?.annual_switch === "true") {
-          const annualDealId = session.metadata?.deal_id as string | undefined;
-          if (annualDealId) {
-            // Save the card so next year's renewal can be charged off-session.
-            let savedPaymentMethodId: string | null = null;
-            try {
-              const { data: annualDeal } = await supabase
-                .from("crm_deals")
-                .select("id, client_id, provisioned_client_id")
-                .eq("id", annualDealId)
-                .maybeSingle();
-              const annualClientId = annualDeal?.provisioned_client_id || annualDeal?.client_id || null;
-              const annualCustomerId = await ensureStripeCustomer(stripe, supabase, {
-                clientId: annualClientId,
-                email: clientEmail,
-                existingCustomerId: typeof customerId === "string" ? customerId : null,
-              });
-              if (annualCustomerId) {
-                savedPaymentMethodId = await savePaymentMethodFromSession(
-                  stripe, supabase, session, annualCustomerId, annualClientId,
-                );
-              }
-            } catch (e) {
-              console.error("[stripe-webhook] annual switch card save failed", e);
-            }
-
-            const res = await applyAnnualSwitch(stripe, supabase, annualDealId);
-            console.log("[stripe-webhook] annual switch:", JSON.stringify(res));
-            await supabase.from("audit_logs").insert({
-              action: "annual_billing_activated",
-              module: "billing",
-              status: "success",
-              metadata: {
-                session_id: session.id,
-                deal_id: annualDealId,
-                card_saved: Boolean(savedPaymentMethodId),
-                ...res,
-              },
-            });
-          }
-          break;
-        }
-
-        // ---- Pay & Sign (Form 3) initial-fee payment: authoritative confirmation ----
+        // ---- Invoice payment (manual invoices from Close Center / Billing) ----
+        // The amount Stripe collected must match the invoice. A session for the wrong amount never marks it paid.
         if (paySignInvoiceId) {
-          const dealId = session.metadata?.deal_id as string | undefined;
-          const envelopeId = session.metadata?.envelope_id as string | undefined;
-
           const { data: invoice } = await supabase
             .from("invoices")
-            .select("id, invoice_status, client_id")
+            .select("id, invoice_status, client_id, total_amount, invoice_number")
             .eq("id", paySignInvoiceId)
             .maybeSingle();
-
-          if (invoice && invoice.invoice_status !== "paid") {
+          const collected = (session.amount_total ?? 0) / 100;
+          if (!invoice) {
+            console.error("[stripe-webhook] invoice not found", paySignInvoiceId);
+            break;
+          }
+          if (session.payment_status !== "paid") break;
+          if (Math.abs(collected - Number(invoice.total_amount || 0)) > 0.01) {
+            await supabase.from("audit_logs").insert({
+              client_id: invoice.client_id ?? null,
+              action: "stripe_amount_mismatch",
+              module: "billing",
+              status: "error",
+              metadata: { session_id: session.id, invoice_id: invoice.id, collected, expected: Number(invoice.total_amount || 0) },
+            });
+            await sendAdhocEmail([OPS_EMAIL_TO], `ACTION NEEDED — payment amount mismatch (${invoice.invoice_number || invoice.id})`,
+              `<p>Stripe collected $${collected.toFixed(2)} for an invoice of $${Number(invoice.total_amount || 0).toFixed(2)}. The invoice was NOT marked paid. Session: ${session.id}</p>`);
+            break;
+          }
+          if (invoice.invoice_status !== "paid") {
             await supabase.from("invoices").update({
               invoice_status: "paid",
-              amount_paid: (session.amount_total ?? 0) / 100,
+              amount_paid: collected,
               paid_at: new Date().toISOString(),
               payment_method: "stripe",
               stripe_checkout_session_id: session.id,
-            }).eq("id", paySignInvoiceId);
+            }).eq("id", invoice.id);
           }
-
-          let deal: any = null;
-          if (dealId) {
-            const { data: d } = await supabase
-              .from("crm_deals")
-              .select("id, client_id, deal_name, pricing_model, initial_fee, recurring_fee, commission_rate, stripe_subscription_id, pay_sign_status")
-              .eq("id", dealId)
-              .maybeSingle();
-            deal = d;
-          }
-
-          // Save the card for future automatic charges (retainer + commission).
-          let effectiveCustomerId: string | null = typeof customerId === "string" ? customerId : null;
-          let paymentMethodId: string | null = null;
-          try {
-            effectiveCustomerId = await ensureStripeCustomer(stripe, supabase, {
-              clientId: deal?.client_id ?? invoice?.client_id ?? null,
-              email: clientEmail,
-              existingCustomerId: effectiveCustomerId,
-            });
-            if (effectiveCustomerId) {
-              paymentMethodId = await savePaymentMethodFromSession(
-                stripe, supabase, session, effectiveCustomerId, deal?.client_id ?? invoice?.client_id ?? null,
-              );
-            }
-          } catch (e) {
-            console.error("[stripe-webhook] card save failed", e);
-          }
-
-          // Retainer → create the real recurring Stripe subscription.
-          if (deal && deal.pricing_model === "retainer" && effectiveCustomerId && session.metadata?.annual !== "true") {
-            try {
-              let clientName: string | null = null;
-              if (deal.client_id) {
-                const { data: c } = await supabase.from("clients").select("name").eq("id", deal.client_id).maybeSingle();
-                clientName = c?.name ?? null;
-              }
-              const subRes = await createRetainerSubscription(stripe, supabase, {
-                deal, customerId: effectiveCustomerId, paymentMethodId, clientName,
-              });
-              console.log("[stripe-webhook] retainer subscription:", JSON.stringify(subRes));
-            } catch (e) {
-              console.error("[stripe-webhook] subscription creation failed", e);
-            }
-          }
-
-          // Form 3 annual cadence — stamp the annual fields on the deal.
-          if (session.metadata?.annual === "true" && dealId) {
-            try {
-              const res = await applyAnnualSwitch(stripe, supabase, dealId);
-              console.log("[stripe-webhook] form3 annual:", JSON.stringify(res));
-            } catch (e) {
-              console.error("[stripe-webhook] form3 annual switch failed", e);
-            }
-          }
-
-          // Resolve envelope state + a public Pay & Sign link for the emails.
-          let envStatus: string | null = null;
-          let paySignUrl: string | undefined;
-          if (envelopeId) {
-            const { data: env } = await supabase
-              .from("document_envelopes").select("status, share_token").eq("id", envelopeId).maybeSingle();
-            envStatus = env?.status ?? null;
-            if (env?.share_token) paySignUrl = `${APP_BASE_URL}/pay-sign/${env.share_token}`;
-          }
-
-          // Idempotent notifications (guarded by invoices.payment_confirmation_sent).
-          if (dealId) {
-            await sendPaymentConfirmation(supabase, dealId, {
-              invoiceId: paySignInvoiceId,
-              payerEmail: clientEmail || null,
-              paySignUrl,
-            });
-
-            // If the agreement is already signed, transition + notify (guarded).
-            if (envStatus === "signed") {
-              await notifyPaidSignedIfTransition(supabase, dealId, { envelopeId, paySignUrl });
-            } else {
-              await supabase.from("crm_deals")
-                .update({ pay_sign_status: "paid" })
-                .eq("id", dealId)
-                .neq("pay_sign_status", "paid_signed");
-            }
-          }
-
           await supabase.from("audit_logs").insert({
-            client_id: deal?.client_id ?? invoice?.client_id ?? null,
-            action: "pay_sign_payment_confirmed",
+            client_id: invoice.client_id ?? null,
+            action: "invoice_payment_confirmed",
             module: "billing",
             status: "success",
-            metadata: { session_id: session.id, invoice_id: paySignInvoiceId, deal_id: dealId ?? null },
+            metadata: { session_id: session.id, invoice_id: invoice.id },
           });
           break;
         }
 
-        // ---- Existing client billing-portal checkout flow ----
-        if (clientEmail) {
-          await supabase.from("clients")
-            .update({
-              stripe_customer_id: customerId,
-              stripe_subscription_id: subscriptionId,
-              stripe_status: "active",
-            })
-            .eq("owner_email", clientEmail);
-        }
-
         await supabase.from("audit_logs").insert({
-          action: "stripe_checkout_completed",
+          action: "stripe_checkout_unmatched",
           module: "billing",
           status: "success",
-          metadata: { customer_id: customerId, session_id: session.id, email: clientEmail },
-        });
-        break;
-      }
-
-      case "invoice.payment_succeeded": {
-        const invoice = event.data.object;
-        const customerId = invoice.customer;
-
-        await supabase.from("clients")
-          .update({ stripe_status: "active" })
-          .eq("stripe_customer_id", customerId);
-
-        // Retainer subscriptions: keep the deal's next_charge_at aligned with
-        // Stripe's own schedule — the period just paid ends when the next one starts.
-        const subId = typeof invoice.subscription === "string"
-          ? invoice.subscription
-          : invoice.subscription?.id ?? null;
-        const periodEnd = invoice.period_end ?? invoice.lines?.data?.[0]?.period?.end ?? null;
-        if (subId && periodEnd) {
-          const { data: subDeal } = await supabase
-            .from("crm_deals").select("id").eq("stripe_subscription_id", subId).maybeSingle();
-          if (subDeal?.id) {
-            await supabase.from("crm_deals")
-              .update({ next_charge_at: new Date(periodEnd * 1000).toISOString() })
-              .eq("id", subDeal.id);
-          }
-        }
-
-
-        await supabase.from("audit_logs").insert({
-          action: "stripe_payment_succeeded",
-          module: "billing",
-          status: "success",
-          metadata: { customer_id: customerId, invoice_id: invoice.id, amount: invoice.amount_paid },
-        });
-        break;
-      }
-
-      case "invoice.payment_failed": {
-        const invoice = event.data.object;
-        const customerId = invoice.customer;
-
-        await supabase.from("clients")
-          .update({ stripe_status: "past_due" })
-          .eq("stripe_customer_id", customerId);
-
-        // ---- Alert ops + the assigned rep (mirrors charge-annual-renewals' fail()) ----
-        try {
-          const failedSubId = typeof invoice.subscription === "string"
-            ? invoice.subscription
-            : invoice.subscription?.id ?? null;
-
-          let failedDeal: any = null;
-          if (failedSubId) {
-            const { data: d } = await supabase
-              .from("crm_deals")
-              .select("id, deal_name, client_id, provisioned_client_id, recurring_fee, assigned_user")
-              .eq("stripe_subscription_id", failedSubId)
-              .maybeSingle();
-            failedDeal = d;
-          }
-
-          let businessName = failedDeal?.deal_name || null;
-          const nameClientId = failedDeal?.provisioned_client_id || failedDeal?.client_id || null;
-          if (nameClientId) {
-            const { data: c } = await supabase
-              .from("clients").select("name, business_name").eq("id", nameClientId).maybeSingle();
-            businessName = c?.business_name || c?.name || businessName;
-          }
-          if (!businessName) {
-            const { data: c2 } = await supabase
-              .from("clients").select("name, business_name").eq("stripe_customer_id", customerId).maybeSingle();
-            businessName = c2?.business_name || c2?.name || "Unknown client";
-          }
-
-          const amountDue = typeof invoice.amount_due === "number" ? invoice.amount_due / 100 : null;
-          const amountFmt = amountDue !== null
-            ? `$${amountDue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            : (failedDeal?.recurring_fee
-              ? `$${Number(failedDeal.recurring_fee).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-              : "amount unavailable");
-
-          let repEmail: string | null = null;
-          if (failedDeal?.assigned_user) {
-            const { data: ep } = await supabase
-              .from("employee_profiles").select("email").eq("user_id", failedDeal.assigned_user).maybeSingle();
-            repEmail = ep?.email ?? null;
-            if (!repEmail) {
-              const { data: wu } = await supabase
-                .from("workspace_users").select("email").eq("user_id", failedDeal.assigned_user).maybeSingle();
-              repEmail = wu?.email ?? null;
-            }
-          }
-
-          const subject = `ACTION NEEDED — Retainer payment failed: ${businessName} · ${amountFmt}`;
-          const text = [
-            `A retainer subscription payment failed in Stripe.`,
-            ``,
-            `Client: ${businessName}`,
-            `Amount: ${amountFmt}`,
-            `Stripe invoice: ${invoice.id}`,
-            failedSubId ? `Subscription: ${failedSubId}` : ``,
-            ``,
-            `Stripe will retry automatically on its own dunning schedule — no manual retry is needed,`,
-            `but a human should be aware and follow up with the client about their card.`,
-          ].filter(Boolean).join("\n");
-          const html = `<!DOCTYPE html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#111;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <div style="background:#b91c1c;color:#fff;padding:12px 16px;border-radius:8px;font-weight:700;text-align:center;">RETAINER PAYMENT FAILED</div>
-    <h1 style="font-size:20px;margin:20px 0 6px;">${businessName}</h1>
-    <table style="width:100%;font-size:14px;line-height:1.8;">
-      <tr><td style="color:#6b7280;width:150px;">Amount</td><td><strong>${amountFmt}</strong></td></tr>
-      <tr><td style="color:#6b7280;">Stripe invoice</td><td>${invoice.id}</td></tr>
-      ${failedSubId ? `<tr><td style="color:#6b7280;">Subscription</td><td>${failedSubId}</td></tr>` : ""}
-    </table>
-    <p style="font-size:13px;color:#6b7280;margin-top:24px;">Stripe will retry automatically per its own dunning schedule. Please follow up with the client about their payment method.</p>
-  </div></body></html>`;
-
-          await sendAdhocEmail([OPS_EMAIL_TO], subject, html);
-          if (repEmail && repEmail !== OPS_EMAIL_TO) await sendAdhocEmail([repEmail], subject, html);
-        } catch (e) {
-          console.error("[stripe-webhook] payment_failed alerting error", e);
-        }
-
-        await supabase.from("audit_logs").insert({
-          action: "stripe_payment_failed",
-          module: "billing",
-          status: "error",
-          metadata: { customer_id: customerId, invoice_id: invoice.id },
+          metadata: { session_id: session.id, note: "no known metadata; ignored" },
         });
         break;
       }
@@ -498,6 +246,12 @@ Deno.serve(async (req) => {
         const { data: deal } = await supabase.from("crm_deals").select("*").eq("id", row.deal_id).maybeSingle();
         if (!deal) break;
         if (event.type === "payment_intent.succeeded") {
+          const got = Number(pi.amount_received ?? pi.amount ?? 0) / 100;
+          if (Math.abs(got - Number(row.amount)) > 0.01) {
+            await supabase.from("audit_logs").insert({ client_id: deal.provisioned_client_id ?? null, action: "stripe_amount_mismatch", module: "billing", status: "error", metadata: { payment_intent: pi.id, schedule_id: row.id, collected: got, expected: Number(row.amount) } });
+            await sendAdhocEmail([OPS_EMAIL_TO], "ACTION NEEDED — payment amount mismatch", `<p>Stripe collected $${got.toFixed(2)} but the scheduled charge "${row.label}" is $${Number(row.amount).toFixed(2)}. Not marked paid. PaymentIntent ${pi.id}.</p>`);
+            break;
+          }
           await markRowPaid(supabase, { ...row, stripe_payment_intent_id: pi.id }, deal, { via: "stripe" });
         } else if (row.status === "processing") {
           // Only async (bank debit) failures land here; card failures were handled when charged.
@@ -507,20 +261,25 @@ Deno.serve(async (req) => {
         break;
       }
 
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object;
-        const customerId = subscription.customer;
-
-        await supabase.from("clients")
-          .update({ stripe_status: "cancelled" })
-          .eq("stripe_customer_id", customerId);
-
+      // ---- Refunds and disputes: flag for a human; commissions must be reversed in the ledger ----
+      case "charge.refunded":
+      case "charge.dispute.created": {
+        const obj = event.data.object;
+        const piId = typeof obj.payment_intent === "string" ? obj.payment_intent : obj.payment_intent?.id;
+        let label = "";
+        if (piId) {
+          const { data: row } = await supabase.from("nl_billing_schedule").select("id, label, deal_id, amount").eq("stripe_payment_intent_id", piId).maybeSingle();
+          if (row) label = `${row.label} ($${Number(row.amount).toFixed(2)}, deal ${row.deal_id})`;
+        }
         await supabase.from("audit_logs").insert({
-          action: "stripe_subscription_cancelled",
+          action: event.type === "charge.refunded" ? "stripe_charge_refunded" : "stripe_dispute_opened",
           module: "billing",
-          status: "success",
-          metadata: { customer_id: customerId, subscription_id: subscription.id },
+          status: "error",
+          metadata: { payment_intent: piId ?? null, charge: obj.id, schedule: label || null },
         });
+        await sendAdhocEmail([OPS_EMAIL_TO],
+          `ACTION NEEDED — ${event.type === "charge.refunded" ? "refund" : "dispute"} on ${label || "a payment"}`,
+          `<p>Stripe reported a ${event.type === "charge.refunded" ? "refund" : "chargeback"}. ${label ? `Payment: ${label}.` : ""} Reverse the rep commission in Commissions if one was earned on it. Stripe charge: ${obj.id}.</p>`);
         break;
       }
 

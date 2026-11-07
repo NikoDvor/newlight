@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { cronAuthorized, requireStaff, authJson } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,53 +7,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-cron-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Auth guard: allow if
-//   (a) x-cron-secret header matches CRON_SECRET (internal edge-to-edge callers), OR
-//   (b) authenticated admin/operator caller, OR
-//   (c) request body carries a recent appointment_id (created <60m ago) whose
-//       contact_email matches body.contact_email — the public booking flows
-//       (BookingPage / BDRBookingPublic) already created a real appointment row
-//       via a slot-limited flow, which acts as our proof-of-booking.
-async function authorizeRequest(req: Request, body: any, supabaseUrl: string, serviceKey: string, anonKey: string): Promise<{ ok: boolean; reason?: string }> {
-  const cronSecret = Deno.env.get("CRON_SECRET") || "";
-  if (cronSecret && (req.headers.get("x-cron-secret") || "") === cronSecret) {
-    return { ok: true };
-  }
-
-  const authHeader = req.headers.get("Authorization") || "";
-  if (authHeader.startsWith("Bearer ")) {
-    try {
-      const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
-      const { data: { user } } = await userClient.auth.getUser();
-      if (user) {
-        const admin = createClient(supabaseUrl, serviceKey);
-        const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
-        if ((roles ?? []).some((r: any) => r.role === "admin" || r.role === "operator")) {
-          return { ok: true };
-        }
-      }
-    } catch (_) { /* fall through */ }
-  }
-
-  const apptId = body?.appointment_id;
-  const emailIn = (body?.contact_email || "").toString().trim().toLowerCase();
-  if (apptId && emailIn) {
-    const admin = createClient(supabaseUrl, serviceKey);
-    const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { data: appt } = await admin
-      .from("appointments").select("id, contact_email, created_at")
-      .eq("id", apptId).gte("created_at", cutoff).maybeSingle();
-    if (appt && (appt.contact_email || "").toString().trim().toLowerCase() === emailIn) {
-      return { ok: true };
-    }
-    const { data: bdr } = await admin
-      .from("bdr_calendar_events").select("id, email, created_at")
-      .eq("id", apptId).gte("created_at", cutoff).maybeSingle();
-    if (bdr && (bdr.email || "").toString().trim().toLowerCase() === emailIn) {
-      return { ok: true };
-    }
-  }
-  return { ok: false, reason: "Unauthorized: missing shared secret, admin session, or valid recent appointment_id" };
+// SECURITY: provisioning creates workspaces, grants client_owner roles and invites arbitrary emails, so it is
+// NOT a public endpoint. Allowed callers only:
+//   (a) internal edge-to-edge callers presenting x-cron-secret (cronOk, fails closed) — booking-confirmation-sms
+//       and close-prep-submit, which load the booking/lead from the database themselves; or
+//   (b) an authenticated admin/operator (requireStaff).
+// The old anonymous "recent appointment_id + matching email" proof-of-booking path was removed: the appointments
+// row is client-insertable by anyone, so it proved nothing. Body fields such as appointment_id,
+// calendar_client_id and bdr_lead_id are never used for authorization.
+async function authorizeRequest(req: Request, adminClient: any): Promise<{ ok: true; via: "cron" | "staff" } | { ok: false; status: number; error: string }> {
+  const sk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const tok = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  if (sk && tok === sk) return { ok: true, via: "cron" }; // internal edge-to-edge call with the service-role key
+  if ((await cronAuthorized(req, adminClient))) return { ok: true, via: "cron" };
+  const staff = await requireStaff(req, adminClient);
+  if (!staff.ok) return staff;
+  return { ok: true, via: "staff" };
 }
 
 function guessProvisionalProfile(businessType: string): string {
@@ -408,16 +378,12 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
+    const authz = await authorizeRequest(req, adminClient);
+    if (!authz.ok) return authJson(authz, corsHeaders);
+
     const rawBody = await req.json();
-    const authz = await authorizeRequest(req, rawBody, supabaseUrl, serviceRoleKey, anonKey);
-    if (!authz.ok) {
-      return new Response(JSON.stringify({ error: authz.reason || "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const {
       business_name,
@@ -998,8 +964,18 @@ Deno.serve(async (req) => {
       const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/[^/]*$/, "") || "";
       const baseUrl = origin || "https://newlightgen.com";
 
-      const handoffResp = await adminClient.functions.invoke("send-handoff-message", {
-        body: {
+      // send-handoff-message only accepts x-cron-secret or a user JWT with client access; the service role key
+      // alone is not a user, so it used to 401 here (and the error was swallowed). Send the cron secret plus the
+      // service-role Authorization header, and log any failure.
+      const handoffHttp = await fetch(`${supabaseUrl}/functions/v1/send-handoff-message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-cron-secret": Deno.env.get("CRON_SECRET") || "",
+          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: serviceRoleKey,
+        },
+        body: JSON.stringify({
           client_id: client.id,
           business_name: displayName,
           owner_email: contact_email,
@@ -1008,14 +984,16 @@ Deno.serve(async (req) => {
           sms_consent: sms_consent || false,
           workspace_slug: slug,
           base_url: baseUrl,
-        },
+        }),
       });
-
-      if (handoffResp.data) {
-        handoffResult = handoffResp.data as Record<string, unknown>;
+      const handoffBody = await handoffHttp.json().catch(() => ({}));
+      if (!handoffHttp.ok) {
+        console.error("[provision-from-booking] send-handoff-message failed:", handoffHttp.status, handoffBody?.error || handoffBody);
+      } else {
+        handoffResult = handoffBody as Record<string, unknown>;
       }
     } catch (handoffErr) {
-      console.warn("Handoff message send failed (non-blocking):", handoffErr);
+      console.error("[provision-from-booking] handoff message send threw (non-blocking):", handoffErr);
     }
 
     return new Response(
@@ -1024,7 +1002,8 @@ Deno.serve(async (req) => {
         client_id: client.id,
         workspace_slug: slug,
         workspace_url: workspaceUrl,
-        setup_link: setupLink,
+        // Setup links are credentials: only returned to a signed-in admin/operator, never to internal/cron callers.
+        setup_link: authz.via === "staff" ? setupLink : null,
         invite_sent: inviteSent,
         existing_user: existingUser,
         is_new_user: isNewUser,

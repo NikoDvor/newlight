@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { targetIsPrivileged, securityAudit } from "../_shared/privileged.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +59,16 @@ Deno.serve(async (req) => {
     }
     if (newEmail.length > 255) return json({ error: "Email must be under 255 characters" }, 400);
 
+    // Operators may only change emails of non-staff users; admin/operator targets require an admin.
+    const { data: callerAdmin } = await adminClient
+      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").limit(1).maybeSingle();
+    if (!callerAdmin && userId !== caller.id && await targetIsPrivileged(adminClient, userId)) {
+      return json({ error: "Only admins can change the email of an admin or operator" }, 403);
+    }
+    if (!callerAdmin && userId === caller.id) {
+      return json({ error: "Only admins can change their own email here" }, 403);
+    }
+
     // Confirm target user exists
     const { data: targetResp, error: targetErr } = await adminClient.auth.admin.getUserById(userId);
     if (targetErr || !targetResp?.user) {
@@ -101,6 +112,8 @@ Deno.serve(async (req) => {
       status: "success",
       metadata: { target_user_id: userId, old_email: currentEmail, new_email: newEmail },
     });
+
+    await securityAudit(adminClient, caller.id, "user_email_changed", { target_user_id: userId, old_email: currentEmail, new_email: newEmail, caller_role: callerAdmin ? "admin" : "operator" });
 
     return json({ success: true, user_id: userId, email: newEmail });
   } catch (err) {

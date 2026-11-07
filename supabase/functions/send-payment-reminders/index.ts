@@ -1,16 +1,16 @@
 // Daily 24-hour-ahead payment reminders (pg_cron).
-// Covers EVERY billing type by reading the one shared field: crm_deals.next_charge_at.
+// Covers non-package deals (retainer / commission) via crm_deals.next_charge_at. Package deals and legacy
+// annual deals are NOT handled here (nl-billing sends its own reminders for packages).
 // A deal whose charge lands 23–25 hours from now gets one email + one SMS.
 // Duplicate protection: crm_deals.last_reminder_sent_for stores the charge date
 // already reminded about, so re-runs before the charge never re-send.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { cronAuthorized, requireStaff, authJson } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
-
-const ANNUAL_PLAN_PRICE = 29997;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -51,6 +51,9 @@ async function sendSms(supabase: any, clientId: string, to: string, body: string
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
   const FROM = "+18555066111";
+  let status = "sent";
+  let errorNote: string | null = null;
+  let sid: string | null = null;
   if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
     status = "failed";
     errorNote = "Twilio credentials not configured in this environment.";
@@ -100,22 +103,11 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Auth: cron secret OR admin/operator JWT.
-  const CRON_SECRET = Deno.env.get("CRON_SECRET");
-  const cronHeader = req.headers.get("x-cron-secret") ?? "";
-  let allowed = Boolean(CRON_SECRET && cronHeader && cronHeader === CRON_SECRET);
-  if (!allowed) {
-    const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-    if (jwt) {
-      const { data: userData } = await supabase.auth.getUser(jwt);
-      if (userData?.user) {
-        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userData.user.id);
-        // deno-lint-ignore no-explicit-any
-        allowed = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "operator");
-      }
-    }
+  // SECURITY: cron secret (fails closed if CRON_SECRET unset) OR admin/operator JWT; otherwise 401/403.
+  if (!(await cronAuthorized(req, supabase))) {
+    const auth = await requireStaff(req, supabase);
+    if (!auth.ok) return authJson(auth, corsHeaders);
   }
-  if (!allowed) return json({ error: "Unauthorized" }, 401);
 
   const now = Date.now();
   const windowStart = new Date(now + 23 * 3600 * 1000).toISOString();
@@ -125,6 +117,8 @@ Deno.serve(async (req) => {
     .from("crm_deals")
     .select("id, client_id, provisioned_client_id, deal_name, pricing_model, billing_cadence, recurring_fee, next_charge_at, last_reminder_sent_for")
     .is("package", null) // package deals: nl-billing sends its own reminders
+    // Legacy annual ($29,997) deals are no longer reminded from here (removed legacy branch).
+    .or("billing_cadence.is.null,billing_cadence.neq.annual")
     .not("next_charge_at", "is", null)
     .gte("next_charge_at", windowStart)
     .lte("next_charge_at", windowEnd);
@@ -146,7 +140,7 @@ Deno.serve(async (req) => {
 
       const { data: client } = await supabase
         .from("clients")
-        .select("id, name, owner_email, owner_phone")
+        .select("id, name, owner_email, owner_phone, sms_consent, allow_sms")
         .eq("id", billingClientId)
         .maybeSingle();
 
@@ -156,13 +150,10 @@ Deno.serve(async (req) => {
         weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC",
       });
 
-      // What's coming: annual flat, retainer recurring fee, or an unknown commission amount.
+      // What's coming: retainer recurring fee, or an unknown commission amount.
       let amountLabel: string;
       let amountPhrase: string;
-      if (deal.billing_cadence === "annual") {
-        amountLabel = money(ANNUAL_PLAN_PRICE);
-        amountPhrase = `your annual plan renewal of ${amountLabel}`;
-      } else if (deal.pricing_model === "commission") {
+      if (deal.pricing_model === "commission") {
         amountLabel = "your monthly commission payment";
         amountPhrase = `your monthly commission payment`;
       } else {
@@ -195,10 +186,14 @@ Deno.serve(async (req) => {
         ? await sendEmail(client.owner_email, subject, html, text)
         : { ok: false, detail: "no client email" };
 
-      const smsBody = `NewLight: reminder — ${amountPhrase} will be charged to your card on file on ${dateLabel}. Reply if anything needs updating.`;
-      const smsRes = client?.owner_phone
-        ? await sendSms(supabase, billingClientId, client.owner_phone, smsBody)
-        : { ok: false, detail: "no client phone" };
+      const smsBody = `NewLight: reminder — ${amountPhrase} will be charged to your card on file on ${dateLabel}. Reply STOP to opt out.`;
+      // Only text clients who consented (clients.sms_consent or allow_sms).
+      const smsConsented = client?.sms_consent === true || client?.allow_sms === true;
+      const smsRes = !client?.owner_phone
+        ? { ok: false, detail: "no client phone" }
+        : !smsConsented
+          ? { ok: false, detail: "skipped: no sms consent" }
+          : await sendSms(supabase, billingClientId, client.owner_phone, smsBody);
 
       await supabase.from("crm_deals")
         .update({ last_reminder_sent_for: deal.next_charge_at })

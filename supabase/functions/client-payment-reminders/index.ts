@@ -2,10 +2,12 @@
 // Fully independent of NewLight's own billing/invoice system.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { cronAuthorized, requireStaff, authJson } from "../_shared/auth.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 /** Local HTML-escape helper (intentionally not imported from shared modules). */
@@ -82,6 +84,12 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // SECURITY: cron secret (fails closed) or admin/operator only.
+    if (!(await cronAuthorized(req, supabase))) {
+      const auth = await requireStaff(req, supabase);
+      if (!auth.ok) return authJson(auth, corsHeaders);
+    }
 
     const todayStr = new Date().toISOString().slice(0, 10);
 

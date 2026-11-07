@@ -5,11 +5,21 @@
 //   - if 72h have passed, revert pipeline_stage to 'cold', log it to
 //     outcome_history, and clear the unattended_* fields.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { cronAuthorized, requireStaff, authJson } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
+
+// SECURITY / SAFETY RULES:
+//  - Caller must present the cron secret (fails closed when CRON_SECRET is unset) or be admin/operator staff.
+//  - Only early-stage leads may be auto-reverted. Stages come from BDRMyLeads/bdrOutcomes:
+//    cold | warm | hot | won | expired_no_close_prep (+ legacy status closed_won/closed_lost/appointment_booked).
+//    Anything advanced (hot = meeting/callback set, won, lost/closed, proposal, expired_no_close_prep) is never touched.
+//  - Leads with a future scheduled meeting are never touched.
+const SWEEPABLE_STAGES = new Set(["", "warm", "cold"]);
+const PROTECTED_STATUSES = new Set(["closed_won", "closed_lost", "appointment_booked"]);
 
 const WARN_AFTER_MS = 67 * 3600_000;   // 5h before the 72h deadline
 const EXPIRE_AFTER_MS = 72 * 3600_000;
@@ -53,29 +63,51 @@ async function sendEmail(to: string, subject: string, text: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const cronSecret = Deno.env.get("CRON_SECRET") || "";
-  if (cronSecret && (req.headers.get("x-cron-secret") || "") !== cronSecret) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
-
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  if (!(await cronAuthorized(req, supabase))) {
+    const auth = await requireStaff(req, supabase);
+    if (!auth.ok) return authJson(auth, corsHeaders);
+  }
 
   const now = Date.now();
   let warned = 0, expired = 0;
 
   const { data: leads, error } = await supabase
     .from("nl_bdr_leads")
-    .select("id, user_id, business_name, unattended_since, unattended_warned_at, unattended_return_stage, outcome_history")
+    .select("id, user_id, business_name, unattended_since, unattended_warned_at, unattended_return_stage, outcome_history, pipeline_stage, status")
     .not("unattended_since", "is", null);
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
+  // Leads that have a future meeting on the calendar are off-limits.
+  const leadIds = (leads || []).map((l: any) => l.id as string);
+  const withFutureMeeting = new Set<string>();
+  if (leadIds.length) {
+    const { data: upcoming, error: upErr } = await supabase
+      .from("bdr_calendar_events")
+      .select("lead_id")
+      .in("lead_id", leadIds)
+      .gt("starts_at", new Date(now).toISOString());
+    if (upErr) {
+      // Fail safe: if we cannot verify meetings, change nothing.
+      return new Response(JSON.stringify({ error: upErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    for (const e of upcoming || []) if ((e as any).lead_id) withFutureMeeting.add((e as any).lead_id);
+  }
+
+  let skipped = 0;
   for (const lead of leads || []) {
+    const stage = String((lead as any).pipeline_stage ?? "").toLowerCase();
+    if (!SWEEPABLE_STAGES.has(stage) || PROTECTED_STATUSES.has(String((lead as any).status ?? "")) || withFutureMeeting.has(lead.id as string)) {
+      skipped++;
+      continue;
+    }
     const sinceMs = new Date(lead.unattended_since as string).getTime();
     const elapsed = now - sinceMs;
 
@@ -113,7 +145,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, checked: (leads || []).length, warned, expired }), {
+  return new Response(JSON.stringify({ ok: true, checked: (leads || []).length, warned, expired, skipped }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { targetIsPrivileged, securityAudit } from "../_shared/privileged.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,6 +63,9 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!callerRole) return json({ error: "Only admins and operators can create users" }, 403);
+    const { data: callerAdminRow } = await adminClient
+      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").limit(1).maybeSingle();
+    const callerIsAdmin = !!callerAdminRow;
 
     const body = await req.json();
     const fullName = String(body.full_name || "").trim();
@@ -80,6 +84,10 @@ Deno.serve(async (req) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Invalid email address" }, 400);
     if (temporaryPassword.length < 8) return json({ error: "Temporary password must be at least 8 characters" }, 400);
     if (!ROLE_PRESETS.has(rolePreset)) return json({ error: "Invalid role preset" }, 400);
+    // Only admins may create admin or operator (service_manager) users.
+    if ((rolePreset === "admin" || rolePreset === "service_manager") && !callerIsAdmin) {
+      return json({ error: "Only admins can create admin or operator users" }, 403);
+    }
     if (["bdr", "sdr"].includes(rolePreset) && !phone) {
       return json({ error: "Phone number is required for BDR/SDR" }, 400);
     }
@@ -118,6 +126,13 @@ Deno.serve(async (req) => {
         }
         const existing = list?.users?.find((u) => (u.email || "").toLowerCase() === email);
         if (existing) {
+          // Never let a non-admin replace (hard-delete) an admin/operator account, and never replace yourself.
+          if (existing.id === caller.id || (!callerIsAdmin && await targetIsPrivileged(adminClient, existing.id))) {
+            return json({ error: "That email belongs to a protected account" }, 403);
+          }
+          await securityAudit(adminClient, caller.id, "user_deleted", {
+            target_user_id: existing.id, target_email: email, reason: "replaced_by_create_user_manual", caller_role: callerIsAdmin ? "admin" : "operator",
+          });
           await adminClient.auth.admin.deleteUser(existing.id);
         }
         const retry = await adminClient.auth.admin.createUser({
@@ -227,6 +242,10 @@ Deno.serve(async (req) => {
         status: "success",
         metadata: { created_user_id: userId, full_name: fullName, email, role_preset: rolePreset, platform_role: platformRole },
       });
+
+      if (platformRole === "operator" || platformRole === "admin") {
+        await securityAudit(adminClient, caller.id, "role_granted", { target_user_id: userId, target_email: email, role: platformRole, caller_role: callerIsAdmin ? "admin" : "operator" });
+      }
 
       return json({ success: true, user_id: userId, platform_role: platformRole });
     }

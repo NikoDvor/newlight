@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { targetIsPrivileged, securityAudit } from "../_shared/privileged.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +52,13 @@ Deno.serve(async (req) => {
     if (!userId) return json({ error: "user_id is required" }, 400);
     if (userId === caller.id) return json({ error: "You cannot delete your own account" }, 400);
 
+    // Operators may only delete non-staff accounts; deleting an admin/operator requires an admin.
+    const { data: callerAdmin } = await adminClient
+      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").limit(1).maybeSingle();
+    if (!callerAdmin && await targetIsPrivileged(adminClient, userId)) {
+      return json({ error: "Only admins can delete admin or operator accounts" }, 403);
+    }
+
     // Remove person records. Calendars, calendar_events, and bdr_calendar_events are
     // intentionally left untouched as historical meeting records.
     const cleanupTables = ["user_roles", "employee_profiles", "workspace_users"];
@@ -75,6 +83,7 @@ Deno.serve(async (req) => {
       module: "team",
       metadata: { deleted_user_id: userId },
     }).then(() => {}, () => {});
+    await securityAudit(adminClient, caller.id, "user_deleted", { target_user_id: userId, caller_role: callerAdmin ? "admin" : "operator" });
 
     return json({ success: true, ...(warning ? { warning } : {}) });
   } catch (err: any) {

@@ -6,11 +6,13 @@
 // only if they opted in). Meetings away from our Zoom (is_external) send the
 // client and attendees nothing — only the salesman's in-app reminder fires.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { cronAuthorized, requireStaff, authJson } from "../_shared/auth.ts";
+// SECURITY: cron-only (x-cron-secret) or admin/operator; anyone else gets 401/403.
 import { attendeeEmail, loadAttendees } from "../_shared/meetingAttendees.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 const TWILIO_FROM_DEFAULT = "+18555066111";
@@ -93,6 +95,11 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  if (!(await cronAuthorized(req, supabase))) {
+    const auth = await requireStaff(req, supabase);
+    if (!auth.ok) return authJson(auth, corsHeaders);
+  }
 
   const now = Date.now();
   const horizon = new Date(now + 25 * 60 * 60 * 1000).toISOString();

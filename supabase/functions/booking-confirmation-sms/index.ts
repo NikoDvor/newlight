@@ -1,3 +1,6 @@
+// SECURITY: public endpoint; only the booking id in the body is trusted. Recipients come from the DB record
+// (see the guard in the handler). Once per booking, capped sends, HTML-escaped emails.
+//
 // Triggered on new row insert into public.bdr_calendar_events (BDR confirmed bookings).
 // Wire this up as a Database Webhook: Table = bdr_calendar_events, Event = INSERT,
 // Type = Supabase Edge Function → booking-confirmation-sms.
@@ -28,7 +31,7 @@ function formatDateTime(d: string) {
   }) + " PT";
 }
 
-async function sendSms(to: string, body: string): Promise<boolean> {
+async function rawSendSms(to: string, body: string): Promise<boolean> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
 
@@ -64,6 +67,16 @@ async function sendSms(to: string, body: string): Promise<boolean> {
     return false;
   }
 }
+
+// SECURITY: this is a PUBLIC endpoint (DB webhook / bdr-book). Anything in the request body other than the
+// booking id is untrusted. We re-load the booking from the database and send ONLY to contact details stored
+// on that record / its lead / the calendar owner. Each booking is processed once (claim flag in metadata).
+function esc(v: unknown): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Hard cap on outbound messages (SMS + email) for one booking, even if the dedupe flag is bypassed.
+const MAX_SENDS_PER_BOOKING = 6;
 
 // Minimal RFC 5545 calendar invite so recipients can add the meeting to
 // Google / Outlook / Apple Calendar.
@@ -102,7 +115,7 @@ function buildIcs(args: {
   return lines.join("\r\n") + "\r\n";
 }
 
-async function sendEmail(
+async function rawSendEmail(
   to: string,
   subject: string,
   html: string,
@@ -155,9 +168,9 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({} as any));
     // Supabase database webhooks send { type, table, record, old_record, schema }
     // Allow direct manual invocation too: { record: {...} } or a raw record.
-    const record = payload.record ?? payload;
+    const bodyRecord = payload.record ?? payload;
 
-    if (!record || typeof record !== "object") {
+    if (!bodyRecord || typeof bodyRecord !== "object") {
       return new Response(JSON.stringify({ error: "No record in payload" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -172,6 +185,45 @@ Deno.serve(async (req) => {
     }
     if (payload.table && payload.table !== "bdr_calendar_events") {
       return new Response(JSON.stringify({ skipped: "unexpected table" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Accept the same contract (record.id) but ignore every other body field.
+    const bookingId = String((bodyRecord as any).id ?? "");
+    if (!UUID_RE.test(bookingId)) {
+      return new Response(JSON.stringify({ error: "Valid booking id required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: record, error: recErr } = await supabase
+      .from("bdr_calendar_events")
+      .select("*")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (recErr || !record) {
+      return new Response(JSON.stringify({ error: "Booking not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Once-per-booking guard: atomically claim the booking. A second call finds the flag set and exits.
+    const priorMeta = (record.metadata || {}) as Record<string, any>;
+    if (priorMeta.confirmation_claimed_at) {
+      return new Response(JSON.stringify({ skipped: "already processed", booking_id: bookingId }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: claimed, error: claimErr } = await supabase
+      .from("bdr_calendar_events")
+      .update({ metadata: { ...priorMeta, confirmation_claimed_at: new Date().toISOString() } })
+      .eq("id", bookingId)
+      .is("metadata->confirmation_claimed_at", null)
+      .select("id");
+    if (claimErr || !claimed || claimed.length === 0) {
+      return new Response(JSON.stringify({ skipped: "already processed", booking_id: bookingId }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -297,6 +349,16 @@ async function runNotifications(
     leadId: string | null;
   },
 ): Promise<void> {
+  // Per-booking send budget (per invocation; local so concurrent bookings in one isolate don't share it).
+  let sent = 0;
+  const sendSms = (to: string, body: string) => {
+    if (++sent > MAX_SENDS_PER_BOOKING) { console.warn("[SMS] per-booking send limit reached"); return Promise.resolve(false); }
+    return rawSendSms(to, body);
+  };
+  const sendEmail = (to: string, subject: string, html: string, text: string, attachments?: Array<{ filename: string; content: string }>) => {
+    if (++sent > MAX_SENDS_PER_BOOKING) { console.warn("[EMAIL] per-booking send limit reached"); return Promise.resolve(false); }
+    return rawSendEmail(to, subject, html, text, attachments);
+  };
   try {
     const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId, leadId } = contacts;
     const when = formatDateTime(startsAt);
@@ -375,17 +437,17 @@ async function runNotifications(
       const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">New booking confirmed</h1>
-    <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">Hi ${bdrName || "there"},</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">Hi ${esc(bdrName || "there")},</p>
     <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">You have a new appointment on your NewLight calendar.</p>
     <table style="width:100%;font-size:14px;line-height:1.6;border-collapse:collapse;margin:0 0 20px;">
-      <tr><td style="padding:6px 0;color:#6b7280;width:110px;">Client</td><td style="padding:6px 0;"><strong>${label}</strong></td></tr>
-      <tr><td style="padding:6px 0;color:#6b7280;">When</td><td style="padding:6px 0;"><strong>${when}</strong></td></tr>
-      <tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;">${clientPhone || "—"}</td></tr>
-      <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;">${clientEmail || "—"}</td></tr>
-      ${meta.improvement_area ? `<tr><td style="padding:6px 0;color:#6b7280;">Interest</td><td style="padding:6px 0;">${meta.improvement_area}</td></tr>` : ""}
-      ${meta.notes ? `<tr><td style="padding:6px 0;color:#6b7280;vertical-align:top;">Notes</td><td style="padding:6px 0;">${meta.notes}</td></tr>` : ""}
-      ${zoomJoinUrl ? `<tr><td style="padding:6px 0;color:#6b7280;">Zoom join</td><td style="padding:6px 0;"><a href="${zoomJoinUrl}">${zoomJoinUrl}</a></td></tr>` : ""}
-      ${zoomStartUrl ? `<tr><td style="padding:6px 0;color:#6b7280;">Zoom start (host)</td><td style="padding:6px 0;"><a href="${zoomStartUrl}">${zoomStartUrl}</a></td></tr>` : ""}
+      <tr><td style="padding:6px 0;color:#6b7280;width:110px;">Client</td><td style="padding:6px 0;"><strong>${esc(label)}</strong></td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">When</td><td style="padding:6px 0;"><strong>${esc(when)}</strong></td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;">${esc(clientPhone) || "—"}</td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;">${esc(clientEmail) || "—"}</td></tr>
+      ${meta.improvement_area ? `<tr><td style="padding:6px 0;color:#6b7280;">Interest</td><td style="padding:6px 0;">${esc(meta.improvement_area)}</td></tr>` : ""}
+      ${meta.notes ? `<tr><td style="padding:6px 0;color:#6b7280;vertical-align:top;">Notes</td><td style="padding:6px 0;">${esc(meta.notes)}</td></tr>` : ""}
+      ${zoomJoinUrl ? `<tr><td style="padding:6px 0;color:#6b7280;">Zoom join</td><td style="padding:6px 0;"><a href="${esc(zoomJoinUrl)}">${esc(zoomJoinUrl)}</a></td></tr>` : ""}
+      ${zoomStartUrl ? `<tr><td style="padding:6px 0;color:#6b7280;">Zoom start (host)</td><td style="padding:6px 0;"><a href="${esc(zoomStartUrl)}">${esc(zoomStartUrl)}</a></td></tr>` : ""}
     </table>
     <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Check your calendar in the NewLight app.</p>
   </div>
@@ -508,10 +570,10 @@ async function runNotifications(
       const credsBlockHtml = showCreds
         ? `<div style="margin:24px 0;padding:20px;background:#F1F5F9;border-radius:12px;border:1px solid #E2E8F0;">
              <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#0F172A;">Your NewLight workspace is ready</p>
-             <p style="margin:0 0 4px;font-size:14px;color:#334155;"><strong>Email:</strong> ${clientEmail}</p>
-             <p style="margin:0 0 14px;font-size:14px;color:#334155;"><strong>Temporary password:</strong> <code style="background:#fff;padding:3px 8px;border-radius:6px;border:1px solid #CBD5E1;font-size:13px;">${tempPassword}</code></p>
+             <p style="margin:0 0 4px;font-size:14px;color:#334155;"><strong>Email:</strong> ${esc(clientEmail)}</p>
+             <p style="margin:0 0 14px;font-size:14px;color:#334155;"><strong>Temporary password:</strong> <code style="background:#fff;padding:3px 8px;border-radius:6px;border:1px solid #CBD5E1;font-size:13px;">${esc(tempPassword)}</code></p>
              <div style="text-align:center;margin-top:8px;">
-               <a href="${loginUrl}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Login to NewLight</a>
+               <a href="${esc(loginUrl)}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Login to NewLight</a>
              </div>
              <p style="margin:12px 0 0;font-size:12px;color:#64748B;">You'll be asked to change your password on first login.</p>
            </div>`
@@ -525,7 +587,7 @@ async function runNotifications(
              <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#0F172A;">Your workspace access is ready</p>
              <p style="margin:0 0 14px;font-size:14px;color:#334155;">We've added this workspace to your existing NewLight account. Your password is unchanged.</p>
              <div style="text-align:center;">
-               <a href="${magicLink}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Sign in to NewLight</a>
+               <a href="${esc(magicLink)}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Sign in to NewLight</a>
              </div>
              <p style="margin:12px 0 0;font-size:12px;color:#64748B;">This sign-in link expires shortly and can only be used from this email.</p>
            </div>`
@@ -534,16 +596,16 @@ async function runNotifications(
       const zoomBlockHtml = zoomJoinUrl
         ? `<div style="margin:24px 0;padding:20px;background:#EFF6FF;border-radius:12px;border:1px solid #BFDBFE;text-align:center;">
              <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#1E3A8A;">Your Zoom meeting</p>
-             <a href="${zoomJoinUrl}" style="display:inline-block;background:#2563EB;color:#fff;font-size:15px;font-weight:600;padding:12px 28px;border-radius:8px;text-decoration:none;">Join Zoom Meeting</a>
-             <p style="margin:12px 0 0;font-size:12px;color:#1E40AF;word-break:break-all;">${zoomJoinUrl}</p>
+             <a href="${esc(zoomJoinUrl)}" style="display:inline-block;background:#2563EB;color:#fff;font-size:15px;font-weight:600;padding:12px 28px;border-radius:8px;text-decoration:none;">Join Zoom Meeting</a>
+             <p style="margin:12px 0 0;font-size:12px;color:#1E40AF;word-break:break-all;">${esc(zoomJoinUrl)}</p>
            </div>`
         : "";
       const emailText = `${greeting}\n\nYour ${isMeetingLink ? "meeting" : "appointment"} with NewLight is confirmed for ${when}.${zoomBlockText}${credsBlockText}${magicBlockText}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
       const emailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">${isMeetingLink ? "Your meeting is confirmed" : "Your appointment is confirmed"}</h1>
-    <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">${greeting}</p>
-    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your ${isMeetingLink ? "meeting" : "strategy session"} with NewLight is confirmed for <strong>${when}</strong>.</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">${esc(greeting)}</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your ${isMeetingLink ? "meeting" : "strategy session"} with NewLight is confirmed for <strong>${esc(when)}</strong>.</p>
     ${zoomBlockHtml}
     ${credsBlockHtml}
     ${magicBlockHtml}

@@ -1,8 +1,9 @@
 // Returns a fresh short-lived signed URL for a deal's signed service agreement.
-// Authenticated internal users only. Legacy rows without storage_path fall back
+// Staff, or members of the deal's provisioned client workspace. Legacy rows without storage_path fall back
 // to the stored long-lived document_url.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getCaller } from "../_shared/auth.ts";
 import { SIGNED_PDF_ITEM_NAME } from "../_shared/agreement-pdf.ts";
 
 const corsHeaders = {
@@ -33,22 +34,33 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const anonClient = createClient(supabaseUrl, anonKey);
-    const { data: userData, error: userErr } = await anonClient.auth.getUser(token);
-    if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
-
     const body = await req.json().catch(() => null);
     const dealId = typeof body?.deal_id === "string" ? body.deal_id : null;
     if (!dealId) return json({ error: "deal_id is required" }, 400);
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    const caller = await getCaller(req, supabase);
+    if (!caller.ok) return json({ error: caller.error }, caller.status);
+
     const { data: deal, error: dealErr } = await supabase
       .from("crm_deals")
-      .select("service_agreement_envelope_id")
+      .select("service_agreement_envelope_id, provisioned_client_id")
       .eq("id", dealId)
       .maybeSingle();
     if (dealErr) return json({ error: dealErr.message }, 500);
+
+    // Staff may read any deal's agreement; other users only for the workspace this deal was provisioned into.
+    if (!(caller.isAdmin || caller.isOperator)) {
+      const cid = deal?.provisioned_client_id;
+      let allowed = false;
+      if (cid) {
+        const { data: wu } = await supabase.from("workspace_users").select("id")
+          .eq("user_id", caller.userId).eq("client_id", cid).maybeSingle();
+        allowed = !!wu;
+      }
+      if (!allowed) return json({ error: "Forbidden" }, 403);
+    }
     if (!deal?.service_agreement_envelope_id) {
       return json({ error: "No signed agreement for this deal yet" }, 404);
     }
