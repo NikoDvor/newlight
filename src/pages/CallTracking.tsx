@@ -27,6 +27,7 @@ const OBJECTION_OUTCOMES = new Set(["Not Interested", "Do Not Call", "Lost"]);
 
 const OBJECTION_CATEGORIES = [
   "Price",
+  "Too Much Risk",
   "Timing",
   "Trust/Credibility",
   "No Decision Maker",

@@ -90,6 +90,7 @@ export const LOST_STAGE_VALUE = "lost";
 
 export const LOST_REASONS = [
   { value: "price", label: "Price" },
+  { value: "too_risky", label: "Too much risk" },
   { value: "timing", label: "Timing" },
   { value: "no_show", label: "No-show" },
   { value: "chose_competitor", label: "Chose competitor" },
