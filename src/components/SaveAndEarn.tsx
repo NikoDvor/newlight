@@ -123,8 +123,7 @@ export function SaveAndEarn() {
         <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-muted-foreground">Save & Earn</h2>
         <div className="h-px flex-1" style={{ background: "linear-gradient(to right, transparent, hsla(211,96%,62%,0.3), transparent)" }} />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <AnnualSwitchCard />
+      <div className="grid grid-cols-1 gap-4 sm:gap-6">
         <ReferralCard />
       </div>
     </section>

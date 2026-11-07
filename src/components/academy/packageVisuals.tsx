@@ -86,7 +86,7 @@ export function Packages() {
   const info = PKG_INFO[k];
   return (
     <Frame caption="Default prices. Every number is negotiable — type the real one into Form 2.">
-      <Tabs items={PKG_TABS} value={k} onChange={setK} />
+      <Tabs items={PKG_TABS} value={k} onChange={(v) => setK(v)} />
       <AnimatePresence mode="wait">
         <motion.div key={k} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="mt-4">
           <p className="text-[13px] text-white/75">{info.who}</p>
@@ -241,9 +241,9 @@ export function PaymentSim() {
       <div className="space-y-3">
         <Tabs items={PKG_TABS} value={k} onChange={(v) => { setK(v); if (v !== "growth") setOngoing("retainer"); }} />
         <AvgSlider avg={avg} setAvg={setAvg} />
-        <Tabs items={[{ k: "full" as Way, l: "Monthly" }, { k: "plan" as Way, l: "Payment plan" }, { k: "annual" as Way, l: "Annual" }]} value={way} onChange={setWay} />
+        <Tabs items={[{ k: "full" as Way, l: "Monthly" }, { k: "plan" as Way, l: "Payment plan" }, { k: "annual" as Way, l: "Annual" }]} value={way} onChange={(v) => setWay(v)} />
         {k === "growth" && way !== "annual" && (
-          <Tabs items={[{ k: "retainer" as Ongoing, l: "Retainer" }, { k: "commission" as Ongoing, l: "Commission" }]} value={ongoing} onChange={setOngoing} />
+          <Tabs items={[{ k: "retainer" as Ongoing, l: "Retainer" }, { k: "commission" as Ongoing, l: "Commission" }]} value={ongoing} onChange={(v) => setOngoing(v)} />
         )}
         <label className="flex items-center justify-between gap-3 text-[12px] text-white/60">
           <span>Signs and pays on</span>
