@@ -202,7 +202,6 @@ const FIELDS: { k: keyof PackageDefaults; label: string; only?: PackageKey[]; su
   { k: "commission_rate", label: "Commission year 1 (%)", only: ["growth"] },
   { k: "commission_rate_ongoing", label: "Commission after (%)", only: ["growth"] },
   { k: "guarantee_days", label: "Guarantee (days)", only: ["growth"] },
-  { k: "min_ad_budget", label: "Minimum ad budget ($/mo)", only: ["growth"] },
   { k: "annual_discount_pct", label: "Annual discount (%)" },
   { k: "payment_plan_markup_pct", label: "Payment plan markup (%)" },
   { k: "discount_approval_pct", label: "Needs approval if more than (%) under default" },
@@ -303,7 +302,7 @@ function Rules({ defs }: { defs: Record<PackageKey, PackageDefaults> }) {
   const cc = defaultPrices(c, 10000), en = defaultPrices(e, 10000);
   const sections: { h: string; items: string[] }[] = [
     { h: "Packages", items: [
-      `${g.label} (${g.steps}): setup = ${g.setup_multiplier}× their average client. Then a retainer of ${g.monthly_multiplier}× average client a month, or commission ${g.commission_rate}% of new-client revenue in year 1, ${g.commission_rate_ongoing}% after. ${g.guarantee_days}-day guarantee. Ad budget minimum ${money(g.min_ad_budget)}/mo.`,
+      `${g.label} (${g.steps}): setup = ${g.setup_multiplier}× their average client. Then a retainer of ${g.monthly_multiplier}× average client a month, or commission ${g.commission_rate}% of new-client revenue in year 1, ${g.commission_rate_ongoing}% after. ${g.guarantee_days}-day guarantee. No minimum ad budget: the client pays the ad platforms directly at the level NewLight recommends in writing.`,
       `${c.label} (${c.steps}): ${money(cc.setup)} setup + ${c.monthly_multiplier}× their average client a month (${money(cc.monthly)}/mo at a $10,000 average client). No guarantee, no commission.`,
       `${e.label} (${e.steps}): ${money(en.setup)} setup + ${e.monthly_multiplier}× their average client a month (${money(en.monthly)}/mo at a $10,000 average client). Includes an exclusive metro market and a dedicated strategist. No guarantee, no commission, no ad minimum.`,
       "Average client value = their yearly revenue ÷ number of clients (Discovery numbers). There is no price floor. The monthly is worked out once at signing and stays a fixed dollar amount.",

@@ -8,6 +8,7 @@
  *                   Then ½ average client per month (retainer) OR commission 25% yr-1 / 10% after.
  *   command_center  Step 3.  $25,000 setup + 1 × average client value per month. No guarantee, no commission.
  *   enterprise      Steps 1+2+3 (+ exclusive metro market + dedicated strategist). $40,000 setup + 2 × average client value per month.
+ *   No minimum ad budget (Nov 7, 2026): Growth clients pay the ad platforms directly at a level NewLight recommends in writing.
  *   "Average client value" = the firm's yearly revenue ÷ its number of clients (Discovery numbers). The monthly amount is
  *   worked out once at signing and is then a FIXED dollar amount (it never moves with the client's revenue or AUM).
  *
@@ -50,7 +51,7 @@ export const DEFAULT_PACKAGES: Record<PackageKey, PackageDefaults> = {
     key: "growth", label: "Growth", steps: "Step 2 — paid traffic turned into booked appointments",
     setup_fee: null, monthly_fee: null, setup_multiplier: 1, monthly_multiplier: 0.5, min_avg_client: 0,
     commission_rate: 25, commission_rate_ongoing: 10, annual_discount_pct: 20, payment_plan_markup_pct: 10,
-    discount_approval_pct: 15, guarantee_days: 90, min_ad_budget: 3000,
+    discount_approval_pct: 15, guarantee_days: 90, min_ad_budget: null,
   },
   command_center: {
     key: "command_center", label: "Command Center", steps: "Step 3 — the app + pipeline that turns meetings into clients",
