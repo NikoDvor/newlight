@@ -5922,6 +5922,8 @@ export type Database = {
           sent_at: string | null
           share_token: string
           status: Database["public"]["Enums"]["envelope_status"]
+          terms_sha256: string | null
+          terms_version: string | null
           title: string
           updated_at: string
           viewed_at: string | null
@@ -5943,6 +5945,8 @@ export type Database = {
           sent_at?: string | null
           share_token?: string
           status?: Database["public"]["Enums"]["envelope_status"]
+          terms_sha256?: string | null
+          terms_version?: string | null
           title: string
           updated_at?: string
           viewed_at?: string | null
@@ -5964,6 +5968,8 @@ export type Database = {
           sent_at?: string | null
           share_token?: string
           status?: Database["public"]["Enums"]["envelope_status"]
+          terms_sha256?: string | null
+          terms_version?: string | null
           title?: string
           updated_at?: string
           viewed_at?: string | null
@@ -8543,6 +8549,21 @@ export type Database = {
           },
         ]
       }
+      nl_bank_holidays: {
+        Row: {
+          d: string
+          name: string
+        }
+        Insert: {
+          d: string
+          name: string
+        }
+        Update: {
+          d?: string
+          name?: string
+        }
+        Relationships: []
+      }
       nl_bdr_dial_log: {
         Row: {
           bdr_user_id: string
@@ -9033,6 +9054,591 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_commission_client_payments: {
+        Row: {
+          amount: number
+          bank_reference: string | null
+          billing_schedule_id: string | null
+          cleared_on: string
+          created_at: string
+          created_by: string | null
+          id: string
+          installment_no: number
+          method: string
+          received_on: string
+          refund_reason: string | null
+          refunded_at: string | null
+          sale_id: string
+        }
+        Insert: {
+          amount: number
+          bank_reference?: string | null
+          billing_schedule_id?: string | null
+          cleared_on: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installment_no?: number
+          method: string
+          received_on: string
+          refund_reason?: string | null
+          refunded_at?: string | null
+          sale_id: string
+        }
+        Update: {
+          amount?: number
+          bank_reference?: string | null
+          billing_schedule_id?: string | null
+          cleared_on?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installment_no?: number
+          method?: string
+          received_on?: string
+          refund_reason?: string | null
+          refunded_at?: string | null
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_commission_client_payments_billing_schedule_id_fkey"
+            columns: ["billing_schedule_id"]
+            isOneToOne: true
+            referencedRelation: "nl_billing_schedule"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_commission_client_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "nl_commission_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_commission_credits: {
+        Row: {
+          created_at: string
+          hire_id: string
+          id: string
+          rate: number
+          role: string
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          hire_id: string
+          id?: string
+          rate: number
+          role: string
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          hire_id?: string
+          id?: string
+          rate?: number
+          role?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_commission_credits_hire_id_fkey"
+            columns: ["hire_id"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_hires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_commission_credits_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "nl_commission_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_commission_entries: {
+        Row: {
+          amount: number
+          base_amount: number
+          client_payment_id: string | null
+          created_at: string
+          due_on: string
+          earned_on: string
+          hire_id: string
+          id: string
+          note: string | null
+          payout_id: string | null
+          rate: number
+          reverses_entry_id: string | null
+          role: string
+          sale_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          base_amount: number
+          client_payment_id?: string | null
+          created_at?: string
+          due_on: string
+          earned_on: string
+          hire_id: string
+          id?: string
+          note?: string | null
+          payout_id?: string | null
+          rate: number
+          reverses_entry_id?: string | null
+          role: string
+          sale_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          base_amount?: number
+          client_payment_id?: string | null
+          created_at?: string
+          due_on?: string
+          earned_on?: string
+          hire_id?: string
+          id?: string
+          note?: string | null
+          payout_id?: string | null
+          rate?: number
+          reverses_entry_id?: string | null
+          role?: string
+          sale_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_commission_entries_client_payment_id_fkey"
+            columns: ["client_payment_id"]
+            isOneToOne: false
+            referencedRelation: "nl_commission_client_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_commission_entries_hire_id_fkey"
+            columns: ["hire_id"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_hires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_commission_entries_payout_fk"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "nl_commission_payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_commission_entries_reverses_entry_id_fkey"
+            columns: ["reverses_entry_id"]
+            isOneToOne: false
+            referencedRelation: "nl_commission_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_commission_entries_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "nl_commission_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_commission_payouts: {
+        Row: {
+          bank_reference: string
+          created_at: string
+          created_by: string | null
+          hire_id: string
+          id: string
+          method: string
+          note: string | null
+          reconciled_at: string | null
+          reconciled_by: string | null
+          sent_on: string
+          total: number
+        }
+        Insert: {
+          bank_reference: string
+          created_at?: string
+          created_by?: string | null
+          hire_id: string
+          id?: string
+          method: string
+          note?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          sent_on: string
+          total: number
+        }
+        Update: {
+          bank_reference?: string
+          created_at?: string
+          created_by?: string | null
+          hire_id?: string
+          id?: string
+          method?: string
+          note?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          sent_on?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_commission_payouts_hire_id_fkey"
+            columns: ["hire_id"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_hires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_commission_sales: {
+        Row: {
+          client_name: string
+          created_at: string
+          created_by: string | null
+          deal_id: string | null
+          id: string
+          installments: number
+          notes: string | null
+          setup_fee: number
+          signed_on: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          id?: string
+          installments?: number
+          notes?: string | null
+          setup_fee: number
+          signed_on?: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          id?: string
+          installments?: number
+          notes?: string | null
+          setup_fee?: number
+          signed_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_commission_sales_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_contractor_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          at: string
+          changes: Json | null
+          id: number
+          row_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          at?: string
+          changes?: Json | null
+          id?: never
+          row_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          at?: string
+          changes?: Json | null
+          id?: never
+          row_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
+      nl_contractor_docs: {
+        Row: {
+          active: boolean
+          after_countersign: boolean
+          applies_cities: string[] | null
+          applies_states: string[] | null
+          body_md: string
+          created_at: string
+          created_by: string | null
+          id: string
+          renew_months: number | null
+          slug: string
+          sort_order: number
+          summary: string | null
+          title: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          after_countersign?: boolean
+          applies_cities?: string[] | null
+          applies_states?: string[] | null
+          body_md: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          renew_months?: number | null
+          slug: string
+          sort_order?: number
+          summary?: string | null
+          title: string
+          version: number
+        }
+        Update: {
+          active?: boolean
+          after_countersign?: boolean
+          applies_cities?: string[] | null
+          applies_states?: string[] | null
+          body_md?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          renew_months?: number | null
+          slug?: string
+          sort_order?: number
+          summary?: string | null
+          title?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      nl_contractor_hires: {
+        Row: {
+          business_name: string | null
+          commission_terms: string
+          countersign_name: string | null
+          countersigned_at: string | null
+          countersigned_by: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          ended_at: string | null
+          entity_type: string | null
+          full_name: string
+          id: string
+          mailing_address: string | null
+          notes: string | null
+          offboarding: Json
+          phone: string | null
+          state_code: string
+          state_report_confirmation: string | null
+          state_report_filed_at: string | null
+          status: string
+          tin_matched_at: string | null
+          updated_at: string
+          user_id: string | null
+          w9_received_at: string | null
+          w9_received_by: string | null
+          w9_requested_at: string | null
+          work_city: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          commission_terms: string
+          countersign_name?: string | null
+          countersigned_at?: string | null
+          countersigned_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          email: string
+          ended_at?: string | null
+          entity_type?: string | null
+          full_name: string
+          id?: string
+          mailing_address?: string | null
+          notes?: string | null
+          offboarding?: Json
+          phone?: string | null
+          state_code: string
+          state_report_confirmation?: string | null
+          state_report_filed_at?: string | null
+          status?: string
+          tin_matched_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          w9_received_at?: string | null
+          w9_received_by?: string | null
+          w9_requested_at?: string | null
+          work_city?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          commission_terms?: string
+          countersign_name?: string | null
+          countersigned_at?: string | null
+          countersigned_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          ended_at?: string | null
+          entity_type?: string | null
+          full_name?: string
+          id?: string
+          mailing_address?: string | null
+          notes?: string | null
+          offboarding?: Json
+          phone?: string | null
+          state_code?: string
+          state_report_confirmation?: string | null
+          state_report_filed_at?: string | null
+          status?: string
+          tin_matched_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          w9_received_at?: string | null
+          w9_received_by?: string | null
+          w9_requested_at?: string | null
+          work_city?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_contractor_hires_state_code_fkey"
+            columns: ["state_code"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_states"
+            referencedColumns: ["state_code"]
+          },
+        ]
+      }
+      nl_contractor_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
+      nl_contractor_signatures: {
+        Row: {
+          body_sha256: string
+          body_snapshot: string
+          doc_id: string
+          doc_slug: string
+          doc_title: string
+          doc_version: number
+          esign_consent: boolean
+          hire_id: string
+          id: string
+          ip: string | null
+          signed_at: string
+          typed_name: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          body_sha256: string
+          body_snapshot: string
+          doc_id: string
+          doc_slug: string
+          doc_title: string
+          doc_version: number
+          esign_consent: boolean
+          hire_id: string
+          id?: string
+          ip?: string | null
+          signed_at?: string
+          typed_name: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          body_sha256?: string
+          body_snapshot?: string
+          doc_id?: string
+          doc_slug?: string
+          doc_title?: string
+          doc_version?: number
+          esign_consent?: boolean
+          hire_id?: string
+          id?: string
+          ip?: string | null
+          signed_at?: string
+          typed_name?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_contractor_signatures_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_contractor_signatures_hire_id_fkey"
+            columns: ["hire_id"]
+            isOneToOne: false
+            referencedRelation: "nl_contractor_hires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_contractor_states: {
+        Row: {
+          allowed: boolean
+          note: string | null
+          report_days: number | null
+          report_note: string | null
+          state_code: string
+          state_name: string
+          tax_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          allowed?: boolean
+          note?: string | null
+          report_days?: number | null
+          report_note?: string | null
+          state_code: string
+          state_name: string
+          tax_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          allowed?: boolean
+          note?: string | null
+          report_days?: number | null
+          report_note?: string | null
+          state_code?: string
+          state_name?: string
+          tax_note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nl_discovery_numbers: {
         Row: {
           created_at: string
@@ -9047,11 +9653,15 @@ export type Database = {
           id: string
           lead_id: string
           leads_per_client: number | null
+          ltv_retention: number | null
+          ltv_years: number | null
           model_close_rate: number | null
           model_leads: number | null
           model_ticket: number | null
+          new_clients_12m: number | null
           new_leads: number | null
           new_leads_period: string
+          their_number: number | null
           updated_at: string
           updated_by: string | null
           user_id: string
@@ -9069,11 +9679,15 @@ export type Database = {
           id?: string
           lead_id: string
           leads_per_client?: number | null
+          ltv_retention?: number | null
+          ltv_years?: number | null
           model_close_rate?: number | null
           model_leads?: number | null
           model_ticket?: number | null
+          new_clients_12m?: number | null
           new_leads?: number | null
           new_leads_period?: string
+          their_number?: number | null
           updated_at?: string
           updated_by?: string | null
           user_id: string
@@ -9091,11 +9705,15 @@ export type Database = {
           id?: string
           lead_id?: string
           leads_per_client?: number | null
+          ltv_retention?: number | null
+          ltv_years?: number | null
           model_close_rate?: number | null
           model_leads?: number | null
           model_ticket?: number | null
+          new_clients_12m?: number | null
           new_leads?: number | null
           new_leads_period?: string
+          their_number?: number | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string
@@ -9582,6 +10200,57 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_legal_documents: {
+        Row: {
+          archived_at: string | null
+          category: string
+          doc_date: string | null
+          file_name: string
+          id: string
+          legal_hold: boolean
+          mime_type: string | null
+          notes: string | null
+          sha256: string | null
+          size_bytes: number | null
+          storage_path: string
+          title: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          category: string
+          doc_date?: string | null
+          file_name: string
+          id?: string
+          legal_hold?: boolean
+          mime_type?: string | null
+          notes?: string | null
+          sha256?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          title: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          category?: string
+          doc_date?: string | null
+          file_name?: string
+          id?: string
+          legal_hold?: boolean
+          mime_type?: string | null
+          notes?: string | null
+          sha256?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          title?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       nl_meeting_recordings: {
         Row: {
           audio_path: string | null
@@ -10051,6 +10720,150 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_training_backup_20261102: {
+        Row: {
+          audience: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261103: {
+        Row: {
+          audience: string | null
+          backed_up_at: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          backed_up_at?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          backed_up_at?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261104: {
+        Row: {
+          audience: string | null
+          backed_up_at: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          backed_up_at?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          backed_up_at?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261104b: {
+        Row: {
+          kind: string | null
+          row: Json | null
+        }
+        Insert: {
+          kind?: string | null
+          row?: Json | null
+        }
+        Update: {
+          kind?: string | null
+          row?: Json | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261107: {
+        Row: {
+          kind: string | null
+          row: Json | null
+        }
+        Insert: {
+          kind?: string | null
+          row?: Json | null
+        }
+        Update: {
+          kind?: string | null
+          row?: Json | null
+        }
+        Relationships: []
+      }
       nl_training_certifications: {
         Row: {
           certificate_number: string | null
@@ -10214,6 +11027,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nl_training_chapters_bak_20261104: {
+        Row: {
+          audience: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
       }
       nl_training_exam_attempts: {
         Row: {
@@ -10432,6 +11281,78 @@ export type Database = {
           },
         ]
       }
+      nl_training_modules_backup_20261103: {
+        Row: {
+          created_at: string | null
+          has_quiz: boolean | null
+          id: string | null
+          is_locked: boolean | null
+          module_description: string | null
+          module_number: number | null
+          module_title: string | null
+          tagline: string | null
+          track_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          has_quiz?: boolean | null
+          id?: string | null
+          is_locked?: boolean | null
+          module_description?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          tagline?: string | null
+          track_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          has_quiz?: boolean | null
+          id?: string | null
+          is_locked?: boolean | null
+          module_description?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          tagline?: string | null
+          track_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_modules_backup_20261104: {
+        Row: {
+          created_at: string | null
+          has_quiz: boolean | null
+          id: string | null
+          is_locked: boolean | null
+          module_description: string | null
+          module_number: number | null
+          module_title: string | null
+          tagline: string | null
+          track_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          has_quiz?: boolean | null
+          id?: string | null
+          is_locked?: boolean | null
+          module_description?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          tagline?: string | null
+          track_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          has_quiz?: boolean | null
+          id?: string | null
+          is_locked?: boolean | null
+          module_description?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          tagline?: string | null
+          track_id?: string | null
+        }
+        Relationships: []
+      }
       nl_training_progress: {
         Row: {
           attempts: number
@@ -10558,6 +11479,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nl_training_questions_backup_20261103: {
+        Row: {
+          chapter_id: string | null
+          correct_index: number | null
+          created_at: string | null
+          explanation: string | null
+          id: string | null
+          is_unlock_question: boolean | null
+          module_id: string | null
+          options: Json | null
+          question_text: string | null
+          question_type: string | null
+          quiz_level: number | null
+          unlock_category: string | null
+          unlock_level: string | null
+        }
+        Insert: {
+          chapter_id?: string | null
+          correct_index?: number | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string | null
+          is_unlock_question?: boolean | null
+          module_id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          question_type?: string | null
+          quiz_level?: number | null
+          unlock_category?: string | null
+          unlock_level?: string | null
+        }
+        Update: {
+          chapter_id?: string | null
+          correct_index?: number | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string | null
+          is_unlock_question?: boolean | null
+          module_id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          question_type?: string | null
+          quiz_level?: number | null
+          unlock_category?: string | null
+          unlock_level?: string | null
+        }
+        Relationships: []
       }
       nl_training_tracks: {
         Row: {
@@ -16256,21 +17225,113 @@ export type Database = {
         }
         Returns: number
       }
+      nl_add_business_days: {
+        Args: { p_from: string; p_n: number }
+        Returns: string
+      }
       nl_attendee_optin_info: { Args: { _token: string }; Returns: Json }
       nl_attendee_sms_optin: {
         Args: { _consent?: boolean; _phone?: string; _token: string }
         Returns: Json
       }
       nl_billing_cron_ok: { Args: { p: string }; Returns: boolean }
+      nl_commission_cleared_on: {
+        Args: { p_method: string; p_received: string }
+        Returns: string
+      }
+      nl_commission_make_entries: {
+        Args: { p_payment_id: string }
+        Returns: undefined
+      }
+      nl_commission_my_ledger: { Args: never; Returns: Json }
+      nl_commission_record_payout: {
+        Args: {
+          p_entry_ids: string[]
+          p_hire_id: string
+          p_method: string
+          p_note?: string
+          p_reference: string
+          p_sent_on: string
+        }
+        Returns: string
+      }
+      nl_commission_reverse_payment: {
+        Args: { p_payment_id: string; p_reason: string }
+        Returns: number
+      }
+      nl_commission_sync_sale: { Args: { p_sale_id: string }; Returns: number }
       nl_contact_rank: {
         Args: { _owner: boolean; _title: string }
         Returns: number
+      }
+      nl_contractor_alerts: { Args: never; Returns: Json }
+      nl_contractor_alerts_notify: { Args: never; Returns: number }
+      nl_contractor_assert_can_sell: {
+        Args: { p_uid: string }
+        Returns: undefined
+      }
+      nl_contractor_countersign: {
+        Args: { p_hire_id: string; p_name: string }
+        Returns: undefined
+      }
+      nl_contractor_doc_applies: {
+        Args: {
+          p_doc: Database["public"]["Tables"]["nl_contractor_docs"]["Row"]
+          p_hire: Database["public"]["Tables"]["nl_contractor_hires"]["Row"]
+        }
+        Returns: boolean
+      }
+      nl_contractor_email_status: { Args: { p_email: string }; Returns: Json }
+      nl_contractor_end: {
+        Args: { p_hire_id: string; p_reason: string }
+        Returns: string
+      }
+      nl_contractor_my_hire_id: { Args: never; Returns: string }
+      nl_contractor_my_packet: { Args: never; Returns: Json }
+      nl_contractor_my_sell_status: { Args: never; Returns: string }
+      nl_contractor_refresh_status: {
+        Args: { p_hire_id: string }
+        Returns: string
+      }
+      nl_contractor_render: {
+        Args: { p_date?: string; p_doc_id: string; p_hire_id: string }
+        Returns: string
+      }
+      nl_contractor_retain_until: {
+        Args: { p_hire_id: string }
+        Returns: string
+      }
+      nl_contractor_sell_block_reason: {
+        Args: { p_uid: string }
+        Returns: string
+      }
+      nl_contractor_set_profile: {
+        Args: {
+          p_address: string
+          p_business: string
+          p_city: string
+          p_entity: string
+          p_phone: string
+        }
+        Returns: undefined
+      }
+      nl_contractor_sign: {
+        Args: {
+          p_body_sha256: string
+          p_consent: boolean
+          p_doc_id: string
+          p_typed_name: string
+          p_user_agent: string
+        }
+        Returns: string
       }
       nl_dialer_lead_details: { Args: { _lead_ids: string[] }; Returns: Json }
       nl_jbool: { Args: { v: Json }; Returns: boolean }
       nl_jdate: { Args: { v: Json }; Returns: string }
       nl_jnum: { Args: { v: Json }; Returns: number }
       nl_jtext_array: { Args: { v: Json }; Returns: string[] }
+      nl_legal_hold_on: { Args: never; Returns: boolean }
+      nl_legal_vault_index: { Args: never; Returns: Json }
       nl_log_call: {
         Args: {
           _contact_id?: string
