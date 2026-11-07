@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
 
     const { data: deal, error: dealErr } = await supabase
       .from("crm_deals")
-      .select("id, client_id, deal_name, assigned_user, pay_sign_status, closing_notes, service_agreement_envelope_id, data_retention_days")
+      .select("id, client_id, deal_name, assigned_user, pay_sign_status, closing_notes, service_agreement_envelope_id, data_retention_days, package")
       .eq("id", deal_id)
       .maybeSingle();
     if (dealErr) throw dealErr;
@@ -58,6 +58,17 @@ Deno.serve(async (req) => {
       return json({ error: "Forbidden" }, 403);
     }
 
+    // Package deals: price and agreement terms are fixed at Form 2 (price approval, plan terms, hash). Re-submit Form 2 before signing instead.
+    if ((deal as any).package) {
+      return json({ error: "Package deals can't be edited here. Re-submit Form 2 so pricing approval, plan terms and the agreement stay in sync." }, 400);
+    }
+    // Never rewrite a document the client has signed (or paid against).
+    if (deal.service_agreement_envelope_id) {
+      const { data: env } = await supabase.from("document_envelopes").select("status").eq("id", deal.service_agreement_envelope_id).maybeSingle();
+      if (env?.status === "signed") {
+        return json({ error: "The client already signed this agreement. Use a formal amendment instead of editing it." }, 400);
+      }
+    }
     if (deal.pay_sign_status === "paid_signed") {
       return json({
         error: "This deal is already signed. Terms cannot be edited here — a signed agreement requires a formal amendment, not a silent edit, since the client's signed copy and any live billing would no longer match.",

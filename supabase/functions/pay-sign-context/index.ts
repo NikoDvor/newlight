@@ -670,6 +670,8 @@ Deno.serve(async (req) => {
 
   if (action === "create_payment") {
     if (!deal) return json({ error: "No deal linked to envelope" }, 400);
+    // Package deals are charged only through plan_pay / save_method (nl_billing_schedule). This legacy flat-price path must never run for them.
+    if (deal.package) return json({ error: "Use the package payment flow for this agreement" }, 400);
     const initialFee = Number(deal.initial_fee ?? 0);
     if (!(initialFee > 0)) return json({ error: "No initial fee set on the deal" }, 400);
 
