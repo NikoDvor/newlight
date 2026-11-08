@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { DEMO_CLIENTS_FILTER } from "@/lib/newlightInternal";
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -45,7 +46,7 @@ export default function AdminBilling() {
   const [metrics, setMetrics] = useState({ mrr: 0, setupCollected: 0, activeSubs: 0, pastDue: 0, totalInvoiced: 0, totalPaid: 0 });
 
   const loadInvoices = useCallback(async () => {
-    const r = await supabase.from("invoices").select("*, clients(business_name)").order("created_at", { ascending: false });
+    const r = await supabase.from("invoices").select("*, clients(business_name)").not("client_id", "in", DEMO_CLIENTS_FILTER).order("created_at", { ascending: false });
     const data = r.data ?? [];
     setInvoices(data);
     const totalInvoiced = data.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
@@ -57,8 +58,8 @@ export default function AdminBilling() {
   useEffect(() => {
 
     Promise.all([
-      supabase.from("billing_accounts").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => setAccounts(r.data ?? [])),
-      supabase.from("subscriptions").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => {
+      supabase.from("billing_accounts").select("*, clients(business_name)").not("client_id", "in", DEMO_CLIENTS_FILTER).order("created_at", { ascending: false }).then(r => setAccounts(r.data ?? [])),
+      supabase.from("subscriptions").select("*, clients(business_name)").not("client_id", "in", DEMO_CLIENTS_FILTER).order("created_at", { ascending: false }).then(r => {
         const data = r.data ?? [];
         setSubs(data);
         const active = data.filter((s: any) => s.subscription_status === "Active");

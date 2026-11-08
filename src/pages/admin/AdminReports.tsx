@@ -10,6 +10,7 @@ import {
   CheckCircle2, Activity
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { DEMO_CLIENTS_FILTER } from "@/lib/newlightInternal";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -57,9 +58,9 @@ export default function AdminReports() {
   useEffect(() => {
     // Sales data
     Promise.all([
-      supabase.from("crm_contacts").select("id, lead_source", { count: "exact" }),
-      supabase.from("crm_deals").select("deal_value, pipeline_stage, status, assigned_user_id"),
-      supabase.from("proposals").select("id, status"),
+      supabase.from("crm_contacts").select("id, lead_source", { count: "exact" }).not("client_id", "in", DEMO_CLIENTS_FILTER),
+      supabase.from("crm_deals").select("deal_value, pipeline_stage, status, assigned_user_id").not("client_id", "in", DEMO_CLIENTS_FILTER),
+      supabase.from("proposals").select("id, status").not("client_id", "in", DEMO_CLIENTS_FILTER),
       supabase.from("calendar_events").select("id, calendar_status, calendar_id"),
     ]).then(([contacts, deals, proposals, events]) => {
       const d = deals.data || [];
@@ -124,9 +125,9 @@ export default function AdminReports() {
 
     // Billing data
     Promise.all([
-      supabase.from("subscriptions" as any).select("status, monthly_amount, setup_fee"),
-      supabase.from("invoices" as any).select("status, total_amount"),
-      supabase.from("billing_accounts").select("billing_status"),
+      supabase.from("subscriptions" as any).select("status, monthly_amount, setup_fee").not("client_id", "in", DEMO_CLIENTS_FILTER),
+      supabase.from("invoices" as any).select("status, total_amount").not("client_id", "in", DEMO_CLIENTS_FILTER),
+      supabase.from("billing_accounts").select("billing_status").not("client_id", "in", DEMO_CLIENTS_FILTER),
     ]).then(([subs, invoices, accounts]) => {
       const s = (subs.data || []) as any[];
       const inv = (invoices.data || []) as any[];

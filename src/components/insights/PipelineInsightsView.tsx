@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DEMO_CLIENTS_FILTER } from "@/lib/newlightInternal";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -65,6 +66,11 @@ export async function fetchInsightsData(clientId: string | null, range: RangeKey
     dq = dq.eq("client_id", clientId);
     aq = aq.eq("client_id", clientId);
     oq = oq.eq("client_id", clientId);
+  } else {
+    // NewLight-wide view: leave out the training workspace
+    dq = dq.not("client_id", "in", DEMO_CLIENTS_FILTER);
+    aq = aq.not("client_id", "in", DEMO_CLIENTS_FILTER);
+    oq = oq.not("client_id", "in", DEMO_CLIENTS_FILTER);
   }
   if (since) {
     dq = dq.gte("created_at", since);

@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import { DEMO_CLIENTS_FILTER } from "@/lib/newlightInternal";
 import {
   CheckCircle2, AlertTriangle, Circle, Rocket, Shield, Route, Smartphone,
   Zap, LayoutDashboard, FileText, Users, Calendar, ShoppingBag, Plug,
@@ -36,7 +37,7 @@ export default function AdminLaunchChecklist() {
       const [clients, templates, proposals, automations, calendars, forms] = await Promise.all([
         supabase.from("clients").select("id, status").limit(100),
         supabase.from("workspace_templates" as any).select("id, is_active"),
-        supabase.from("proposals").select("id, status"),
+        supabase.from("proposals").select("id, status").not("client_id", "in", DEMO_CLIENTS_FILTER),
         supabase.from("automations").select("id, enabled"),
         supabase.from("calendars").select("id"),
         supabase.from("client_forms" as any).select("id"),

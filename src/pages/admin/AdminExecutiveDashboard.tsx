@@ -77,7 +77,7 @@ export default function AdminExecutiveDashboard() {
       supabase.from("crm_deals").select("client_id, deal_value, pipeline_stage, status, created_at")
         .not("client_id", "in", EXCLUDED_FILTER),
       supabase.from("proposals").select("id, status").not("client_id", "in", EXCLUDED_FILTER),
-      supabase.from("billing_accounts").select("billing_status"),
+      supabase.from("billing_accounts").select("billing_status").not("client_id", "in", EXCLUDED_FILTER),
       supabase.from("subscriptions" as any).select("subscription_status, monthly_amount")
         .not("client_id", "in", EXCLUDED_FILTER),
       supabase.from("automations").select("id, enabled"),
