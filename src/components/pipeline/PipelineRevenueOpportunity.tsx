@@ -677,15 +677,17 @@ export function PipelineRevenueOpportunity({
               <p className="text-[11px] text-white/50 mt-0.5">
                 <span className="text-white/85 font-semibold tabular-nums">{s.booked}</span> booked ·{" "}
                 <span className="text-white/85 font-semibold tabular-nums">{s.attended}</span> attended
+                {s.missed > 0 && <> · <span className="text-white/85 font-semibold tabular-nums">{s.missed}</span> missed</>}
+                {s.pending > 0 && <> · <span className="font-semibold tabular-nums" style={{ color: "hsl(38 95% 65%)" }}>{s.pending}</span> outcome not logged / upcoming</>}
               </p>
             </div>
             <div className="text-right">
               <p className="text-[9px] uppercase tracking-wider text-white/35">Show-up</p>
               <p
                 className="text-lg font-bold tabular-nums leading-none"
-                style={{ color: s.rate >= 0.7 ? "hsl(152 62% 55%)" : s.booked ? "hsl(38 95% 65%)" : "hsl(0 0% 100% / .3)" }}
+                style={{ color: s.attended + s.missed === 0 ? "hsl(0 0% 100% / .3)" : s.rate >= 0.7 ? "hsl(152 62% 55%)" : "hsl(38 95% 65%)" }}
               >
-                {s.booked ? fmtPct(s.rate) : "—"}
+                {s.attended + s.missed ? fmtPct(s.rate) : "—"}
               </p>
             </div>
           </div>
@@ -700,7 +702,7 @@ export function PipelineRevenueOpportunity({
               <UserRound className="h-3 w-3" /> Salesman close rate & capacity
             </p>
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full min-w-[460px] text-xs [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap [&_th+th]:pl-4 [&_td+td]:pl-4">
                 <thead>
                   <tr className="text-left text-[10px] uppercase tracking-wider text-white/35">
                     <th className="pb-2 font-semibold">Rep</th>

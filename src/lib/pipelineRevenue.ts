@@ -217,6 +217,11 @@ export interface ShowUpRow {
   label: string;
   booked: number;
   attended: number;
+  /** Logged as missed (no-show / cancelled). */
+  missed: number;
+  /** Upcoming, or past with no outcome logged yet — never counted as a no-show. */
+  pending: number;
+  /** attended ÷ (attended + missed); 0 when nothing has been logged. */
   rate: number;
 }
 
@@ -572,7 +577,9 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
   ].map(({ label, rows }) => {
     const booked = rows.length;
     const attended = rows.filter((m) => m.attended === true).length;
-    return { label, booked, attended, rate: booked ? attended / booked : 0 };
+    const missed = rows.filter((m) => m.attended === false).length;
+    const pending = booked - attended - missed;
+    return { label, booked, attended, missed, pending, rate: attended + missed ? attended / (attended + missed) : 0 };
   });
 
   /* win-back candidates */
