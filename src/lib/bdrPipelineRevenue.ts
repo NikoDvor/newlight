@@ -52,6 +52,9 @@ export interface BdrLinkedDealRow {
   pay_sign_status: string | null;
   pipeline_stage: string | null;
   close_prep_completed_at: string | null;
+  /** Saved Pay & Sign schedule (packages.ts buildPlan) — holds the real first-year total. */
+  plan_preview?: { firstYearTotal?: number | null; annualFirst?: number | null } | null;
+  annual_amount_first?: number | string | null;
 }
 
 export interface BdrEventRow {
@@ -72,6 +75,10 @@ const num = (v: unknown) => Number(v) || 0;
  */
 export function bdrDealValue(deal: BdrLinkedDealRow | undefined | null): number {
   if (!deal) return 0;
+  // Package deals: use what the plan actually bills in year one (Growth bills monthly only after the
+  // 90-day guarantee, annual is 20% off, payment plans add 10% to setup). Same engine as Pay & Sign.
+  const planned = num(deal.plan_preview?.firstYearTotal) || num(deal.plan_preview?.annualFirst) || num(deal.annual_amount_first);
+  if (planned > 0) return planned;
   const fees = num(deal.initial_fee) + num(deal.recurring_fee) * RECURRING_MONTHS;
   return fees > 0 ? fees : num(deal.deal_value);
 }

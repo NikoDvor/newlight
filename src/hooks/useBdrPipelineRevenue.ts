@@ -87,7 +87,7 @@ export function useBdrPipelineRevenue(
         const { data: dealData } = await (supabase as any)
           .from("crm_deals")
           .select(
-            "id,deal_value,initial_fee,recurring_fee,pricing_model,pay_sign_status,pipeline_stage,close_prep_completed_at",
+            "id,deal_value,initial_fee,recurring_fee,pricing_model,pay_sign_status,pipeline_stage,close_prep_completed_at,plan_preview,annual_amount_first",
           )
           .in("id", dealIds);
         if (active) setDeals((dealData ?? []) as BdrLinkedDealRow[]);
