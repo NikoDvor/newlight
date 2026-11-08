@@ -442,7 +442,7 @@ export function PipelineRevenueOpportunity({
                     />
                   </div>
                   <span className="text-[11px] text-white/55 tabular-nums w-10 text-right">
-                    {fmtPct(r.share)}
+                    {fmtPct(r.share, 1)}
                   </span>
                   <span
                     className="text-[10px] tabular-nums w-14 text-right"
@@ -687,7 +687,7 @@ export function PipelineRevenueOpportunity({
                 className="text-lg font-bold tabular-nums leading-none"
                 style={{ color: s.attended + s.missed === 0 ? "hsl(0 0% 100% / .3)" : s.rate >= 0.7 ? "hsl(152 62% 55%)" : "hsl(38 95% 65%)" }}
               >
-                {s.attended + s.missed ? fmtPct(s.rate) : "—"}
+                {s.attended + s.missed ? fmtPct(s.rate, 1) : "—"}
               </p>
             </div>
           </div>

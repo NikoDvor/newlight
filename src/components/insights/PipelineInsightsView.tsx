@@ -150,7 +150,7 @@ export function computeStageFunnel(deals: any[]): FunnelStage[] {
     let conversionPct: number | null = null;
     if (i > 0) {
       const prev = deals.filter(d => d.pipeline_stage === STAGE_ORDER[i - 1].key).length;
-      conversionPct = prev > 0 ? Math.round((count / prev) * 100) : null;
+      conversionPct = prev > 0 ? Math.round((count / prev) * 1000) / 10 : null;
     }
     return { key: s.key, name: s.label, count, conversionPct };
   });
@@ -203,12 +203,12 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
   const wonValue = won.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
   const noShows = effectiveAppts.filter(isNoShow);
   const rescheduled = effectiveAppts.reduce((s, a) => s + (Number(a.reschedule_count) || 0), 0);
-  const closeRate = won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0;
+  const closeRate = won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 1000) / 10 : 0;
 
   const funnel = computeStageFunnel(effectiveDeals);
   funnel.push({ name: "Lost", count: lost.length, conversionPct: null });
   const bottleneck = computeBottleneck(effectiveDeals);
-  const attendRate = effectiveAppts.length ? Math.round(100 - (noShows.length / effectiveAppts.length) * 100) : null;
+  const attendRate = effectiveAppts.length ? Math.round(1000 - (noShows.length / effectiveAppts.length) * 1000) / 10 : null;
 
   const wonLost = [
     { name: "Won", value: won.length },
@@ -234,10 +234,10 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
       return {
         id,
         name: names[id] || `${id.slice(0, 8)}…`,
-        closeRate: dW + dL > 0 ? Math.round((dW / (dW + dL)) * 100) : null,
+        closeRate: dW + dL > 0 ? Math.round((dW / (dW + dL)) * 1000) / 10 : null,
         won: dW,
         lost: dL,
-        noShowRate: myAppts.length ? Math.round((ns / myAppts.length) * 100) : null,
+        noShowRate: myAppts.length ? Math.round((ns / myAppts.length) * 1000) / 10 : null,
         reschedules: myAppts.reduce((s, a) => s + (Number(a.reschedule_count) || 0), 0),
       };
     }).sort((a, b) => (b.closeRate ?? -1) - (a.closeRate ?? -1));

@@ -94,7 +94,7 @@ function StageCard({ s }: { s: StageClose }) {
       </p>
 
       <div className="grid grid-cols-2 gap-1.5 mt-3 text-[12px]">
-        <Mini icon={CalendarCheck} label="Show-up" value={a.held + a.noShow ? `${Math.round(a.showRate * 100)}%` : "—"} />
+        <Mini icon={CalendarCheck} label="Show-up" value={a.held + a.noShow ? `${(a.showRate * 100).toFixed(1)}%` : "—"} />
         <Mini icon={CalendarX} label="No-shows" value={String(a.noShow)} />
         <Mini icon={Repeat} label="Rescheduled" value={String(a.rescheduled)} />
         <Mini icon={Hourglass} label="Upcoming" value={String(a.upcoming)} />

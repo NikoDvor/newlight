@@ -120,6 +120,11 @@ export const BENCHMARK_MIN_PEERS = 3;
 export const BENCHMARK_MIN_DEALS = 30;
 
 export const ROLLING_WINDOW_DAYS = 90;
+/**
+ * Stage conversion rates look back a full year: sales cycles run 1–3 months, so most deals created in
+ * the last 90 days haven't been decided yet and a 90-day window reads every stage as converting badly.
+ */
+export const CONVERSION_WINDOW_DAYS = 365;
 export const TREND_WEEKS = 8;
 
 /* ────────────────────────────── inputs ────────────────────────────── */
@@ -361,8 +366,13 @@ function conversions(deals: DealRow[], reach: Map<string, number> = new Map()): 
     let denom = 0;
     let numr = 0;
     for (const d of deals) {
-      const r = reachedRank(toCanonStage(d.pipeline_stage), d.lost_reason, reach.get(d.id) ?? 0);
-      if (r >= fromRank) denom++;
+      const stage = toCanonStage(d.pipeline_stage);
+      const r = reachedRank(stage, d.lost_reason, reach.get(d.id) ?? 0);
+      if (r < fromRank) continue;
+      // From a booked meeting onward, only decided deals count: a deal still sitting at this stage
+      // hasn't converted OR failed yet (same rule as the main close rate). Cold keeps every lead.
+      if (fromRank >= 1 && r === fromRank && stage !== "lost") continue;
+      denom++;
       if (r >= toRank) numr++;
     }
     return { rate: denom > 0 ? numr / denom : 0, n: denom };
@@ -400,7 +410,8 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
   const now = input.now ?? new Date();
   const deals = input.deals ?? [];
   const windowStart = new Date(now.getTime() - ROLLING_WINDOW_DAYS * DAY);
-  const inWindow = deals.filter((d) => new Date(d.created_at) >= windowStart);
+  const convStart = new Date(now.getTime() - CONVERSION_WINDOW_DAYS * DAY);
+  const inWindow = deals.filter((d) => new Date(d.created_at) >= convStart);
   const reach = meetingReach(input.meetings ?? []);
   /** When a deal was decided (won/lost) — falls back to created_at for legacy rows. */
   const decidedAt = (d: DealRow) => new Date(d.lost_at || d.close_date || d.created_at);
@@ -433,7 +444,7 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
   }
 
   /* systemic detection: recent half vs earlier half of the window */
-  const midpoint = new Date(now.getTime() - (ROLLING_WINDOW_DAYS / 2) * DAY);
+  const midpoint = new Date(now.getTime() - (CONVERSION_WINDOW_DAYS / 2) * DAY);
   const recentConv = conversions(inWindow.filter((d) => new Date(d.created_at) >= midpoint), reach);
   const priorConv = conversions(inWindow.filter((d) => new Date(d.created_at) < midpoint), reach);
 

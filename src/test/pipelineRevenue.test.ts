@@ -32,8 +32,11 @@ describe("pipeline revenue", () => {
       { id: "m3", meeting_type: "second_meeting", attended: true, start_time: null, assigned_salesman_user_id: "u1" },
     ], revenueTarget: 50000, now });
 
-    // cold->warm = 35/75 reached warm+ (20+10+5) out of 75 cold-reached
-    expect(m.stageRates[0].sampleSize).toBe(75); // 200-day-old lost deal is outside the 90d window
+    // cold->warm counts every lead in the 365-day conversion window (incl. the 200-day-old lost deal)
+    expect(m.stageRates[0].sampleSize).toBe(76);
+    // warm->hot only counts decided deals: 10 hot + 5 won reached hot; the 20 still at warm are excluded
+    expect(m.stageRates[1].sampleSize).toBe(15);
+    expect(m.stageRates[1].rate).toBe(1);
     expect(m.stageRates.length).toBe(3);
     expect(m.wonValueAllTime).toBe(10000);
     expect(m.wonCountAllTime).toBe(5);
