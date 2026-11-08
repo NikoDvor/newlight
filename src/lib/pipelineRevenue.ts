@@ -135,6 +135,8 @@ export interface DealRow {
   created_at: string;
   lost_reason: string | null;
   lost_at: string | null;
+  /** Won/lost decision date, when known. */
+  close_date?: string | null;
 }
 
 export interface MeetingRow {
@@ -143,6 +145,8 @@ export interface MeetingRow {
   attended: boolean | null;
   start_time: string | null;
   assigned_salesman_user_id: string | null;
+  /** Deal (or BDR lead) the meeting belongs to — lets lost deals keep the stage they reached. */
+  deal_id?: string | null;
 }
 
 export interface PeerDealRow {
@@ -188,7 +192,7 @@ export interface RepRow {
   openValue: number;
   wonCount: number;
   wonValue: number;
-  /** cold→won close rate across the rolling window. */
+  /** Main close rate: first booked meeting → won, decided deals only, rolling window. */
   closeRate: number;
   closeSample: number;
   lowConfidence: boolean;
@@ -233,8 +237,21 @@ export interface TrendPoint {
   hot: number;
   won: number;
   lost: number;
-  /** cold→won conversion as of that week (trailing window). */
+  /** Main close rate (first booked meeting → won, decided deals) as of that week, trailing window. */
   closeRate: number;
+}
+
+/**
+ * THE main close rate (decided Nov 7, 2026): of the deals whose first meeting (Form 1 / discovery) was
+ * booked, the share that became won clients. Only decided deals count (won ÷ won + lost); deals still in
+ * progress are reported separately as `open` so an active pipeline doesn't drag the rate down.
+ */
+export interface BookedCloseRate {
+  rate: number;
+  won: number;
+  decided: number;
+  open: number;
+  lowConfidence: boolean;
 }
 
 export interface BenchmarkRow {
@@ -262,6 +279,10 @@ export interface PipelineRevenueModel {
   trend: TrendPoint[];
   benchmark: BenchmarkRow[] | null;
   benchmarkPeers: number;
+  /** Main close rate, all time: first booked meeting → won client. */
+  bookedClose: BookedCloseRate;
+  /** Same, rolling window (last ROLLING_WINDOW_DAYS days of decisions). */
+  bookedCloseWindow: BookedCloseRate;
   /** Stage keys where the funnel is collapsing badly enough to alert on. */
   riskSignals: { stage: CanonStage; kind: StageSignalKind; message: string }[];
 }
@@ -282,9 +303,36 @@ function rankOf(stage: CanonStage): number {
  * with the stage their loss reason proves they reached (a no-show implies a
  * meeting was booked). Everything else counts as cold-only.
  */
-function reachedRank(stage: CanonStage, lostReason: string | null): number {
-  if (stage === "lost") return lostReason === "no_show" ? 1 : 0;
-  return rankOf(stage);
+function reachedRank(stage: CanonStage, lostReason: string | null, meetingRank = 0): number {
+  if (stage === "lost") return Math.max(lostReason === "no_show" ? 1 : 0, meetingRank);
+  return Math.max(rankOf(stage), stage === "won" ? 0 : meetingRank);
+}
+
+const SECOND_MEETING_RE = /second|final|close|closing|meeting_?2|followup|follow_up/i;
+
+/** Furthest stage each deal's meetings prove it reached: any meeting = Warm, a closing meeting = Hot. */
+export function meetingReach(meetings: MeetingRow[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const m of meetings) {
+    if (!m.deal_id) continue;
+    const r = m.meeting_type && SECOND_MEETING_RE.test(m.meeting_type) ? 2 : 1;
+    out.set(m.deal_id, Math.max(out.get(m.deal_id) ?? 0, r));
+  }
+  return out;
+}
+
+/** First booked meeting → won, decided deals only. */
+export function bookedCloseRate(deals: DealRow[], reach: Map<string, number> = new Map()): BookedCloseRate {
+  let won = 0, lost = 0, open = 0;
+  for (const d of deals) {
+    const stage = toCanonStage(d.pipeline_stage);
+    if (reachedRank(stage, d.lost_reason, reach.get(d.id) ?? 0) < 1) continue; // never booked
+    if (stage === "won") won++;
+    else if (stage === "lost") lost++;
+    else open++;
+  }
+  const decided = won + lost;
+  return { rate: decided ? won / decided : 0, won, decided, open, lowConfidence: decided < LOW_CONFIDENCE_N };
 }
 
 function waldMargin(rate: number, n: number): number {
@@ -301,14 +349,14 @@ function stagePairs(): { from: CanonStage; to: CanonStage }[] {
   return out;
 }
 
-function conversions(deals: DealRow[]): { rate: number; n: number }[] {
+function conversions(deals: DealRow[], reach: Map<string, number> = new Map()): { rate: number; n: number }[] {
   return stagePairs().map(({ from, to }) => {
     const fromRank = rankOf(from);
     const toRank = rankOf(to);
     let denom = 0;
     let numr = 0;
     for (const d of deals) {
-      const r = reachedRank(toCanonStage(d.pipeline_stage), d.lost_reason);
+      const r = reachedRank(toCanonStage(d.pipeline_stage), d.lost_reason, reach.get(d.id) ?? 0);
       if (r >= fromRank) denom++;
       if (r >= toRank) numr++;
     }
@@ -348,6 +396,9 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
   const deals = input.deals ?? [];
   const windowStart = new Date(now.getTime() - ROLLING_WINDOW_DAYS * DAY);
   const inWindow = deals.filter((d) => new Date(d.created_at) >= windowStart);
+  const reach = meetingReach(input.meetings ?? []);
+  /** When a deal was decided (won/lost) — falls back to created_at for legacy rows. */
+  const decidedAt = (d: DealRow) => new Date(d.lost_at || d.close_date || d.created_at);
 
   /* stage buckets — Won is ALL-TIME cumulative, everything else is live */
   const buckets: StageBucket[] = CANON_STAGES.map((stage) => {
@@ -364,7 +415,7 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
   const wonCountAllTime = wonBucket.count;
 
   /* conversion rates + confidence */
-  const conv = conversions(inWindow);
+  const conv = conversions(inWindow, reach);
   const rates = conv.map((c) => c.rate);
 
   /* rep-level rates for outlier detection */
@@ -373,13 +424,13 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
   );
   const repConv = new Map<string, { rate: number; n: number }[]>();
   for (const uid of repIds) {
-    repConv.set(uid, conversions(inWindow.filter((d) => d.assigned_user === uid)));
+    repConv.set(uid, conversions(inWindow.filter((d) => d.assigned_user === uid), reach));
   }
 
   /* systemic detection: recent half vs earlier half of the window */
   const midpoint = new Date(now.getTime() - (ROLLING_WINDOW_DAYS / 2) * DAY);
-  const recentConv = conversions(inWindow.filter((d) => new Date(d.created_at) >= midpoint));
-  const priorConv = conversions(inWindow.filter((d) => new Date(d.created_at) < midpoint));
+  const recentConv = conversions(inWindow.filter((d) => new Date(d.created_at) >= midpoint), reach);
+  const priorConv = conversions(inWindow.filter((d) => new Date(d.created_at) < midpoint), reach);
 
   const pairs = stagePairs();
   const stageRates: StageRate[] = pairs.map((p, i) => {
@@ -459,7 +510,8 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
       const mine = deals.filter((d) => d.assigned_user === uid);
       const mineWindow = inWindow.filter((d) => d.assigned_user === uid);
       const rc = repConv.get(uid)!;
-      const closeRate = rc.reduce((p, c) => p * c.rate, 1);
+      const repClose = bookedCloseRate(mine.filter((d) => decidedAt(d) >= windowStart), reach);
+      const closeRate = repClose.rate;
       const active = mine.filter((d) => {
         const s = toCanonStage(d.pipeline_stage);
         return s !== "won" && s !== "lost";
@@ -472,8 +524,8 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
         wonCount: won.length,
         wonValue: won.reduce((s, d) => s + num(d.deal_value), 0),
         closeRate,
-        closeSample: mineWindow.length,
-        lowConfidence: mineWindow.length < LOW_CONFIDENCE_N,
+        closeSample: repClose.decided,
+        lowConfidence: repClose.decided < LOW_CONFIDENCE_N,
         stageRates: rc.map((c, i) => ({
           stage: pairs[i].from,
           rate: c.rate,
@@ -511,8 +563,7 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
 
   /* show-up rate, split by meeting stage, tracked apart from booked count */
   const meetings = input.meetings ?? [];
-  const isSecond = (t: string | null) =>
-    !!t && /second|final|close|closing|meeting_?2|followup|follow_up/i.test(t);
+  const isSecond = (t: string | null) => !!t && SECOND_MEETING_RE.test(t);
   const bucketMeetings = (second: boolean) =>
     meetings.filter((m) => isSecond(m.meeting_type) === second);
   const showUp: ShowUpRow[] = [
@@ -553,11 +604,10 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
       const t = new Date(d.created_at);
       return t >= weekStart && t < weekEnd;
     });
-    const trailing = deals.filter((d) => {
-      const t = new Date(d.created_at);
+    const decidedTrailing = deals.filter((d) => {
+      const t = decidedAt(d);
       return t < weekEnd && t >= new Date(weekEnd.getTime() - ROLLING_WINDOW_DAYS * DAY);
     });
-    const tRates = conversions(trailing).map((c) => c.rate);
     const countOf = (s: CanonStage) =>
       created.filter((d) => toCanonStage(d.pipeline_stage) === s).length;
     trend.push({
@@ -568,7 +618,7 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
       hot: countOf("hot"),
       won: countOf("won"),
       lost: countOf("lost"),
-      closeRate: tRates.reduce((p, c) => p * c, 1),
+      closeRate: bookedCloseRate(decidedTrailing, reach).rate,
     });
   }
 
@@ -627,6 +677,8 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
     trend,
     benchmark,
     benchmarkPeers,
+    bookedClose: bookedCloseRate(deals, reach),
+    bookedCloseWindow: bookedCloseRate(deals.filter((d) => decidedAt(d) >= windowStart), reach),
     riskSignals,
   };
 }

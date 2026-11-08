@@ -331,8 +331,8 @@ export function PipelineRevenueOpportunity({
             <StatTile
               icon={trendDelta > 0.005 ? TrendingUp : trendDelta < -0.005 ? TrendingDown : Minus}
               label="Close rate"
-              value={fmtPct(lastTrend?.closeRate ?? 0, 1)}
-              sub={`${trendDelta >= 0 ? "+" : ""}${(trendDelta * 100).toFixed(1)}pt vs last wk`}
+              value={fmtPct(model.bookedClose.rate, 1)}
+              sub={`First booked meeting → won · ${model.bookedClose.won} of ${model.bookedClose.decided} decided${model.bookedClose.open ? ` · ${model.bookedClose.open} in progress` : ""} · ${trendDelta >= 0 ? "+" : ""}${(trendDelta * 100).toFixed(1)}pt vs last wk`}
               tone={trendDelta >= 0 ? "good" : "bad"}
             />
           </div>
@@ -660,8 +660,8 @@ export function PipelineRevenueOpportunity({
               {bdrStageRates.finalClose.lowConfidence && " · low confidence"}
             </p>
             <p className="text-[11px] text-white/45 leading-snug mt-2">
-              True first-booked-meeting → won conversion. Not split by reschedules —
-              onboarding (Form 3) has no reschedule flow yet.
+              Main close rate: first booked meeting → won client, decided leads only. Not split by
+              reschedules — onboarding (Form 3) has no reschedule flow yet.
             </p>
           </div>
         </motion.div>

@@ -189,6 +189,7 @@ export function computeBdrPipelineRevenue(input: BdrComputeInput): BdrPipelineRe
       created_at: lead.created_at,
       lost_reason: stage === "lost" ? lead.objection_category || "other" : null,
       lost_at: stage === "lost" ? lead.updated_at || lead.created_at : null,
+      close_date: stage === "won" ? lead.updated_at || lead.created_at : null,
     };
   });
 
@@ -210,6 +211,7 @@ export function computeBdrPipelineRevenue(input: BdrComputeInput): BdrPipelineRe
             : null,
       start_time: e.starts_at,
       assigned_salesman_user_id: e.user_id,
+      deal_id: e.lead_id,
     }));
 
   const model = computePipelineRevenue({
@@ -268,7 +270,7 @@ export interface StageCloseRate extends CloseRate {
 export interface BdrStageCloseRates {
   firstMeeting: StageCloseRate;
   secondMeeting: StageCloseRate;
-  /** Not reschedule-stratified — see module note above. */
+  /** Main close rate: first booked meeting → won (decided leads). Not reschedule-stratified — see note above. */
   finalClose: CloseRate;
 }
 
@@ -311,6 +313,7 @@ export function computeBdrStageCloseRates(
     return {
       stage,
       nonCold: stage !== "cold",
+      booked: discovery.length > 0 || stage === "warm" || stage === "hot" || stage === "won",
       won: stage === "won",
       discoveryTier: tierOf(discovery.length),
       closingTier: tierOf(closing.length),
@@ -346,8 +349,9 @@ export function computeBdrStageCloseRates(
     byReschedule: tierBreakdown(secondPool, (r) => r.closingTier, (r) => r.won),
   };
 
-  // Final — true first-booked-meeting → won conversion across all live leads.
-  const finalPool = rows.filter((r) => r.nonCold);
+  // Final = THE main close rate: first booked meeting (Form 1) → won client.
+  // Decided leads only (won ÷ won + lost); leads still in progress don't count yet.
+  const finalPool = rows.filter((r) => r.booked && (r.stage === "won" || r.stage === "lost"));
   const finalClose = rateOf(finalPool.filter((r) => r.won).length, finalPool.length);
 
   return { firstMeeting, secondMeeting, finalClose };

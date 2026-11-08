@@ -27,7 +27,7 @@ export interface UsePipelineRevenueResult {
 }
 
 const DEAL_COLS =
-  "id,client_id,deal_name,deal_value,pipeline_stage,status,assigned_user,created_at,lost_reason,lost_at";
+  "id,client_id,deal_name,deal_value,pipeline_stage,status,assigned_user,created_at,lost_reason,lost_at,close_date";
 
 export function usePipelineRevenue(
   clientId: string | null | undefined,
@@ -59,7 +59,7 @@ export function usePipelineRevenue(
         (supabase as any).from("crm_deals").select(DEAL_COLS).eq("client_id", clientId),
         (supabase as any)
           .from("sales_meetings")
-          .select("id,meeting_type,attended,start_time,assigned_salesman_user_id")
+          .select("id,meeting_type,attended,start_time,assigned_salesman_user_id,deal_id")
           .eq("client_id", clientId),
         (supabase as any)
           .from("clients")
