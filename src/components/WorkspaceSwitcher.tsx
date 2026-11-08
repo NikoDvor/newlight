@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo, useState } from "react";
-import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
+import { NEWLIGHT_INTERNAL_CLIENT_ID, NEWLIGHT_DEMO_CLIENT_IDS } from "@/lib/newlightInternal";
 
 interface ClientItem {
   id: string;
@@ -25,7 +25,7 @@ export function WorkspaceSwitcher() {
   useEffect(() => {
     supabase.from("clients").select("id, business_name, workspace_slug, status")
       .neq("status", "archived")
-      .or(`payment_status.eq.paid,id.eq.${NEWLIGHT_INTERNAL_CLIENT_ID}`)
+      .or(`payment_status.eq.paid,id.in.(${[NEWLIGHT_INTERNAL_CLIENT_ID, ...NEWLIGHT_DEMO_CLIENT_IDS].join(",")})`)
       .order("business_name").then(({ data }) => {
         setClients(data ?? []);
       });

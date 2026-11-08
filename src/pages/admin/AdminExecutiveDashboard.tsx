@@ -46,6 +46,7 @@ const EXCLUDED_CLIENT_IDS = [
   "0555604e-a50d-42d6-9e7e-4171b97b1ec2",
   "785cd5a0-795c-4077-9d1b-65521b360045",
   "c928f5a8-eb0e-43e0-8e2f-70551345330b",
+  "6e1a0c00-0000-4000-8000-00000000a001", // NewLight Account (training demo)
 ];
 const EXCLUDED_FILTER = `(${EXCLUDED_CLIENT_IDS.join(",")})`;
 
