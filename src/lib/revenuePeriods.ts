@@ -77,11 +77,11 @@ function bounds(now: Date, key: PeriodKey): { start: Date; priorStart: Date; pri
 }
 
 const META: { key: PeriodKey; label: string; compareLabel: string | null }[] = [
-  { key: "today", label: "Today", compareLabel: "vs yesterday" },
-  { key: "week", label: "This Week", compareLabel: "vs last week" },
-  { key: "month", label: "This Month", compareLabel: "vs last month" },
-  { key: "quarter", label: "This Quarter", compareLabel: "vs last quarter" },
-  { key: "year", label: "This Year", compareLabel: "vs last year" },
+  { key: "today", label: "Today", compareLabel: "vs this time yesterday" },
+  { key: "week", label: "This Week", compareLabel: "vs same point last week" },
+  { key: "month", label: "This Month", compareLabel: "vs same point last month" },
+  { key: "quarter", label: "This Quarter", compareLabel: "vs same point last quarter" },
+  { key: "year", label: "This Year", compareLabel: "vs same point last year" },
   { key: "all", label: "All-Time", compareLabel: null },
 ];
 
@@ -105,7 +105,10 @@ export function computeRevenuePeriods(events: RevenueEvent[], now: Date = new Da
     const b = bounds(now, key)!;
     const startMs = b.start.getTime();
     const priorStartMs = b.priorStart.getTime();
-    const priorEndMs = b.priorEnd.getTime();
+    // Like-for-like: a period that's only partly over is compared with the same stretch of the prior
+    // period (Nov 1–7 vs Oct 1–7), not the whole prior period — otherwise early in a period every
+    // card reads as a big drop.
+    const priorEndMs = Math.min(b.priorEnd.getTime(), priorStartMs + (now.getTime() - startMs));
 
     let total = 0;
     let count = 0;
