@@ -17255,6 +17255,10 @@ export type Database = {
         }
         Returns: string
       }
+      nl_commission_reverse_for_schedule: {
+        Args: { p_reason: string; p_schedule_id: string }
+        Returns: number
+      }
       nl_commission_reverse_payment: {
         Args: { p_payment_id: string; p_reason: string }
         Returns: number
