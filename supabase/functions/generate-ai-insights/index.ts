@@ -85,6 +85,8 @@ serve(async (req) => {
       { data: health },
       { data: yearDeals },
       { data: yearMeetings },
+      { count: leads12 },
+      { count: won12 },
     ] = await Promise.all([
       sb.from("clients").select("business_name, industry").eq("id", client_id).maybeSingle(),
       sb.from("crm_contacts").select("id, created_at").eq("client_id", client_id).gte("created_at", ninetyAgo),
@@ -94,6 +96,9 @@ serve(async (req) => {
       sb.from("client_health_scores").select("overall_score").eq("client_id", client_id).maybeSingle(),
       sb.from("crm_deals").select("id, pipeline_stage, lost_reason").eq("client_id", client_id).gte("created_at", yearAgo).limit(10000),
       sb.from("sales_meetings").select("deal_id, meeting_type, status, attended, start_time").eq("client_id", client_id).gte("start_time", yearAgo).limit(10000),
+      sb.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", client_id).gte("created_at", yearAgo),
+      sb.from("crm_deals").select("id", { count: "exact", head: true }).eq("client_id", client_id)
+        .eq("pipeline_stage", "closed_won").gte("close_date", yearAgo.slice(0, 10)),
     ]);
     // Main close rate = first booked meeting → won client (decided deals); plus each meeting's own rates.
     const mc = computeMeetingCloseRates((yearDeals ?? []) as any, (yearMeetings ?? []) as any);
@@ -116,7 +121,12 @@ serve(async (req) => {
     const totalLeads = (contacts ?? []).length;
     const totalDeals = (deals ?? []).length;
     const wonDeals = (deals ?? []).filter((d) => d.pipeline_stage === "closed_won").length;
-    const conversion = totalLeads > 0 ? (wonDeals / totalLeads) * 100 : 0;
+    // Lead-to-client conversion: clients won in the last 12 months ÷ new leads in the last 12 months.
+    // (A 90-day window undercounts: most leads added recently haven't had time to become clients.)
+    const leadsYear = Number(leads12 || 0);
+    const wonYear = Number(won12 || 0);
+    const conversion = leadsYear > 0 ? (wonYear / leadsYear) * 100 : 0;
+    void wonDeals;
 
     const totalAppts = (events ?? []).length;
     const noShows = (events ?? []).filter((e) =>
@@ -178,7 +188,7 @@ serve(async (req) => {
       ...meetingDefs,
       { metric_key: "conversion_rate", category: "crm", actual: conversion,
         direction: "higher_is_better",
-        human_label: `Lead-to-client conversion is ${conversion.toFixed(1)}% (${wonDeals} won from ${totalLeads} new leads, last 90 days)`,
+        human_label: `Lead-to-client conversion is ${conversion.toFixed(1)}% (${wonYear} clients won from ${leadsYear} new leads, last 12 months)`,
         action_hint: "Work new leads faster and with more touches before they go cold" },
       { metric_key: "no_show_rate", category: "crm", actual: noShowRate,
         direction: "lower_is_better",
