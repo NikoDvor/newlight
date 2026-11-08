@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { computeMeetingCloseRates } from "../_shared/meetingCloseRates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -72,6 +73,8 @@ serve(async (req) => {
     // ---- Fetch real data (last 90 days for signals) ----
     const ninetyAgo = new Date(Date.now() - 90 * 86400000).toISOString();
     const thirtyAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+    // Meeting close rates need decided deals, so they use a 12-month window.
+    const yearAgo = new Date(Date.now() - 365 * 86400000).toISOString();
 
     const [
       { data: client },
@@ -80,6 +83,8 @@ serve(async (req) => {
       { data: events },
       { data: reviews },
       { data: health },
+      { data: yearDeals },
+      { data: yearMeetings },
     ] = await Promise.all([
       sb.from("clients").select("business_name, industry").eq("id", client_id).maybeSingle(),
       sb.from("crm_contacts").select("id, created_at").eq("client_id", client_id).gte("created_at", ninetyAgo),
@@ -87,7 +92,12 @@ serve(async (req) => {
       sb.from("calendar_events").select("id, calendar_status, created_at").eq("client_id", client_id).gte("created_at", ninetyAgo),
       sb.from("review_requests").select("id, rating, created_at").eq("client_id", client_id).gte("created_at", ninetyAgo),
       sb.from("client_health_scores").select("overall_score").eq("client_id", client_id).maybeSingle(),
+      sb.from("crm_deals").select("id, pipeline_stage, lost_reason").eq("client_id", client_id).gte("created_at", yearAgo).limit(10000),
+      sb.from("sales_meetings").select("deal_id, meeting_type, status, attended, start_time").eq("client_id", client_id).gte("start_time", yearAgo).limit(10000),
     ]);
+    // Main close rate = first booked meeting → won client (decided deals); plus each meeting's own rates.
+    const mc = computeMeetingCloseRates((yearDeals ?? []) as any, (yearMeetings ?? []) as any);
+    const [mFirst, mClosing, mOnb] = mc.stages;
 
     const industry = mapIndustry(client?.industry);
     const { data: benchmarks } = await sb
@@ -112,7 +122,10 @@ serve(async (req) => {
     const noShows = (events ?? []).filter((e) =>
       ["no_show", "no-show", "noshow"].includes((e.calendar_status || "").toLowerCase())
     ).length;
-    const noShowRate = totalAppts > 0 ? (noShows / totalAppts) * 100 : 0;
+    const calendarNoShowRate = totalAppts > 0 ? (noShows / totalAppts) * 100 : 0;
+    // Prefer the pipeline's first-meeting no-show rate when meetings are logged there.
+    const fa = mFirst.attendance;
+    const noShowRate = fa.held + fa.noShow >= 5 ? (fa.noShow / (fa.held + fa.noShow)) * 100 : calendarNoShowRate;
 
     const reviewsWithRating = (reviews ?? []).filter((r) => r.rating != null);
     const avgRating = reviewsWithRating.length > 0
@@ -122,23 +135,63 @@ serve(async (req) => {
     // monthly velocity from last 30 days
     const reviewVelocity = reviewsLast30;
 
-    const signalDefs: Array<Omit<Signal, "benchmark" | "top_quartile" | "unit" | "gap_pct" | "breach">> = [
+    type Def = Omit<Signal, "benchmark" | "top_quartile" | "unit" | "gap_pct" | "breach">;
+    const MIN_N = 5;
+    const pct1 = (x: number) => (x * 100).toFixed(1);
+    const meetingDefs: Def[] = [];
+    if (mc.main.n >= MIN_N) meetingDefs.push({ metric_key: "booked_close_rate", category: "crm", actual: mc.main.rate * 100,
+      direction: "higher_is_better",
+      human_label: `Close rate (first booked meeting → won) is ${pct1(mc.main.rate)}% — ${mc.main.hits} won of ${mc.main.n} decided`,
+      action_hint: "Find which meeting loses the most deals and fix that step first" });
+    if (fa.held + fa.noShow >= MIN_N) meetingDefs.push({ metric_key: "first_meeting_show_rate", category: "crm", actual: fa.showRate * 100,
+      direction: "higher_is_better",
+      human_label: `First-meeting show-up is ${pct1(fa.showRate)}% (${fa.noShow} no-shows of ${fa.held + fa.noShow})`,
+      action_hint: "Confirm by text 24h and 1h before, and re-book no-shows the same day" });
+    if (fa.booked >= MIN_N) {
+      const rr = (fa.noShow + fa.rescheduled) / fa.booked;
+      meetingDefs.push({ metric_key: "first_meeting_reschedule_rate", category: "crm", actual: rr * 100,
+        direction: "lower_is_better",
+        human_label: `${pct1(rr)}% of first meetings were rescheduled or missed (${fa.noShow + fa.rescheduled} of ${fa.booked})`,
+        action_hint: "Rescheduled first meetings close at a lower rate — tighten confirmation and booking windows" });
+    }
+    if (mFirst.close.n >= MIN_N) meetingDefs.push({ metric_key: "first_meeting_advance_rate", category: "crm", actual: mFirst.close.rate * 100,
+      direction: "higher_is_better",
+      human_label: `First meeting → closing meeting booked is ${pct1(mFirst.close.rate)}% (${mFirst.close.hits} of ${mFirst.close.n})`,
+      action_hint: "Book the closing meeting before the first meeting ends" });
+    if (mClosing.close.n >= MIN_N) meetingDefs.push({ metric_key: "closing_close_rate", category: "crm", actual: mClosing.close.rate * 100,
+      direction: "higher_is_better",
+      human_label: `Closing meeting → won is ${pct1(mClosing.close.rate)}% (${mClosing.close.hits} of ${mClosing.close.n})`,
+      action_hint: "Prepare an answer to the top lost reason before every closing meeting" });
+    const ca = mClosing.attendance;
+    if (ca.held + ca.noShow >= MIN_N) meetingDefs.push({ metric_key: "closing_show_rate", category: "crm", actual: ca.showRate * 100,
+      direction: "higher_is_better",
+      human_label: `Closing-meeting show-up is ${pct1(ca.showRate)}%`,
+      action_hint: "Send the agenda and confirm the decision-maker will attend" });
+    const oa = mOnb.attendance;
+    if (oa.held + oa.noShow >= MIN_N) meetingDefs.push({ metric_key: "onboarding_show_rate", category: "crm", actual: oa.showRate * 100,
+      direction: "higher_is_better",
+      human_label: `Onboarding show-up is ${pct1(oa.showRate)}% (${oa.noShow} missed of ${oa.held + oa.noShow})`,
+      action_hint: "Book onboarding during the closing meeting, before the client leaves the call" });
+
+    const hasReviews = (reviews ?? []).length > 0;
+    const signalDefs: Def[] = [
+      ...meetingDefs,
       { metric_key: "conversion_rate", category: "crm", actual: conversion,
         direction: "higher_is_better",
-        human_label: `Lead-to-close conversion is ${conversion.toFixed(1)}%`,
-        action_hint: "Improve CRM follow-up cadence and speed-to-lead" },
+        human_label: `Lead-to-client conversion is ${conversion.toFixed(1)}% (${wonDeals} won from ${totalLeads} new leads, last 90 days)`,
+        action_hint: "Work new leads faster and with more touches before they go cold" },
       { metric_key: "no_show_rate", category: "crm", actual: noShowRate,
         direction: "lower_is_better",
         human_label: `Appointment no-show rate is ${noShowRate.toFixed(1)}%`,
         action_hint: "Add SMS reminders and confirmation flow" },
-      { metric_key: "review_velocity_monthly", category: "reviews", actual: reviewVelocity,
-        direction: "higher_is_better",
+      ...(hasReviews ? [{ metric_key: "review_velocity_monthly", category: "reviews", actual: reviewVelocity,
+        direction: "higher_is_better" as const,
         human_label: `Only ${reviewVelocity} reviews collected in last 30 days`,
-        action_hint: "Turn on automated post-appointment review requests" },
-      { metric_key: "avg_rating", category: "reviews", actual: avgRating,
-        direction: "higher_is_better",
+        action_hint: "Turn on automated post-appointment review requests"  }] : []),
+      ...(reviewsWithRating.length > 0 ? [{ metric_key: "avg_rating", category: "reviews", actual: avgRating,
+        direction: "higher_is_better" as const,
         human_label: `Average review rating is ${avgRating.toFixed(2)}`,
-        action_hint: "Add reputation-recovery flow for low-rating feedback" },
+        action_hint: "Add reputation-recovery flow for low-rating feedback" }] : []),
     ];
 
     const signals: Signal[] = signalDefs
@@ -188,6 +241,12 @@ serve(async (req) => {
     const prompt = `You are a growth advisor for a ${client?.industry || "financial firm"} named "${client?.business_name || "the client"}".
 
 Below are business signals that are underperforming the ${industry} industry benchmark. For each, produce a specific, actionable recommendation.
+
+How this business measures its pipeline (use these definitions, never invent others):
+- Close rate = first booked meeting → won client, decided deals only: ${pct1(mc.main.rate)}% (${mc.main.hits} of ${mc.main.n}; ${mc.main.inProgress} still in progress).
+- Close rate when the first meeting was held on time vs after a reschedule/no-show: ${mc.mainByTier.filter((t) => t.n > 0).map((t) => `${t.label}: ${pct1(t.rate)}% (${t.hits}/${t.n})`).join("; ")}.
+- First meeting → closing meeting: ${pct1(mFirst.close.rate)}% (n=${mFirst.close.n}); top reason lost at first meeting: ${mFirst.topLostReason?.reason ?? "n/a"}.
+- Closing meeting → won: ${pct1(mClosing.close.rate)}% (n=${mClosing.close.n}); top reason lost at closing: ${mClosing.topLostReason?.reason ?? "n/a"}.
 
 Signals (JSON):
 ${JSON.stringify(signals.map((s) => ({

@@ -64,6 +64,15 @@ export function MeetingCloseRates({ clientId }: { clientId: string }) {
             {main.n < LOW_N ? " · low sample" : ""}
           </p>
         </div>
+        <div className="flex flex-wrap gap-2 ml-auto">
+          {model.mainByTier.filter((t) => t.n > 0).map((t) => (
+            <div key={t.tier} className="rounded-lg px-2.5 py-1.5 text-[12px]" style={{ background: "hsl(var(--muted) / 0.5)" }}>
+              <span className="text-muted-foreground">{t.tier === "0" ? "First meeting on time" : `First meeting ${t.label.toLowerCase()}`}</span>{" "}
+              <span className="font-semibold tabular-nums text-foreground">{pct(t.rate, t.n)}</span>{" "}
+              <span className="text-muted-foreground tabular-nums">({t.hits}/{t.n})</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-3">

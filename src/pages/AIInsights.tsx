@@ -1871,8 +1871,15 @@ interface WeaknessSignal {
 }
 
 const METRIC_LABELS: Record<string, string> = {
-  conversion_rate: "Lead-to-close conversion",
-  no_show_rate: "Appointment no-show rate",
+  conversion_rate: "Lead-to-client conversion",
+  no_show_rate: "First-meeting no-show rate",
+  booked_close_rate: "Close rate (first booked meeting → won)",
+  first_meeting_show_rate: "First-meeting show-up",
+  first_meeting_reschedule_rate: "First meetings rescheduled or missed",
+  first_meeting_advance_rate: "First meeting → closing meeting",
+  closing_close_rate: "Closing meeting → won",
+  closing_show_rate: "Closing-meeting show-up",
+  onboarding_show_rate: "Onboarding show-up",
   review_velocity_monthly: "Review velocity",
   avg_rating: "Average review rating",
   reply_time_minutes: "Speed to lead",

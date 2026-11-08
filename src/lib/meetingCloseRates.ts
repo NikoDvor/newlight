@@ -10,9 +10,21 @@
  *      Onboarding      → did the won client show up and get activated?
  *  - Reschedule tier = how many times that meeting was rescheduled or no-showed before it was held.
  *
- * Pure function: no React, no Supabase — so the same maths can run anywhere.
+ * Pure TypeScript (no imports): this exact file is copied to supabase/functions/_shared/meetingCloseRates.ts so the
+ * app and the AI Insights generator use the same maths. Keep the two copies identical.
  */
-import { toCanonStage, type CanonStage } from "@/lib/pipelineRevenue";
+type CanonStage = "cold" | "warm" | "hot" | "won" | "lost";
+const RAW_TO_CANON: Record<string, CanonStage> = {
+  new_lead: "cold", cold_lead: "cold", cold: "cold", contacted: "cold", qualified: "cold",
+  appointment_booked: "warm", warm_lead: "warm", warm: "warm", proposal_sent: "warm",
+  hot_lead: "hot", hot: "hot", negotiation: "hot",
+  closed_won: "won", won_lead: "won", won: "won",
+  closed_lost: "lost", lost: "lost",
+};
+/** Same mapping as pipelineRevenue.toCanonStage. */
+function toCanonStage(raw: string | null | undefined): CanonStage {
+  return (raw && RAW_TO_CANON[String(raw).toLowerCase()]) || "cold";
+}
 
 export interface MCDeal {
   id: string;
@@ -65,6 +77,8 @@ export interface StageClose {
 
 export interface MeetingCloseRates {
   main: Rate & { inProgress: number };
+  /** Main close rate split by how many times the FIRST meeting was rescheduled / no-showed. */
+  mainByTier: Array<{ tier: Tier; label: string } & Rate>;
   booked: number;
   stages: StageClose[];
 }
@@ -135,6 +149,10 @@ export function computeMeetingCloseRates(deals: MCDeal[], meetings: MCMeeting[],
   const bookedDecided = booked.filter(decided);
   const main = { ...rate(bookedDecided.filter((r) => r.stage === "won").length, bookedDecided.length),
     inProgress: booked.length - bookedDecided.length };
+  const mainByTier = TIERS.map((t) => {
+    const p = bookedDecided.filter((r) => tierOf(r.g.first) === t);
+    return { tier: t, label: TIER_LABEL[t], ...rate(p.filter((r) => r.stage === "won").length, p.length) };
+  });
 
   const lostReasonTop = (pool: Row[]) => {
     const c = new Map<string, number>();
@@ -199,5 +217,5 @@ export function computeMeetingCloseRates(deals: MCDeal[], meetings: MCMeeting[],
     lostHere: 0,
   };
 
-  return { main, booked: booked.length, stages: [first, closing, onboarding] };
+  return { main, mainByTier, booked: booked.length, stages: [first, closing, onboarding] };
 }
