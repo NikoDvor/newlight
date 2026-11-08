@@ -246,7 +246,7 @@ function AIIndicator({ label = "AI Active" }: { label?: string }) {
       <div className="dash-ai-dots">
         <div className="dash-ai-dot" /><div className="dash-ai-dot" /><div className="dash-ai-dot" />
       </div>
-      <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsla(211,96%,68%,.35)" }}>{label}</span>
+      <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsla(211,96%,68%,.8)" }}>{label}</span>
     </div>
   );
 }
@@ -270,7 +270,7 @@ function SectionHeader({ icon: Icon, label, extra }: { icon: any; label: string;
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Icon className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.4)" }} />
+      <Icon className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.8)" }} />
       <span className="dash-section-label">{label}</span>
       <div className="dash-section-line" />
       {extra}
@@ -291,7 +291,7 @@ function KpiCard({ label, value, sub, icon: Icon, accent = false, to, sparkData 
         <div className={`dash-kpi h-full group relative ${accent ? "glow-pulse" : ""}`}>
           <div className="flex items-start justify-between relative z-10">
             <div className="space-y-1.5 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,75%,.45)" }}>{label}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,75%,.8)" }}>{label}</p>
               <motion.p className="text-2xl font-bold tracking-tight tabular-nums"
                 style={{
                   background: accent
@@ -301,7 +301,7 @@ function KpiCard({ label, value, sub, icon: Icon, accent = false, to, sparkData 
                   filter: accent ? "drop-shadow(0 0 6px hsla(211,96%,60%,.12))" : undefined,
                 }}
               >{count}</motion.p>
-              <p className="text-[11px]" style={{ color: "hsla(210,50%,65%,.5)" }}>{sub}</p>
+              <p className="text-[11px]" style={{ color: "hsla(210,50%,65%,.8)" }}>{sub}</p>
             </div>
             <div className="flex flex-col items-end gap-2">
               <motion.div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
@@ -355,7 +355,7 @@ function SystemActivityPulse({ activities }: { activities: any[] }) {
         <div className="flex items-center gap-2">
           <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(211 96% 62%)" }}
             animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} />
-          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.45)" }}>Live</span>
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.8)" }}>Live</span>
         </div>
       </div>
       <div className="relative z-10 space-y-0.5">
@@ -368,7 +368,7 @@ function SystemActivityPulse({ activities }: { activities: any[] }) {
                   animate={{ height: [4, 8 + i * 3, 4] }} transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.15 }} />
               ))}
             </motion.div>
-            <p className="text-[11px] font-medium" style={{ color: "hsla(210,50%,70%,.4)" }}>Monitoring — activity will appear here</p>
+            <p className="text-[11px] font-medium" style={{ color: "hsla(210,50%,70%,.8)" }}>Monitoring — activity will appear here</p>
           </div>
         ) : recent.map((a, i) => (
           <motion.div key={a.id || i} className="flex items-center gap-3 py-2.5"
@@ -379,7 +379,7 @@ function SystemActivityPulse({ activities }: { activities: any[] }) {
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium truncate" style={{ color: "hsl(210 40% 78%)" }}>{a.activity_note || a.activity_type}</p>
             </div>
-            <span className="text-[10px] tabular-nums shrink-0" style={{ color: "hsla(210,40%,55%,.35)" }}>
+            <span className="text-[10px] tabular-nums shrink-0" style={{ color: "hsla(210,40%,55%,.8)" }}>
               {new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </motion.div>
@@ -424,7 +424,7 @@ function PriorityInsights({ metrics, isNewClient }: { metrics: any; isNewClient:
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold" style={{ color: "hsl(210 40% 88%)" }}>{ins.label}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "hsla(210,40%,65%,.5)" }}>{ins.desc}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "hsla(210,40%,65%,.8)" }}>{ins.desc}</p>
                   </div>
                   <ChevronRight className="h-3.5 w-3.5 mt-1 shrink-0 opacity-0 group-hover:opacity-40 transition-opacity" style={{ color: "hsl(211 96% 68%)" }} />
                 </div>
@@ -453,7 +453,7 @@ function AIAssistantPresence() {
           <div className="flex items-center gap-2">
             <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(211 96% 62%)" }}
               animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }} />
-            <span className="text-[9px]" style={{ color: "hsla(211,96%,62%,.5)" }}>Optimizing performance</span>
+            <span className="text-[9px]" style={{ color: "hsla(211,96%,62%,.8)" }}>Optimizing performance</span>
           </div>
         </div>
         <Waveform />
@@ -474,7 +474,7 @@ function EmptyBlock({ icon: Icon, title, desc }: { icon: any; title: string; des
         </motion.div>
       </div>
       <p className="text-sm font-semibold mb-1" style={{ color: "hsl(210 40% 82%)" }}>{title}</p>
-      <p className="text-xs max-w-xs mx-auto leading-relaxed" style={{ color: "hsla(210,40%,65%,.4)" }}>{desc}</p>
+      <p className="text-xs max-w-xs mx-auto leading-relaxed" style={{ color: "hsla(210,40%,65%,.8)" }}>{desc}</p>
     </div>
   );
 }
@@ -536,7 +536,7 @@ function RevenueTrendsSection({ data }: {
       transition={{ duration: 0.6 }}
     >
       <SectionHeader icon={LineChart} label="Revenue Trends" extra={
-        <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.35)" }}>
+        <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.8)" }}>
           {data.activeSubs} Active Sub{data.activeSubs !== 1 ? "s" : ""}
         </span>
       } />
@@ -552,8 +552,8 @@ function RevenueTrendsSection({ data }: {
             transition={{ delay: i * 0.06 }}>
             <div className="dash-card p-4 h-full">
               <div className="flex items-center justify-between mb-2 relative z-10">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,75%,.45)" }}>{m.label}</p>
-                <m.icon className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.5)" }} />
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,75%,.8)" }}>{m.label}</p>
+                <m.icon className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.8)" }} />
               </div>
               <p className="text-xl font-bold tabular-nums relative z-10"
                 style={{
@@ -562,7 +562,7 @@ function RevenueTrendsSection({ data }: {
                 }}>
                 ${m.value.toLocaleString()}
               </p>
-              <p className="text-[10px] mt-1 relative z-10" style={{ color: "hsla(210,50%,65%,.45)" }}>{m.sub}</p>
+              <p className="text-[10px] mt-1 relative z-10" style={{ color: "hsla(210,50%,65%,.8)" }}>{m.sub}</p>
             </div>
           </motion.div>
         ))}
@@ -574,11 +574,11 @@ function RevenueTrendsSection({ data }: {
             <div className="flex items-center justify-between mb-4 relative z-10">
               <div>
                 <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Income Trend · Last 6 months</h3>
-                <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.4)" }}>Collected vs invoiced from billing records</p>
+                <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.8)" }}>Collected vs invoiced from billing records</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5"><div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(211 96% 62%)" }} /><span className="text-[9px]" style={{ color: "hsla(210,40%,65%,.45)" }}>Collected</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(197 88% 55%)" }} /><span className="text-[9px]" style={{ color: "hsla(210,40%,65%,.45)" }}>Invoiced</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(211 96% 62%)" }} /><span className="text-[9px]" style={{ color: "hsla(210,40%,65%,.8)" }}>Collected</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(197 88% 55%)" }} /><span className="text-[9px]" style={{ color: "hsla(210,40%,65%,.8)" }}>Invoiced</span></div>
               </div>
             </div>
             <div className="relative z-10" style={{ height: 220 }}>
@@ -608,9 +608,9 @@ function RevenueTrendsSection({ data }: {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-center">
-                  <DollarSign className="h-6 w-6 mb-2" style={{ color: "hsla(211,96%,60%,.3)" }} />
-                  <p className="text-xs" style={{ color: "hsla(210,40%,65%,.5)" }}>No billing activity yet</p>
-                  <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.35)" }}>Invoices will populate this chart automatically</p>
+                  <DollarSign className="h-6 w-6 mb-2" style={{ color: "hsla(211,96%,60%,.8)" }} />
+                  <p className="text-xs" style={{ color: "hsla(210,40%,65%,.8)" }}>No billing activity yet</p>
+                  <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.8)" }}>Invoices will populate this chart automatically</p>
                 </div>
               )}
             </div>
@@ -621,11 +621,11 @@ function RevenueTrendsSection({ data }: {
           <div className="dash-card p-5 h-full">
             <div className="flex items-center justify-between mb-4 relative z-10">
               <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Revenue Breakdown</h3>
-              <Layers className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.5)" }} />
+              <Layers className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.8)" }} />
             </div>
             <div className="relative z-10 space-y-3">
               {data.breakdown.length === 0 ? (
-                <p className="text-xs py-6 text-center" style={{ color: "hsla(210,40%,65%,.45)" }}>No active subscriptions</p>
+                <p className="text-xs py-6 text-center" style={{ color: "hsla(210,40%,65%,.8)" }}>No active subscriptions</p>
               ) : data.breakdown.map((b, i) => {
                 const pct = breakdownTotal > 0 ? (b.value / breakdownTotal) * 100 : 0;
                 return (
@@ -876,7 +876,7 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <p className="text-sm font-semibold mb-1" style={{ color: "hsla(211,96%,68%,.45)" }}>{getGreeting()}</p>
+              <p className="text-sm font-semibold mb-1" style={{ color: "hsla(211,96%,68%,.8)" }}>{getGreeting()}</p>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold"
                 style={{
                   background: "linear-gradient(140deg, hsl(210 40% 92%) 0%, hsl(211 96% 72%) 40%, hsl(197 88% 62%) 80%)",
@@ -885,7 +885,7 @@ export default function Dashboard() {
                 }}>
                 {displayName}
               </h1>
-              <p className="text-xs sm:text-sm mt-2.5 max-w-lg leading-relaxed" style={{ color: "hsla(210,40%,65%,.45)" }}>
+              <p className="text-xs sm:text-sm mt-2.5 max-w-lg leading-relaxed" style={{ color: "hsla(210,40%,65%,.8)" }}>
                 {getSystemStatus(isLive, hasData)}
               </p>
             </div>
@@ -1001,7 +1001,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-bold" style={{ color: "hsl(210 40% 88%)" }}>Complete your setup</p>
-                    <p className="text-xs" style={{ color: "hsla(210,40%,65%,.5)" }}>Finish onboarding to unlock your full growth toolkit</p>
+                    <p className="text-xs" style={{ color: "hsla(210,40%,65%,.8)" }}>Finish onboarding to unlock your full growth toolkit</p>
                   </div>
                 </div>
                 <span className="text-3xl font-bold tabular-nums"
@@ -1208,7 +1208,7 @@ export default function Dashboard() {
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium leading-snug transition-colors duration-300 group-hover/item:text-[hsl(210,40%,90%)]"
                             style={{ color: "hsl(210 40% 78%)" }}>{a.activity_note || a.activity_type}</p>
-                          <p className="text-[11px] mt-0.5" style={{ color: "hsla(210,40%,55%,.4)" }}>{new Date(a.created_at).toLocaleString()}</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "hsla(210,40%,55%,.8)" }}>{new Date(a.created_at).toLocaleString()}</p>
                         </div>
                       </motion.div>
                     ))}
@@ -1233,11 +1233,11 @@ export default function Dashboard() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-end">
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(210,40%,65%,.45)" }}>Open Pipeline</p>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(210,40%,65%,.8)" }}>Open Pipeline</p>
                           <p className="text-xl font-bold" style={{ color: "hsl(210 40% 88%)" }}>${metrics.pipelineValue.toLocaleString()}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(210,40%,65%,.45)" }}>Closed Won</p>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(210,40%,65%,.8)" }}>Closed Won</p>
                           <p className="text-xl font-bold" style={{ color: "hsl(197 88% 60%)" }}>${metrics.wonValue.toLocaleString()}</p>
                         </div>
                       </div>
@@ -1284,7 +1284,7 @@ export default function Dashboard() {
                           ))}
                         </div>
                       </div>
-                      <div className="text-xs pb-1" style={{ color: "hsla(210,40%,65%,.5)" }}>
+                      <div className="text-xs pb-1" style={{ color: "hsla(210,40%,65%,.8)" }}>
                         <p>{metrics.ratingCount} ratings</p>
                         <p>{metrics.reviewRequests} requests sent</p>
                       </div>
@@ -1318,7 +1318,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(211 96% 62%)" }}
                   animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }} />
-                <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.45)" }}>Healthy</span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.8)" }}>Healthy</span>
               </div>
             } />
             <SystemStatusBar />

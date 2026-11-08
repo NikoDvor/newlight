@@ -49,13 +49,13 @@ function IntelCard({ icon: Icon, label, value, sub, delay = 0 }: {
           >
             <Icon className="h-3.5 w-3.5" style={{ color: "hsl(211 96% 68%)" }} />
           </motion.div>
-          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,70%,.4)" }}>{label}</span>
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,70%,.8)" }}>{label}</span>
         </div>
         <p className="text-lg font-bold" style={{
           background: "linear-gradient(135deg, hsl(211 96% 72%), hsl(197 88% 58%))",
           WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
         }}>{value}</p>
-        {sub && <p className="text-[10px] mt-0.5" style={{ color: "hsla(210,40%,65%,.4)" }}>{sub}</p>}
+        {sub && <p className="text-[10px] mt-0.5" style={{ color: "hsla(210,40%,65%,.8)" }}>{sub}</p>}
       </div>
     </motion.div>
   );
@@ -64,7 +64,7 @@ function IntelCard({ icon: Icon, label, value, sub, delay = 0 }: {
 function ModuleEmphasisBar({ name, priority }: { name: string; priority: number }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-[10px] w-20 shrink-0" style={{ color: "hsla(210,40%,70%,.5)" }}>{name}</span>
+      <span className="text-[10px] w-20 shrink-0" style={{ color: "hsla(210,40%,70%,.8)" }}>{name}</span>
       <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "hsla(211,96%,60%,.06)" }}>
         <motion.div
           className="h-full rounded-full"
@@ -79,7 +79,7 @@ function ModuleEmphasisBar({ name, priority }: { name: string; priority: number 
           transition={{ duration: 0.8, ease: "easeOut" }}
         />
       </div>
-      <span className="text-[9px] font-bold tabular-nums w-4 text-right" style={{ color: "hsla(211,96%,65%,.4)" }}>{priority}</span>
+      <span className="text-[9px] font-bold tabular-nums w-4 text-right" style={{ color: "hsla(211,96%,65%,.8)" }}>{priority}</span>
     </div>
   );
 }
@@ -131,15 +131,15 @@ export function BusinessIntelligencePreview({ clientId, profile: externalProfile
     >
       {/* Section header */}
       <div className="flex items-center gap-2 mb-4">
-        <Brain className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.4)" }} />
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsla(210,50%,70%,.4)" }}>
+        <Brain className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.8)" }} />
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsla(210,50%,70%,.8)" }}>
           Business Intelligence
         </span>
         <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, hsla(211,96%,60%,.12), transparent)" }} />
         <div className="flex items-center gap-1.5">
           <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(211 96% 62%)" }}
             animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }} />
-          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.35)" }}>
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.8)" }}>
             Analyzing
           </span>
         </div>
@@ -180,7 +180,7 @@ export function BusinessIntelligencePreview({ clientId, profile: externalProfile
 
       {/* Module emphasis */}
       <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,60%,.03)", border: "1px solid hsla(211,96%,60%,.06)" }}>
-        <p className="text-[9px] font-bold uppercase tracking-[0.14em] mb-3" style={{ color: "hsla(210,50%,70%,.35)" }}>
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] mb-3" style={{ color: "hsla(210,50%,70%,.8)" }}>
           Module Emphasis
         </p>
         <div className="space-y-2">
@@ -193,7 +193,7 @@ export function BusinessIntelligencePreview({ clientId, profile: externalProfile
       </div>
 
       {/* Estimate label */}
-      <p className="text-center text-[9px] mt-3 font-medium uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,60%,.25)" }}>
+      <p className="text-center text-[9px] mt-3 font-medium uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,60%,.8)" }}>
         {intel.estimateLabel}
       </p>
     </motion.div>

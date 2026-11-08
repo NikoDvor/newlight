@@ -169,6 +169,9 @@
 /* 1. A tight dark edge around all text inside the app — invisible on solid boxes, separates letters from the lines behind. */
 .nl-dark-bg { text-shadow: 0 1px 2px rgb(0 0 0 / 0.9), 0 0 1px rgb(0 0 0 / 0.7); }
 .nl-dark-bg :is(.text-transparent, .bg-clip-text, svg, svg *, input, textarea, select) { text-shadow: none; }
+/* Gradient text set by inline style (background-clip:text + transparent fill): the dark edge shows through the
+   transparent letters and turns them black, so it's removed here too. */
+.nl-dark-bg :is([style*="text-fill-color"], [style*="background-clip: text"]) { text-shadow: none; }
 /* 2. Tables and sideways-scrolling boxes get a solid surface that doesn't slide away when you scroll them. */
 .nl-dark-bg table { background-color: hsl(222 38% 6%); }
 .nl-dark-bg .overflow-x-auto:is([class*="rounded"], [class*="border"]) { background-color: hsl(222 38% 6%); }
@@ -848,7 +851,7 @@
   .dash-card {
     position: relative;
     border-radius: 1rem;
-    background: hsla(222,30%,9%,.82);
+    background: linear-gradient(hsla(222,30%,9%,.82), hsla(222,30%,9%,.82)), hsl(222 38% 6%);
     backdrop-filter: blur(28px) saturate(1.4);
     -webkit-backdrop-filter: blur(28px) saturate(1.4);
     border: 1px solid hsla(211,96%,60%,.07);
@@ -908,7 +911,8 @@
       linear-gradient(160deg,
         hsla(222,28%,12%,.85) 0%,
         hsla(222,30%,9%,.9) 100%
-      );
+      ),
+      hsl(222 38% 6%);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid hsla(211,96%,60%,.06);
@@ -1114,7 +1118,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: hsla(210,50%,70%,.55);
+    color: hsla(210,50%,80%,.85);
   }
   .dash-section-line {
     flex: 1;
