@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { cn } from "@/lib/utils";
 import { toCanonStage } from "@/lib/pipelineRevenue";
 import { detectLeakage, type LeakageFlag, type TakeawayDeal } from "@/lib/pipelineLeakage";
+import { MeetingCloseRates } from "@/components/insights/MeetingCloseRates";
 
 const DAY_MS = 86_400_000;
 
@@ -423,6 +424,7 @@ export default function AIInsights() {
       {/* ── Pipeline Takeaways ─────────────────────────────────────── */}
       <PipelineTakeaways clientId={activeClientId} />
       <PipelineDetailStrip clientId={activeClientId} />
+      <MeetingCloseRates clientId={activeClientId} />
 
       {/* ── Marketing Attribution ──────────────────────────────────── */}
       <AttributionSummarySection clientId={activeClientId} />
