@@ -245,11 +245,22 @@ export default function BDRMyLeads() {
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) return;
-    const { data } = await (supabase as any).from("nl_bdr_leads")
-      .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+    // Page past Supabase's 1000-row cap (salesmen get 150 new leads every work day).
+    const data: any[] = [];
+    for (let from = 0; from < 50000; from += 1000) {
+      const { data: page } = await (supabase as any).from("nl_bdr_leads")
+        .select("*").eq("user_id", user.id).order("created_at", { ascending: false }).order("id").range(from, from + 999);
+      data.push(...(page || []));
+      if (!page || page.length < 1000) break;
+    }
     setLeads((data || []).map((d: any) => ({ ...d, outcome_history: d.outcome_history || [] })));
-    const { data: calls } = await (supabase as any).from("bdr_call_outcomes")
-      .select("lead_id").eq("bdr_user_id", user.id);
+    const calls: any[] = [];
+    for (let from = 0; from < 100000; from += 1000) {
+      const { data: page } = await (supabase as any).from("bdr_call_outcomes")
+        .select("lead_id").eq("bdr_user_id", user.id).order("id").range(from, from + 999);
+      calls.push(...(page || []));
+      if (!page || page.length < 1000) break;
+    }
     const calledSet = new Set<string>((calls || []).map((c: any) => c.lead_id).filter(Boolean));
     (data || []).forEach((d: any) => { if (d.called) calledSet.add(d.id); });
     setCalledLeadIds(calledSet);

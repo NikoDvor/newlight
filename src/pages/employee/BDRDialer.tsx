@@ -76,6 +76,17 @@ interface DialLogRow {
 const STAT_KEYS = OUTCOMES.map(o => o.label);
 
 const ALL_LIST = "__all__";
+/** Reads past Supabase's 1000-row cap, 1000 at a time. */
+async function fetchAllRows(page: (from: number, to: number) => PromiseLike<{ data: any[] | null; error: any }>) {
+  const out: any[] = [];
+  for (let from = 0; from < 50000; from += 1000) {
+    const { data, error } = await page(from, from + 999);
+    if (error) return { data: out.length ? out : null, error };
+    out.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  return { data: out, error: null };
+}
 const ALL_NICHES = "__all_niches__";
 const NO_NICHE = "No firm type yet";
 const ALL_STATES = "__all_states__";
@@ -198,19 +209,22 @@ export default function BDRDialer() {
       setUserId(user.id);
       const cid = activeClientId || await resolveEmployeeClientId(user.id);
       setClientId(cid);
+      // Supabase returns at most 1000 rows per request. With 150 new leads a day the Dialer passes that within a week,
+      // so read every table in pages.
+      const db = supabase as any;
       const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
-        (supabase as any).from("nl_bdr_leads")
+        fetchAllRows((from, to) => db.from("nl_bdr_leads")
           .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, state, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id, pool_firm_id")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
-        (supabase as any).from("bdr_call_outcomes")
+          .order("created_at", { ascending: false }).order("id").range(from, to)),
+        fetchAllRows((from, to) => db.from("bdr_call_outcomes")
           .select("lead_id, outcome, objection_type, logged_at, created_at")
           .eq("bdr_user_id", user.id)
           .order("logged_at", { ascending: false })
-          .order("created_at", { ascending: false }),
-        (supabase as any).from("nl_bdr_dial_log")
+          .order("created_at", { ascending: false }).range(from, to)),
+        fetchAllRows((from, to) => db.from("nl_bdr_dial_log")
           .select("dialed_at")
-          .eq("bdr_user_id", user.id),
+          .eq("bdr_user_id", user.id).order("dialed_at").range(from, to)),
       ]);
       setLeads(leadRows || []);
       const all: OutcomeRow[] = (outcomeRows || []).map((r: any) => ({
