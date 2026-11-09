@@ -163,10 +163,13 @@ export function PipelineRevenueOpportunity({
 
   const [avgValueDraft, setAvgValueDraft] = useState<string>("");
 
+  // Revenue per deal = what a won client is actually worth (average won deal, priced by the package
+  // rules). Falls back to open deals that carry a value — never the $0 cold leads.
   const naturalAvg = useMemo(() => {
-    const rows = (openDeals ?? []) as { value: number }[];
+    if (model && model.wonCountAllTime > 0) return model.wonValueAllTime / model.wonCountAllTime;
+    const rows = ((openDeals ?? []) as { value: number }[]).filter((d) => Number(d.value) > 0);
     return rows.length ? rows.reduce((s, d) => s + Number(d.value || 0), 0) / rows.length : 0;
-  }, [openDeals]);
+  }, [openDeals, model?.wonValueAllTime, model?.wonCountAllTime]);
 
   const avgOverride = useMemo(() => {
     const n = Number(String(avgValueDraft).replace(/[^0-9.]/g, ""));
@@ -184,8 +187,9 @@ export function PipelineRevenueOpportunity({
         avgDealValueOverride: avgOverride,
         revenueTarget: model?.revenueTarget ?? null,
         baseline,
+        naturalAvgDealValue: naturalAvg,
       }),
-    [openDeals, rates, baseRates, avgOverride, model?.revenueTarget, baseline],
+    [openDeals, rates, baseRates, avgOverride, model?.revenueTarget, baseline, naturalAvg],
   );
 
   const projected = lever.projectedRevenue;

@@ -739,7 +739,13 @@ export interface RevenueLeverProjection {
 export function projectRevenueLever(
   openDeals: { stage: CanonStage; value: number }[],
   rates: number[],
-  opts: { avgDealValueOverride?: number | null; revenueTarget?: number | null; baseline?: number } = {},
+  opts: {
+    avgDealValueOverride?: number | null;
+    revenueTarget?: number | null;
+    baseline?: number;
+    /** What a client is actually worth (average won deal). Defaults to the average open deal that carries a value. */
+    naturalAvgDealValue?: number | null;
+  } = {},
 ): RevenueLeverProjection {
   const override =
     opts.avgDealValueOverride && opts.avgDealValueOverride > 0 ? opts.avgDealValueOverride : null;
@@ -752,9 +758,11 @@ export function projectRevenueLever(
     expectedWonDeals += p;
   }
 
-  const naturalAvg = openDeals.length
-    ? openDeals.reduce((s, d) => s + d.value, 0) / openDeals.length
-    : 0;
+  // Cold leads carry $0 until a package is priced, so they must not drag the per-deal value down.
+  const valued = openDeals.filter((d) => d.value > 0);
+  const naturalAvg = opts.naturalAvgDealValue && opts.naturalAvgDealValue > 0
+    ? opts.naturalAvgDealValue
+    : valued.length ? valued.reduce((s, d) => s + d.value, 0) / valued.length : 0;
   const avgDealValue = override ?? naturalAvg;
 
   const target = opts.revenueTarget && opts.revenueTarget > 0 ? opts.revenueTarget : projectedRevenue;
