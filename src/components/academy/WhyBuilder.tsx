@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Plus, X, History, Check } from "lucide-react";
+import { Lock, Plus, X, History, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { BUILT_IN_QUOTES, DREAM_PROMPTS, daysLeft, loadWhy, saveWhy, type WhyRow } from "@/lib/academy";
+import { BUILT_IN_QUOTES, DREAM_PROMPTS, STARTER_QUOTE_IDS, daysLeft, loadWhy, saveWhy, type WhyRow } from "@/lib/academy";
 import { Kicker } from "./ui";
 
 /**
@@ -25,7 +25,8 @@ export default function WhyBuilder({ onSaved }: { onSaved?: () => void }) {
   const [deadline, setDeadline] = useState("");
   const [dream, setDream] = useState("");
   const [mine, setMine] = useState<string[]>([]);
-  const [kept, setKept] = useState<string[]>([]);
+  const [kept, setKept] = useState<string[]>(STARTER_QUOTE_IDS);
+  const [browse, setBrowse] = useState(false);
   const [newQuote, setNewQuote] = useState("");
   const [saving, setSaving] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -37,7 +38,10 @@ export default function WhyBuilder({ onSaved }: { onSaved?: () => void }) {
     if (r.current) {
       setGoal(r.current.goal); setAmount(r.current.goal_amount != null ? String(r.current.goal_amount) : "");
       setDeadline(r.current.deadline); setDream(r.current.dream_life || "");
-      setMine(r.current.quotes || []); setKept(r.current.favorite_quotes || []);
+      const own = (r.current.quotes || []).filter((q) => q.trim());
+      const fav = r.current.favorite_quotes || [];
+      // Nothing kept or added means the starter set rotates, so show exactly that.
+      setMine(own); setKept(own.length || fav.length ? fav : STARTER_QUOTE_IDS);
     }
     setLoaded(true);
   };
@@ -45,6 +49,10 @@ export default function WhyBuilder({ onSaved }: { onSaved?: () => void }) {
 
   const addPrompt = (p: string) => setDream((d) => (d.trim() ? d.trimEnd() + "\n\n" : "") + p + " ");
   const toggleKept = (id: string) => setKept((k) => (k.includes(id) ? k.filter((x) => x !== id) : [...k, id]));
+  const addMine = () => { const q = newQuote.trim(); if (q && !mine.includes(q)) setMine([...mine, q]); setNewQuote(""); };
+  const keptQuotes = BUILT_IN_QUOTES.filter((q) => kept.includes(q.id));
+  const moreQuotes = BUILT_IN_QUOTES.filter((q) => !kept.includes(q.id));
+  const rotating = mine.length + keptQuotes.length;
 
   const save = async () => {
     if (!user?.id) return;
@@ -94,35 +102,59 @@ export default function WhyBuilder({ onSaved }: { onSaved?: () => void }) {
       {/* 2. Quotes */}
       <section className="mt-7">
         <h3 className="text-[15px] font-semibold text-white">2 · Your quotes</h3>
-        <p className="mt-1 text-[12px] text-white/50">Keep the ones that hit. Add your own. One shows each day. Keep none and they all rotate.</p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {BUILT_IN_QUOTES.map((q) => {
-            const on = kept.includes(q.id);
-            return (
-              <button key={q.id} type="button" onClick={() => toggleKept(q.id)}
-                className="rounded-lg border px-2.5 py-1.5 text-left text-[12px] transition-colors"
-                style={{ borderColor: on ? "hsl(197,100%,58%)" : "hsla(0,0%,100%,.1)", background: on ? "hsla(197,100%,55%,.1)" : "transparent", color: on ? "white" : "hsla(0,0%,100%,.6)" }}>
-                {on && <Check className="mr-1 inline h-3 w-3 text-[hsl(197,100%,65%)]" />}{q.text}
-              </button>
-            );
-          })}
-        </div>
+        <p className="mt-1 text-[12px] text-white/50">
+          Only these rotate on My Pipeline, one a day{rotating ? ` · ${rotating} in your rotation` : ""}. Remove any, add your own.
+        </p>
         <div className="mt-3 space-y-1.5">
           <AnimatePresence initial={false}>
             {mine.map((q, i) => (
-              <motion.div key={i + q} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+              <motion.div key={"m" + q} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
                 className="flex items-center gap-2 rounded-lg border border-[hsla(262,85%,74%,.3)] bg-[hsla(262,85%,74%,.06)] px-3 py-1.5 text-[13px] text-white">
                 <span className="flex-1">{q}</span>
+                <span className="text-[10px] uppercase tracking-wider text-[hsl(262,85%,80%)]">Yours</span>
                 <button type="button" aria-label="Remove" onClick={() => setMine(mine.filter((_, j) => j !== i))}><X className="h-3.5 w-3.5 text-white/50" /></button>
               </motion.div>
             ))}
+            {keptQuotes.map((q) => (
+              <motion.div key={q.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                className="flex items-center gap-2 rounded-lg border border-[hsla(197,100%,58%,.3)] bg-[hsla(197,100%,55%,.06)] px-3 py-1.5 text-[13px] text-white">
+                <span className="flex-1">{q.text}</span>
+                <button type="button" aria-label="Remove" onClick={() => toggleKept(q.id)}><X className="h-3.5 w-3.5 text-white/50" /></button>
+              </motion.div>
+            ))}
           </AnimatePresence>
+          {rotating === 0 && (
+            <p className="rounded-lg border border-dashed border-white/15 px-3 py-2 text-[12px] text-white/50">
+              Your rotation is empty. Add your own below, or pick from the list. Until then the starter quotes rotate.
+            </p>
+          )}
           <div className="flex gap-2">
             <Input value={newQuote} onChange={(e) => setNewQuote(e.target.value)} placeholder="Add your own quote"
-              onKeyDown={(e) => { if (e.key === "Enter" && newQuote.trim()) { setMine([...mine, newQuote.trim()]); setNewQuote(""); } }} />
-            <Button type="button" variant="outline" size="icon" disabled={!newQuote.trim()} onClick={() => { setMine([...mine, newQuote.trim()]); setNewQuote(""); }}><Plus className="h-4 w-4" /></Button>
+              onKeyDown={(e) => { if (e.key === "Enter") addMine(); }} />
+            <Button type="button" variant="outline" size="icon" disabled={!newQuote.trim()} onClick={addMine}><Plus className="h-4 w-4" /></Button>
           </div>
         </div>
+        {moreQuotes.length > 0 && (
+          <div className="mt-3">
+            <button type="button" onClick={() => setBrowse(!browse)} className="inline-flex items-center gap-1 text-[12px] text-white/55 hover:text-white">
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${browse ? "rotate-180" : ""}`} />
+              {browse ? "Hide" : "Browse"} more quotes ({moreQuotes.length})
+            </button>
+            <AnimatePresence initial={false}>
+              {browse && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                  className="mt-2 flex flex-wrap gap-1.5 overflow-hidden">
+                  {moreQuotes.map((q) => (
+                    <button key={q.id} type="button" onClick={() => toggleKept(q.id)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-left text-[12px] text-white/65 transition-colors hover:border-[hsla(197,100%,55%,.5)] hover:text-white">
+                      <Plus className="h-3 w-3 shrink-0" />{q.text}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </section>
 
       {/* 3. Dream life */}

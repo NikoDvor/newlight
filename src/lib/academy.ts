@@ -290,6 +290,9 @@ export const BUILT_IN_QUOTES: { id: string; text: string }[] = [
   { id: "q24", text: "Hard calls make easy years." },
 ];
 
+/** A short starter set: new reps begin with these, and they rotate when a rep has kept or added nothing. */
+export const STARTER_QUOTE_IDS = ["q1", "q4", "q8", "q11", "q21"];
+
 export const DREAM_PROMPTS = [
   "Where do you live? Describe the place.",
   "What does a normal Tuesday look like?",
@@ -328,11 +331,11 @@ export function daysLeft(deadline: string): number {
   return Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86400_000));
 }
 
-/** Same quote all day, a new one tomorrow. Uses the user's own + kept quotes, else all built-ins. */
+/** Same quote all day, a new one tomorrow. Uses only the rep's own + kept quotes, else the starter set. */
 export function quoteOfTheDay(why: WhyRow | null): string {
   const kept = BUILT_IN_QUOTES.filter((q) => why?.favorite_quotes?.includes(q.id)).map((q) => q.text);
   const pool = [...(why?.quotes || []).filter((q) => q.trim()), ...kept];
-  const list = pool.length ? pool : BUILT_IN_QUOTES.map((q) => q.text);
+  const list = pool.length ? pool : BUILT_IN_QUOTES.filter((q) => STARTER_QUOTE_IDS.includes(q.id)).map((q) => q.text);
   const dayNum = Math.floor(new Date(localDay() + "T12:00:00").getTime() / 86400_000);
   return list[dayNum % list.length];
 }
