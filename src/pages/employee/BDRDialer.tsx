@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, BookOpen, Phone, Calendar, CalendarClock, Search, X, Trash2, Trophy } from "lucide-react";
+import { Loader2, BookOpen, Phone, Calendar, CalendarClock, Search, X, Trash2, Trophy, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,7 @@ interface Lead {
   owner_direct_phone: string | null;
   city: string | null;
   niche: string | null;
+  state?: string | null;
   list_name: string | null;
   called: boolean | null;
   dialed_at?: string | null;
@@ -76,7 +77,16 @@ const STAT_KEYS = OUTCOMES.map(o => o.label);
 
 const ALL_LIST = "__all__";
 const ALL_NICHES = "__all_niches__";
-const NO_NICHE = "No niche yet";
+const NO_NICHE = "No firm type yet";
+const ALL_STATES = "__all_states__";
+const ALL_CITIES = "__all_cities__";
+const NO_PLACE = "Unknown";
+const stateOf = (l: { state?: string | null }) => (l.state || "").trim().toUpperCase() || NO_PLACE;
+const cityOf = (l: { city: string | null }) => {
+  const c = (l.city || "").split(",")[0].trim();
+  return c ? c.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase()) : NO_PLACE;
+};
+const readPref = (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } };
 const nicheOf = (l: { niche: string | null }) => (l.niche || "").trim() || NO_NICHE;
 /** Firm-type niches in a fixed order; anything a rep typed sorts after them, "No niche yet" last. */
 const NICHE_ORDER = ["RIA", "Hybrid", "Advisor", "Insurance"];
@@ -134,10 +144,17 @@ export default function BDRDialer() {
   const [clientId, setClientId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<string>(ALL_LIST);
   const [showDialed, setShowDialed] = useState(false);
-  const [activeNiche, setActiveNiche] = useState<string>(() => {
-    try { return localStorage.getItem("nl_dialer_niche") || ALL_NICHES; } catch { return ALL_NICHES; }
-  });
-  useEffect(() => { try { localStorage.setItem("nl_dialer_niche", activeNiche); } catch { /* private mode */ } }, [activeNiche]);
+  // Firm type + state + city filters. They all combine, on top of the list tab, and are remembered per browser.
+  const [activeNiche, setActiveNiche] = useState<string>(() => readPref("nl_dialer_niche", ALL_NICHES));
+  const [activeState, setActiveState] = useState<string>(() => readPref("nl_dialer_state", ALL_STATES));
+  const [activeCity, setActiveCity] = useState<string>(() => readPref("nl_dialer_city", ALL_CITIES));
+  useEffect(() => {
+    try {
+      localStorage.setItem("nl_dialer_niche", activeNiche);
+      localStorage.setItem("nl_dialer_state", activeState);
+      localStorage.setItem("nl_dialer_city", activeCity);
+    } catch { /* private mode */ }
+  }, [activeNiche, activeState, activeCity]);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [callbackLead, setCallbackLead] = useState<Lead | null>(null);
   const [callbackDate, setCallbackDate] = useState<string>("");
@@ -183,7 +200,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id, pool_firm_id")
+          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, state, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id, pool_firm_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -248,22 +265,37 @@ export default function BDRDialer() {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [leads, modeLeads]);
 
-  // Niches with counts inside the selected list (so the numbers match what tapping shows). "No niche yet" goes last.
+  // Each filter's counts respect the OTHER filters, so a number always equals what tapping it shows.
   const listLeads = useMemo(() => activeList === ALL_LIST
     ? modeLeads
     : modeLeads.filter(l => (l.list_name || "Uncategorized") === activeList), [modeLeads, activeList]);
-  const niches = useMemo(() => {
+  const okNiche = useCallback((l: Lead) => activeNiche === ALL_NICHES || nicheOf(l) === activeNiche, [activeNiche]);
+  const okState = useCallback((l: Lead) => activeState === ALL_STATES || stateOf(l) === activeState, [activeState]);
+  const okCity = useCallback((l: Lead) => activeCity === ALL_CITIES || cityOf(l) === activeCity, [activeCity]);
+  const countBy = (rows: Lead[], key: (l: Lead) => string) => {
     const map = new Map<string, number>();
-    listLeads.forEach(l => map.set(nicheOf(l), (map.get(nicheOf(l)) || 0) + 1));
-    return Array.from(map.entries()).sort((a, b) => nicheRank(a[0]) - nicheRank(b[0]) || b[1] - a[1] || a[0].localeCompare(b[0]));
-  }, [listLeads]);
-  // A saved niche that no longer exists in this list falls back to all niches.
+    rows.forEach(l => map.set(key(l), (map.get(key(l)) || 0) + 1));
+    return map;
+  };
+  const niches = useMemo(() => Array.from(countBy(listLeads.filter(l => okState(l) && okCity(l)), nicheOf).entries())
+    .sort((a, b) => nicheRank(a[0]) - nicheRank(b[0]) || b[1] - a[1] || a[0].localeCompare(b[0])), [listLeads, okState, okCity]);
+  const placeSort = (a: [string, number], b: [string, number]) =>
+    (a[0] === NO_PLACE ? 1 : 0) - (b[0] === NO_PLACE ? 1 : 0) || a[0].localeCompare(b[0]);
+  const states = useMemo(() => Array.from(countBy(listLeads.filter(okNiche), stateOf).entries()).sort(placeSort), [listLeads, okNiche]);
+  const cities = useMemo(() => Array.from(countBy(listLeads.filter(l => okNiche(l) && okState(l)), cityOf).entries()).sort(placeSort),
+    [listLeads, okNiche, okState]);
+  // A saved filter that no longer exists here falls back to "all".
   useEffect(() => {
-    if (activeNiche !== ALL_NICHES && !loading && !niches.some(([n]) => n === activeNiche)) setActiveNiche(ALL_NICHES);
-  }, [niches, activeNiche, loading]);
+    if (loading) return;
+    if (activeNiche !== ALL_NICHES && !niches.some(([n]) => n === activeNiche)) setActiveNiche(ALL_NICHES);
+    if (activeState !== ALL_STATES && !states.some(([n]) => n === activeState)) setActiveState(ALL_STATES);
+    if (activeCity !== ALL_CITIES && !cities.some(([n]) => n === activeCity)) setActiveCity(ALL_CITIES);
+  }, [niches, states, cities, activeNiche, activeState, activeCity, loading]);
+  const filtersOn = activeNiche !== ALL_NICHES || activeState !== ALL_STATES || activeCity !== ALL_CITIES;
+  const clearFilters = () => { setActiveNiche(ALL_NICHES); setActiveState(ALL_STATES); setActiveCity(ALL_CITIES); };
 
   const visibleLeads = useMemo(() => {
-    const base = activeNiche === ALL_NICHES ? listLeads : listLeads.filter(l => nicheOf(l) === activeNiche);
+    const base = filtersOn ? listLeads.filter(l => okNiche(l) && okState(l) && okCity(l)) : listLeads;
     if (!showDialed) return base;
     // Most recently dialed first; legacy rows with no dialed_at go last (stable).
     return [...base].sort((a, b) => {
@@ -272,9 +304,9 @@ export default function BDRDialer() {
       if (ta === tb) return 0;
       return tb > ta ? 1 : -1;
     });
-  }, [listLeads, activeNiche, showDialed]);
+  }, [listLeads, filtersOn, okNiche, okState, okCity, showDialed]);
 
-  useEffect(() => { if (!highlightId) setRenderCount(PAGE); }, [activeList, activeNiche, showDialed]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!highlightId) setRenderCount(PAGE); }, [activeList, activeNiche, activeState, activeCity, showDialed]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -305,6 +337,8 @@ export default function BDRDialer() {
     }
     setShowDialed(!!lead.called);
     if (activeNiche !== ALL_NICHES && nicheOf(lead) !== activeNiche) setActiveNiche(ALL_NICHES);
+    if (activeState !== ALL_STATES && stateOf(lead) !== activeState) setActiveState(ALL_STATES);
+    if (activeCity !== ALL_CITIES && cityOf(lead) !== activeCity) setActiveCity(ALL_CITIES);
     if (lead.list_name && (lead.list_name || "Uncategorized") !== activeList) {
       setActiveList(lead.list_name || "Uncategorized");
     } else if (!lead.list_name && activeList !== ALL_LIST && activeList !== "Uncategorized") {
@@ -317,7 +351,7 @@ export default function BDRDialer() {
       rowRefs.current[lead.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 150);
     setTimeout(() => setHighlightId(null), 2400);
-  }, [activeList, activeNiche, navigate]);
+  }, [activeList, activeNiche, activeState, activeCity, navigate]);
 
 
   const stats = useMemo(() => {
@@ -325,12 +359,12 @@ export default function BDRDialer() {
     let total = 0;
     const visibleIds = new Set(visibleLeads.map(l => l.id));
     for (const o of outcomes) {
-      if ((activeList !== ALL_LIST || activeNiche !== ALL_NICHES) && (!o.lead_id || !visibleIds.has(o.lead_id))) continue;
+      if ((activeList !== ALL_LIST || filtersOn) && (!o.lead_id || !visibleIds.has(o.lead_id))) continue;
       total += 1;
       if (counts[o.outcome] !== undefined) counts[o.outcome] += 1;
     }
     return { total, counts };
-  }, [outcomes, visibleLeads, activeList, activeNiche]);
+  }, [outcomes, visibleLeads, activeList, filtersOn]);
 
   const callCounts = useMemo(() => {
     const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
@@ -563,7 +597,7 @@ export default function BDRDialer() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">BDR Dialer</h1>
-          <p className="text-xs text-white/50 mt-1">{visibleLeads.length} lead{visibleLeads.length !== 1 ? "s" : ""} {activeList !== ALL_LIST && `in "${activeList}"`}{activeNiche !== ALL_NICHES && ` · ${activeNiche}`}</p>
+          <p className="text-xs text-white/50 mt-1">{visibleLeads.length} lead{visibleLeads.length !== 1 ? "s" : ""} {activeList !== ALL_LIST && `in "${activeList}"`}{activeNiche !== ALL_NICHES && ` · ${activeNiche}`}{activeCity !== ALL_CITIES && ` · ${activeCity}`}{activeState !== ALL_STATES && ` · ${activeState}`}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => navigate("/employee/training")} className="text-white/60">
           <BookOpen className="h-4 w-4 mr-1" /> Training
@@ -710,12 +744,12 @@ export default function BDRDialer() {
         ))}
       </div>
 
-      {/* Niche filter — works on top of the list tab */}
-      {niches.length > 0 && !(niches.length === 1 && niches[0][0] === NO_NICHE) && (
-        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-1 px-1 pb-1"
+      {/* Filters — firm type, state and city all combine, on top of the list tab */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex min-w-0 max-w-full items-center gap-1.5 flex-nowrap overflow-x-auto -mx-1 px-1 pb-0.5"
           style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}>
-          <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/40 mr-0.5">Niche</span>
-          {[[ALL_NICHES, listLeads.length] as [string, number], ...niches].map(([name, count]) => {
+          <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/40 mr-0.5">Firm type</span>
+          {[[ALL_NICHES, niches.reduce((x, [, c]) => x + c, 0)] as [string, number], ...niches].map(([name, count]) => {
             const on = activeNiche === name;
             return (
               <button key={name} onClick={() => setActiveNiche(name)}
@@ -725,12 +759,20 @@ export default function BDRDialer() {
                   color: on ? "hsl(262,80%,82%)" : name === NO_NICHE ? "hsl(0,0%,55%)" : "hsl(0,0%,72%)",
                   border: `1px solid ${on ? "hsla(262,80%,65%,.45)" : "hsla(211,96%,60%,.12)"}`,
                 }}>
-                {name === ALL_NICHES ? "All niches" : name} <span className="opacity-60 ml-1">{count}</span>
+                {name === ALL_NICHES ? "All" : name} <span className="opacity-60 ml-1">{count}</span>
               </button>
             );
           })}
         </div>
-      )}
+        <div className="flex items-center gap-1.5">
+          <FilterSelect label="State" value={activeState} allValue={ALL_STATES} allLabel="All states" options={states}
+            onChange={(v) => { setActiveState(v); setActiveCity(ALL_CITIES); }} />
+          <FilterSelect label="City" value={activeCity} allValue={ALL_CITIES} allLabel="All cities" options={cities} onChange={setActiveCity} />
+          {filtersOn && (
+            <button onClick={clearFilters} className="text-[11px] text-white/50 hover:text-white px-1.5">Clear</button>
+          )}
+        </div>
+      </div>
 
       {/* Spreadsheet */}
       {/* Full width: cancels the page's side padding so the table runs edge to edge */}
@@ -997,7 +1039,7 @@ export default function BDRDialer() {
                     <td className="px-3 py-3 border-b border-white/5 text-xs text-white/60 whitespace-nowrap">
                       {isPool && det?.firm
                         ? ([det.firm.city, det.firm.state].filter(Boolean).join(", ") || "—")
-                        : (lead.city || "—")}
+                        : ([lead.city, lead.state].filter(Boolean).join(", ") || "—")}
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-xs text-white/70 whitespace-nowrap">
                       {isPool ? (fmtAum(det?.firm?.aum) || "—") : "—"}
@@ -1357,5 +1399,29 @@ function WonHistoryButton({ userId, onOpenLead }: { userId: string | null; onOpe
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function FilterSelect({ label, value, allValue, allLabel, options, onChange }: {
+  label: string; value: string; allValue: string; allLabel: string; options: [string, number][]; onChange: (v: string) => void;
+}) {
+  const on = value !== allValue;
+  const total = options.reduce((x, [, c]) => x + c, 0);
+  return (
+    <label className="relative inline-flex items-center">
+      <span className="sr-only">{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        className="appearance-none rounded-lg pl-2.5 pr-7 py-1 text-[11px] font-medium outline-none max-w-[170px] truncate"
+        style={{
+          background: on ? "hsla(197,100%,55%,.14)" : "hsla(215,35%,10%,.6)",
+          color: on ? "hsl(197,100%,75%)" : "hsl(0,0%,72%)",
+          border: `1px solid ${on ? "hsla(197,100%,55%,.45)" : "hsla(211,96%,60%,.12)"}`,
+          colorScheme: "dark",
+        }}>
+        <option value={allValue}>{allLabel} ({total})</option>
+        {options.map(([name, count]) => <option key={name} value={name}>{name} ({count})</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2 h-3 w-3 opacity-60" />
+    </label>
   );
 }
