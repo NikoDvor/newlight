@@ -273,7 +273,7 @@ export function GenericPipelineDashboard({ section = "home" }: { section?: "home
     () => monthProposals.filter((p) => p.accepted_at || p.proposal_status === "accepted").length,
     [monthProposals]
   );
-  const closeRate = monthMeetings ? Math.round((closedMonth / monthMeetings) * 100) : 0;
+  const closeRate = monthMeetings ? Math.round((closedMonth / monthMeetings) * 1000) / 10 : 0;
 
   const topObjection = objectionCounts[0];
   const topUnlock = topObjection ? unlocks.find((u) => u.objection_category === topObjection.category) : null;
@@ -376,7 +376,7 @@ export function GenericPipelineDashboard({ section = "home" }: { section?: "home
       {/* 2. STATS ROW */}
       <Reveal delay={0.05}>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Close Rate (Month)" value={`${closeRate}%`} icon={TrendingUp} tone="success" />
+        <StatCard label="Meetings → wins (month)" value={`${closeRate}%`} icon={TrendingUp} tone="success" />
         <StatCard label="Deals Closed (Month)" value={closedMonth} icon={Target} tone="success" />
         <StatCard label="Objections Logged (Month)" value={monthObjections} icon={AlertTriangle} tone="warn" />
         <StatCard label="Calls / Meetings (Month)" value={monthCalls + monthMeetings} icon={PhoneCall} />

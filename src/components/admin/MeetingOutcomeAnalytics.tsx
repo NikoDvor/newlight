@@ -33,7 +33,7 @@ export interface MeetingOutcomeAnalyticsProps {
 
 const SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", pay_sign: "Pay & Sign" };
 const kindLabel = (k: string, a?: number | null) => (k === "pay_sign" ? "Pay & Sign" : `${SHORT[k] || k} #${a ?? 1}`);
-const pct = (r: { num: number; den: number }) => (r.den ? Math.round((r.num / r.den) * 100) : null);
+const pct = (r: { num: number; den: number }) => (r.den ? Math.round((r.num / r.den) * 1000) / 10 : null);
 const reasonLabel = (k: string) => LOST_REASONS[k as LostReason] || k;
 
 async function pageAll<T>(build: (from: number, to: number) => any): Promise<T[]> {
@@ -102,7 +102,13 @@ function computeMetrics(events: Ev[], outs: Out[], leads: Map<string, Lead>, dea
     closPS: leadConv("closing"),
     psPaid: { num: paidLeads.size, den: cwLeads.size, items: closingWon.map(item) } as Rate,
     paidAct: { num: activated, den: paidDeals.size, items: outs.filter((o) => o.lead_id && allPaidInScope.has(o.lead_id) && o.meeting_kind === "closing").map(item) } as Rate,
-    overall: { num: Array.from(discLeads).filter((l) => dealOf(l)?.pay_sign_status === "paid_signed").length, den: discLeads.size, items: discOuts.map(item) } as Rate,
+    // Main close rate: first booked meeting → won client, decided leads only (won = paid + signed, lost = a meeting logged as lost).
+    overall: (() => {
+      const lostLeads = new Set(outs.filter((o) => o.result === "lost" && o.lead_id).map((o) => o.lead_id!));
+      const wonL = Array.from(discLeads).filter((l) => dealOf(l)?.pay_sign_status === "paid_signed");
+      const decided = Array.from(discLeads).filter((l) => dealOf(l)?.pay_sign_status === "paid_signed" || lostLeads.has(l));
+      return { num: wonL.length, den: decided.length, items: discOuts.filter((o) => decided.includes(o.lead_id!)).map(item) } as Rate;
+    })(),
     recovery: { num: recovered.length, den: resched.length, items: resched.map(item) } as Rate,
     discA1: attempt("discovery", true), discA2: attempt("discovery", false),
     closA1: attempt("closing", true), closA2: attempt("closing", false),
@@ -290,7 +296,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
     { label: "Closing → Pay & Sign sent", r: m.closPS },
     { label: "Pay & Sign → Paid + signed", r: m.psPaid },
     { label: "Paid + signed → Activated", r: m.paidAct },
-    { label: "Overall close rate", r: m.overall },
+    { label: "Close rate (first booked meeting → won)", r: m.overall },
     { label: "Reschedule recovery", r: m.recovery },
   ];
 
@@ -298,7 +304,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
     { key: "name", label: "Salesman" }, { key: "discMeetings", label: "Discovery mtgs" },
     { key: "discShow", label: "Disc show %" }, { key: "discForm2", label: "Disc → Form 2 %" },
     { key: "closShow", label: "Closing show %" }, { key: "closPS", label: "Closing → P&S %" },
-    { key: "psPaid", label: "P&S → Paid %" }, { key: "overall", label: "Overall close %" },
+    { key: "psPaid", label: "P&S → Paid %" }, { key: "overall", label: "Close rate %" },
     { key: "lost", label: "Lost" }, { key: "topLost", label: "Top lost reason" }, { key: "missing", label: "Outcomes missing" },
   ];
   const repCellItems = (row: typeof repRows[number], key: string): Item[] | null => {
