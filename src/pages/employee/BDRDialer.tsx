@@ -75,6 +75,9 @@ interface DialLogRow {
 const STAT_KEYS = OUTCOMES.map(o => o.label);
 
 const ALL_LIST = "__all__";
+const ALL_NICHES = "__all_niches__";
+const NO_NICHE = "No niche yet";
+const nicheOf = (l: { niche: string | null }) => (l.niche || "").trim() || NO_NICHE;
 
 function inBucket(dateStr: string | null, bucket: "today" | "week" | "month" | "all") {
   if (!dateStr) return false;
@@ -128,6 +131,10 @@ export default function BDRDialer() {
   const [clientId, setClientId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<string>(ALL_LIST);
   const [showDialed, setShowDialed] = useState(false);
+  const [activeNiche, setActiveNiche] = useState<string>(() => {
+    try { return localStorage.getItem("nl_dialer_niche") || ALL_NICHES; } catch { return ALL_NICHES; }
+  });
+  useEffect(() => { try { localStorage.setItem("nl_dialer_niche", activeNiche); } catch { /* private mode */ } }, [activeNiche]);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [callbackLead, setCallbackLead] = useState<Lead | null>(null);
   const [callbackDate, setCallbackDate] = useState<string>("");
@@ -238,10 +245,23 @@ export default function BDRDialer() {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [leads, modeLeads]);
 
+  // Niches with counts inside the selected list (so the numbers match what tapping shows). "No niche yet" goes last.
+  const listLeads = useMemo(() => activeList === ALL_LIST
+    ? modeLeads
+    : modeLeads.filter(l => (l.list_name || "Uncategorized") === activeList), [modeLeads, activeList]);
+  const niches = useMemo(() => {
+    const map = new Map<string, number>();
+    listLeads.forEach(l => map.set(nicheOf(l), (map.get(nicheOf(l)) || 0) + 1));
+    return Array.from(map.entries()).sort((a, b) =>
+      a[0] === NO_NICHE ? 1 : b[0] === NO_NICHE ? -1 : b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [listLeads]);
+  // A saved niche that no longer exists in this list falls back to all niches.
+  useEffect(() => {
+    if (activeNiche !== ALL_NICHES && !loading && !niches.some(([n]) => n === activeNiche)) setActiveNiche(ALL_NICHES);
+  }, [niches, activeNiche, loading]);
+
   const visibleLeads = useMemo(() => {
-    const base = activeList === ALL_LIST
-      ? modeLeads
-      : modeLeads.filter(l => (l.list_name || "Uncategorized") === activeList);
+    const base = activeNiche === ALL_NICHES ? listLeads : listLeads.filter(l => nicheOf(l) === activeNiche);
     if (!showDialed) return base;
     // Most recently dialed first; legacy rows with no dialed_at go last (stable).
     return [...base].sort((a, b) => {
@@ -250,9 +270,9 @@ export default function BDRDialer() {
       if (ta === tb) return 0;
       return tb > ta ? 1 : -1;
     });
-  }, [modeLeads, activeList, showDialed]);
+  }, [listLeads, activeNiche, showDialed]);
 
-  useEffect(() => { if (!highlightId) setRenderCount(PAGE); }, [activeList, showDialed]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!highlightId) setRenderCount(PAGE); }, [activeList, activeNiche, showDialed]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -282,6 +302,7 @@ export default function BDRDialer() {
       return;
     }
     setShowDialed(!!lead.called);
+    if (activeNiche !== ALL_NICHES && nicheOf(lead) !== activeNiche) setActiveNiche(ALL_NICHES);
     if (lead.list_name && (lead.list_name || "Uncategorized") !== activeList) {
       setActiveList(lead.list_name || "Uncategorized");
     } else if (!lead.list_name && activeList !== ALL_LIST && activeList !== "Uncategorized") {
@@ -294,7 +315,7 @@ export default function BDRDialer() {
       rowRefs.current[lead.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 150);
     setTimeout(() => setHighlightId(null), 2400);
-  }, [activeList, navigate]);
+  }, [activeList, activeNiche, navigate]);
 
 
   const stats = useMemo(() => {
@@ -302,12 +323,12 @@ export default function BDRDialer() {
     let total = 0;
     const visibleIds = new Set(visibleLeads.map(l => l.id));
     for (const o of outcomes) {
-      if (activeList !== ALL_LIST && (!o.lead_id || !visibleIds.has(o.lead_id))) continue;
+      if ((activeList !== ALL_LIST || activeNiche !== ALL_NICHES) && (!o.lead_id || !visibleIds.has(o.lead_id))) continue;
       total += 1;
       if (counts[o.outcome] !== undefined) counts[o.outcome] += 1;
     }
     return { total, counts };
-  }, [outcomes, visibleLeads, activeList]);
+  }, [outcomes, visibleLeads, activeList, activeNiche]);
 
   const callCounts = useMemo(() => {
     const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
@@ -540,7 +561,7 @@ export default function BDRDialer() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">BDR Dialer</h1>
-          <p className="text-xs text-white/50 mt-1">{visibleLeads.length} lead{visibleLeads.length !== 1 ? "s" : ""} {activeList !== ALL_LIST && `in "${activeList}"`}</p>
+          <p className="text-xs text-white/50 mt-1">{visibleLeads.length} lead{visibleLeads.length !== 1 ? "s" : ""} {activeList !== ALL_LIST && `in "${activeList}"`}{activeNiche !== ALL_NICHES && ` · ${activeNiche}`}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => navigate("/employee/training")} className="text-white/60">
           <BookOpen className="h-4 w-4 mr-1" /> Training
@@ -687,6 +708,28 @@ export default function BDRDialer() {
         ))}
       </div>
 
+      {/* Niche filter — works on top of the list tab */}
+      {niches.length > 0 && !(niches.length === 1 && niches[0][0] === NO_NICHE) && (
+        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-1 px-1 pb-1"
+          style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}>
+          <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/40 mr-0.5">Niche</span>
+          {[[ALL_NICHES, listLeads.length] as [string, number], ...niches].map(([name, count]) => {
+            const on = activeNiche === name;
+            return (
+              <button key={name} onClick={() => setActiveNiche(name)}
+                className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors"
+                style={{
+                  background: on ? "hsla(262,80%,65%,.18)" : "hsla(215,35%,10%,.6)",
+                  color: on ? "hsl(262,80%,82%)" : name === NO_NICHE ? "hsl(0,0%,55%)" : "hsl(0,0%,72%)",
+                  border: `1px solid ${on ? "hsla(262,80%,65%,.45)" : "hsla(211,96%,60%,.12)"}`,
+                }}>
+                {name === ALL_NICHES ? "All niches" : name} <span className="opacity-60 ml-1">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Spreadsheet */}
       {/* Full width: cancels the page's side padding so the table runs edge to edge */}
       <div className="-mx-4 sm:-mx-6 lg:-mx-10" style={{ borderTop: "1px solid hsla(211,96%,60%,.12)", borderBottom: "1px solid hsla(211,96%,60%,.12)", background: "hsl(215,35%,8%)" }}>
@@ -745,6 +788,11 @@ export default function BDRDialer() {
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug min-w-[200px]" style={{ background: "hsl(215,35%,8%)" }}>
                       {lead.business_name}
+                      {lead.niche && (
+                        <div className="mt-1">
+                          <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}>{lead.niche}</span>
+                        </div>
+                      )}
                       {isPool && det?.firm && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {det.firm.firm_type && (
