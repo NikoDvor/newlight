@@ -78,6 +78,9 @@ const ALL_LIST = "__all__";
 const ALL_NICHES = "__all_niches__";
 const NO_NICHE = "No niche yet";
 const nicheOf = (l: { niche: string | null }) => (l.niche || "").trim() || NO_NICHE;
+/** Firm-type niches in a fixed order; anything a rep typed sorts after them, "No niche yet" last. */
+const NICHE_ORDER = ["RIA", "Hybrid", "Advisor", "Insurance"];
+const nicheRank = (n: string) => (n === NO_NICHE ? 99 : NICHE_ORDER.indexOf(n) >= 0 ? NICHE_ORDER.indexOf(n) : 50);
 
 function inBucket(dateStr: string | null, bucket: "today" | "week" | "month" | "all") {
   if (!dateStr) return false;
@@ -252,8 +255,7 @@ export default function BDRDialer() {
   const niches = useMemo(() => {
     const map = new Map<string, number>();
     listLeads.forEach(l => map.set(nicheOf(l), (map.get(nicheOf(l)) || 0) + 1));
-    return Array.from(map.entries()).sort((a, b) =>
-      a[0] === NO_NICHE ? 1 : b[0] === NO_NICHE ? -1 : b[1] - a[1] || a[0].localeCompare(b[0]));
+    return Array.from(map.entries()).sort((a, b) => nicheRank(a[0]) - nicheRank(b[0]) || b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [listLeads]);
   // A saved niche that no longer exists in this list falls back to all niches.
   useEffect(() => {

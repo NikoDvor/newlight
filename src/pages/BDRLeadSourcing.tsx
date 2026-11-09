@@ -331,7 +331,8 @@ export default function BDRLeadSourcing() {
       city: [r.city, r.state].filter(Boolean).join(", ") || null,
       website: r.iapd_url || null,
       crd: r.crd || null,
-      niche: r.focus || null,
+      // Niche = firm type. Insurance licensing rows are Insurance; SEC rows are set by the DB (RIA / Hybrid / Advisor).
+      niche: r.source === "SEC" ? null : "Insurance",
       notes: [
         r.source === "SEC" ? `Sourced from SEC IAPD.` : `Sourced from ${SOURCE_LABEL[r.source]} insurance licensing.`,
         r.sec_number ? `SEC #: ${r.sec_number}` : null,
