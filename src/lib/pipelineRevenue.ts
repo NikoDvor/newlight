@@ -125,6 +125,10 @@ export const ROLLING_WINDOW_DAYS = 90;
  * the last 90 days haven't been decided yet and a 90-day window reads every stage as converting badly.
  */
 export const CONVERSION_WINDOW_DAYS = 365;
+/** Deals younger than this are left out of the systemic-decline check. */
+export const SYSTEMIC_MIN_AGE_DAYS = 30;
+/** Lost-reason ▲/▼ changes only show when both periods have at least this many lost deals. */
+export const LOST_DELTA_MIN_N = 20;
 export const TREND_WEEKS = 8;
 
 /* ────────────────────────────── inputs ────────────────────────────── */
@@ -277,13 +281,20 @@ export interface PipelineRevenueModel {
   wonCountAllTime: number;
   openValue: number;
   weighted: { point: number; low: number; high: number };
+  /** Weighted pipeline ÷ what's still needed to hit the target this calendar year (null when no target or already hit). */
   coverageRatio: number | null;
   revenueTarget: number | null;
+  /** Won this calendar year (close date, falling back to created date). */
+  wonThisYear: number;
+  /** Target − won this year, floored at 0. Null when there's no target. */
+  targetRemaining: number | null;
   buckets: StageBucket[];
   stageRates: StageRate[];
   reps: RepRow[];
   lostBreakdown: LostBreakdownRow[];
   lostTotal: number;
+  /** Whether both 90-day periods have enough lost deals for the ▲/▼ share changes to mean anything. */
+  lostDeltaReliable: boolean;
   showUp: ShowUpRow[];
   winBacks: WinBackRow[];
   trend: TrendPoint[];
@@ -445,7 +456,13 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
 
   /* systemic detection: recent half vs earlier half of the window */
   const midpoint = new Date(now.getTime() - (CONVERSION_WINDOW_DAYS / 2) * DAY);
-  const recentConv = conversions(inWindow.filter((d) => new Date(d.created_at) >= midpoint), reach);
+  // Leads added in the last 30 days haven't had time to be worked yet — counting them would make every
+  // account that just added leads look like its Cold→Warm rate is collapsing.
+  const matureCutoff = new Date(now.getTime() - SYSTEMIC_MIN_AGE_DAYS * DAY);
+  const recentConv = conversions(
+    inWindow.filter((d) => new Date(d.created_at) >= midpoint && new Date(d.created_at) < matureCutoff),
+    reach,
+  );
   const priorConv = conversions(inWindow.filter((d) => new Date(d.created_at) < midpoint), reach);
 
   const pairs = stagePairs();
@@ -518,7 +535,13 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
   }
 
   const revenueTarget = input.revenueTarget && input.revenueTarget > 0 ? input.revenueTarget : null;
-  const coverageRatio = revenueTarget ? point / revenueTarget : null;
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const wonThisYear = deals
+    .filter((d) => toCanonStage(d.pipeline_stage) === "won" && new Date(d.close_date || d.created_at) >= yearStart)
+    .reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+  // Coverage is measured against what's still left to win this year, not the whole target.
+  const targetRemaining = revenueTarget != null ? Math.max(0, revenueTarget - wonThisYear) : null;
+  const coverageRatio = targetRemaining ? point / targetRemaining : null;
 
   /* per-rep rows */
   const reps: RepRow[] = repIds
@@ -684,6 +707,9 @@ export function computePipelineRevenue(input: ComputeInput): PipelineRevenueMode
     openValue,
     weighted: { point, low: Math.min(low, point), high: Math.max(high, point) },
     coverageRatio,
+    wonThisYear,
+    targetRemaining,
+    lostDeltaReliable: lostNow.length >= LOST_DELTA_MIN_N && lostPrior.length >= LOST_DELTA_MIN_N,
     revenueTarget,
     buckets,
     stageRates,

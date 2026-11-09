@@ -185,11 +185,12 @@ export function PipelineRevenueOpportunity({
     () =>
       projectRevenueLever(openDeals as any, rates.length ? rates : baseRates, {
         avgDealValueOverride: avgOverride,
-        revenueTarget: model?.revenueTarget ?? null,
+        // volume needed is for what's still left to win this year
+        revenueTarget: model?.targetRemaining || model?.revenueTarget || null,
         baseline,
         naturalAvgDealValue: naturalAvg,
       }),
-    [openDeals, rates, baseRates, avgOverride, model?.revenueTarget, baseline, naturalAvg],
+    [openDeals, rates, baseRates, avgOverride, model?.targetRemaining, model?.revenueTarget, baseline, naturalAvg],
   );
 
   const projected = lever.projectedRevenue;
@@ -212,7 +213,7 @@ export function PipelineRevenueOpportunity({
     );
   }
 
-  const { weighted, coverageRatio, revenueTarget, buckets, stageRates, lostBreakdown, lostTotal } = model;
+  const { weighted, coverageRatio, revenueTarget, targetRemaining, buckets, stageRates, lostBreakdown, lostTotal, lostDeltaReliable } = model;
   const bucket = (s: CanonStage) => buckets.find((b) => b.stage === s)!;
   const lastTrend = model.trend[model.trend.length - 1];
   const prevTrend = model.trend[model.trend.length - 2];
@@ -292,11 +293,14 @@ export function PipelineRevenueOpportunity({
                 icon={Gauge}
                 label="Coverage"
                 value={`${coverageRatio.toFixed(2)}×`}
-                sub={`vs ${fmtMoney(revenueTarget!)} target`}
+                sub={`vs ${fmtMoney(targetRemaining!)} left of ${fmtMoney(revenueTarget!)} target`}
                 tone={coverageRatio >= 3 ? "good" : coverageRatio >= 1.5 ? "warn" : "bad"}
               />
             )}
-            {coverageRatio == null && isAdmin && (
+            {revenueTarget != null && targetRemaining === 0 && (
+              <StatTile icon={Gauge} label="Revenue target" value="Reached" sub={`${fmtMoney(revenueTarget)} this year`} tone="good" />
+            )}
+            {revenueTarget == null && isAdmin && (
               <div className="rounded-xl px-3.5 py-2.5 min-w-[150px]" style={SUBPANEL}>
                 <p className="text-[9px] uppercase tracking-wider text-white/35 font-semibold flex items-center gap-1">
                   <Gauge className="h-3 w-3" /> Revenue target
@@ -336,7 +340,7 @@ export function PipelineRevenueOpportunity({
               icon={trendDelta > 0.005 ? TrendingUp : trendDelta < -0.005 ? TrendingDown : Minus}
               label="Close rate"
               value={fmtPct(model.bookedClose.rate, 1)}
-              sub={`First booked meeting → won · ${model.bookedClose.won} of ${model.bookedClose.decided} decided${model.bookedClose.open ? ` · ${model.bookedClose.open} in progress` : ""} · ${trendDelta >= 0 ? "+" : ""}${(trendDelta * 100).toFixed(1)}pt vs last wk`}
+              sub={`All time · first booked meeting → won · ${model.bookedClose.won} of ${model.bookedClose.decided} decided${model.bookedClose.open ? ` · ${model.bookedClose.open} in progress` : ""} · ${trendDelta >= 0 ? "+" : ""}${(trendDelta * 100).toFixed(1)}pt vs last wk`}
               tone={trendDelta >= 0 ? "good" : "bad"}
             />
           </div>
@@ -452,15 +456,17 @@ export function PipelineRevenueOpportunity({
                     className="text-[10px] tabular-nums w-14 text-right"
                     style={{
                       color:
-                        r.deltaPoints > 0.5
+                        lostDeltaReliable && r.deltaPoints > 0.5
                           ? "hsl(0 68% 62%)"
-                          : r.deltaPoints < -0.5
+                          : lostDeltaReliable && r.deltaPoints < -0.5
                             ? "hsl(152 62% 55%)"
                             : "hsl(0 0% 100% / .3)",
                     }}
                   >
-                    {r.deltaPoints > 0.5 ? "▲" : r.deltaPoints < -0.5 ? "▼" : "–"}{" "}
-                    {Math.abs(r.deltaPoints) >= 0.5 ? `${Math.abs(r.deltaPoints).toFixed(0)}pt` : ""}
+                    {!lostDeltaReliable ? "–" : <>
+                      {r.deltaPoints > 0.5 ? "▲" : r.deltaPoints < -0.5 ? "▼" : "–"}{" "}
+                      {Math.abs(r.deltaPoints) >= 0.5 ? `${Math.abs(r.deltaPoints).toFixed(0)}pt` : ""}
+                    </>}
                   </span>
                 </div>
               ))}
@@ -548,8 +554,12 @@ export function PipelineRevenueOpportunity({
               ))}
             </div>
             <p className="mt-2 text-[10px] text-white/35">
-              Volume needed to reach{" "}
-              {model.revenueTarget ? `your ${fmtMoney(model.revenueTarget)} target` : "the projection above"}
+              Volume needed to{" "}
+              {model.revenueTarget
+                ? model.targetRemaining
+                  ? `close the ${fmtMoney(model.targetRemaining)} still left of your ${fmtMoney(model.revenueTarget)} target this year`
+                  : `match the projection above — this year's ${fmtMoney(model.revenueTarget)} target is already reached`
+                : "reach the projection above"}
               , at the current stage close rates.
             </p>
           </div>

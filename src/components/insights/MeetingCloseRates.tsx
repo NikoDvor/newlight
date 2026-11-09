@@ -45,13 +45,13 @@ export function MeetingCloseRates({ clientId }: { clientId: string }) {
           <Target className="h-3.5 w-3.5" style={{ color: "hsl(210 40% 98%)" }} />
         </div>
         <h3 className="text-base font-bold text-foreground">Close Rates by Meeting</h3>
-        <span className="text-[11px] text-muted-foreground">Every meeting, reschedule and show-up, from your live pipeline</span>
+        <span className="text-[11px] text-muted-foreground">All time · every meeting, reschedule and show-up, from your live pipeline</span>
       </div>
 
       {/* main close rate */}
       <div className="rounded-xl border p-4 mb-4 flex flex-wrap items-end gap-x-6 gap-y-2" style={{ borderColor: "hsl(var(--border))" }}>
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Close rate</p>
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Close rate · all time</p>
           <p className="text-4xl font-bold tabular-nums leading-none mt-1" style={{ color: "hsl(142 71% 40%)" }}>
             {pct(main.rate, main.n)}
           </p>

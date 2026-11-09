@@ -42,7 +42,10 @@ describe("pipeline revenue", () => {
     expect(m.wonCountAllTime).toBe(5);
     expect(m.weighted.low).toBeLessThanOrEqual(m.weighted.point);
     expect(m.weighted.high).toBeGreaterThanOrEqual(m.weighted.point);
-    expect(m.coverageRatio).toBeCloseTo(m.weighted.point / 50000);
+    // coverage is vs what's left of the target this year: 50,000 − 10,000 already won
+    expect(m.wonThisYear).toBe(10000);
+    expect(m.targetRemaining).toBe(40000);
+    expect(m.coverageRatio).toBeCloseTo(m.weighted.point / 40000);
     expect(m.showUp[0]).toMatchObject({ booked: 2, attended: 1, rate: 0.5 });
     expect(m.showUp[1]).toMatchObject({ booked: 1, attended: 1, rate: 1 });
     expect(m.winBacks.map(w => w.id)).toEqual(["d99"]);
