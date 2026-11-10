@@ -1195,6 +1195,7 @@ export type Database = {
           description: string | null
           ends_at: string
           extra_type: string | null
+          followup_number: number
           id: string
           is_external: boolean
           is_extra: boolean
@@ -1234,6 +1235,7 @@ export type Database = {
           description?: string | null
           ends_at: string
           extra_type?: string | null
+          followup_number?: number
           id?: string
           is_external?: boolean
           is_extra?: boolean
@@ -1273,6 +1275,7 @@ export type Database = {
           description?: string | null
           ends_at?: string
           extra_type?: string | null
+          followup_number?: number
           id?: string
           is_external?: boolean
           is_extra?: boolean
@@ -1528,6 +1531,7 @@ export type Database = {
           client_id: string | null
           created_at: string
           event_id: string
+          followup_number: number
           id: string
           lead_id: string | null
           logged_at: string
@@ -1548,6 +1552,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           event_id: string
+          followup_number?: number
           id?: string
           lead_id?: string | null
           logged_at?: string
@@ -1568,6 +1573,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           event_id?: string
+          followup_number?: number
           id?: string
           lead_id?: string | null
           logged_at?: string
@@ -8653,6 +8659,7 @@ export type Database = {
           self_booking_widget_non_owner: boolean | null
           skipped_discovery: boolean
           source_type: string | null
+          state: string | null
           status: string
           street_address: string | null
           unattended_return_stage: string | null
@@ -8719,6 +8726,7 @@ export type Database = {
           self_booking_widget_non_owner?: boolean | null
           skipped_discovery?: boolean
           source_type?: string | null
+          state?: string | null
           status?: string
           street_address?: string | null
           unattended_return_stage?: string | null
@@ -8785,6 +8793,7 @@ export type Database = {
           self_booking_widget_non_owner?: boolean | null
           skipped_discovery?: boolean
           source_type?: string | null
+          state?: string | null
           status?: string
           street_address?: string | null
           unattended_return_stage?: string | null
@@ -9639,6 +9648,32 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_demo_state: {
+        Row: {
+          as_of: string
+          client_id: string
+          last_rolled_at: string | null
+        }
+        Insert: {
+          as_of: string
+          client_id: string
+          last_rolled_at?: string | null
+        }
+        Update: {
+          as_of?: string
+          client_id?: string
+          last_rolled_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_demo_state_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_discovery_numbers: {
         Row: {
           created_at: string
@@ -9759,6 +9794,27 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_firm_types: {
+        Row: {
+          crd: string
+          firm_type: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          crd: string
+          firm_type: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          crd?: string
+          firm_type?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nl_health_check_log: {
         Row: {
           chapters_under_threshold: Json
@@ -9795,6 +9851,57 @@ export type Database = {
           overall_status?: string
           total_chapters?: number
           total_questions?: number
+        }
+        Relationships: []
+      }
+      nl_lead_auto_pull_log: {
+        Row: {
+          cities: string[]
+          id: string
+          note: string | null
+          pulled: number
+          rep_user_id: string
+          requested: number
+          run_at: string
+        }
+        Insert: {
+          cities?: string[]
+          id?: string
+          note?: string | null
+          pulled: number
+          rep_user_id: string
+          requested: number
+          run_at?: string
+        }
+        Update: {
+          cities?: string[]
+          id?: string
+          note?: string | null
+          pulled?: number
+          rep_user_id?: string
+          requested?: number
+          run_at?: string
+        }
+        Relationships: []
+      }
+      nl_lead_auto_pull_settings: {
+        Row: {
+          enabled: boolean
+          id: number
+          leads_per_day: number
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: number
+          leads_per_day?: number
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: number
+          leads_per_day?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -10178,25 +10285,40 @@ export type Database = {
           active: boolean
           city: string | null
           created_at: string
+          done_at: string | null
           id: string
+          position: number | null
           rep_user_id: string
+          source_exhausted: boolean
+          started_at: string | null
           state: string
+          status: string
         }
         Insert: {
           active?: boolean
           city?: string | null
           created_at?: string
+          done_at?: string | null
           id?: string
+          position?: number | null
           rep_user_id: string
+          source_exhausted?: boolean
+          started_at?: string | null
           state: string
+          status?: string
         }
         Update: {
           active?: boolean
           city?: string | null
           created_at?: string
+          done_at?: string | null
           id?: string
+          position?: number | null
           rep_user_id?: string
+          source_exhausted?: boolean
+          started_at?: string | null
           state?: string
+          status?: string
         }
         Relationships: []
       }
@@ -10861,6 +10983,114 @@ export type Database = {
         Update: {
           kind?: string | null
           row?: Json | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261109: {
+        Row: {
+          audience: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261109b: {
+        Row: {
+          audience: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261110: {
+        Row: {
+          audience: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
         }
         Relationships: []
       }
@@ -17234,6 +17464,19 @@ export type Database = {
         Args: { _consent?: boolean; _phone?: string; _token: string }
         Returns: Json
       }
+      nl_auto_pull_daily: { Args: never; Returns: number }
+      nl_auto_pull_for: {
+        Args: { _count?: number; _rep: string }
+        Returns: number
+      }
+      nl_auto_pull_now: {
+        Args: { _count?: number; _rep: string }
+        Returns: number
+      }
+      nl_bdr_lead_firm_niche: {
+        Args: { _crd: string; _pool: string; _source: string }
+        Returns: string
+      }
       nl_billing_cron_ok: { Args: { p: string }; Returns: boolean }
       nl_commission_cleared_on: {
         Args: { p_method: string; p_received: string }
@@ -17329,7 +17572,17 @@ export type Database = {
         }
         Returns: string
       }
+      nl_demo_roll_forward: { Args: never; Returns: number }
+      nl_dialer_find_by_phone: {
+        Args: { _digits: string }
+        Returns: {
+          lead_id: string
+          matched_name: string
+          matched_phone: string
+        }[]
+      }
       nl_dialer_lead_details: { Args: { _lead_ids: string[] }; Returns: Json }
+      nl_digits: { Args: { _t: string }; Returns: string }
       nl_jbool: { Args: { v: Json }; Returns: boolean }
       nl_jdate: { Args: { v: Json }; Returns: string }
       nl_jnum: { Args: { v: Json }; Returns: number }
@@ -17382,6 +17635,7 @@ export type Database = {
           won_clients: number
         }[]
       }
+      nl_niche_label: { Args: { _t: string }; Returns: string }
       nl_phone10: { Args: { t: string }; Returns: string }
       nl_pool_assign: {
         Args: {
@@ -17425,6 +17679,7 @@ export type Database = {
         Returns: number
       }
       nl_pool_recycle: { Args: never; Returns: Json }
+      nl_pool_release_untouched: { Args: never; Returns: number }
       nl_pool_stats: {
         Args: never
         Returns: {
@@ -17437,9 +17692,33 @@ export type Database = {
           total: number
         }[]
       }
+      nl_territory_move: {
+        Args: { _dir: number; _id: string }
+        Returns: undefined
+      }
+      nl_territory_queue: {
+        Args: never
+        Returns: {
+          available: number
+          city: string
+          done_at: string
+          id: string
+          queue_position: number
+          rep_user_id: string
+          source_exhausted: boolean
+          started_at: string
+          state: string
+          status: string
+          with_reps: number
+        }[]
+      }
       nl_update_call: {
         Args: { _call_id: string; _notes?: string; _outcome: string }
         Returns: undefined
+      }
+      nl_workdays_between: {
+        Args: { _from: string; _to: string }
+        Returns: number
       }
       normalize_business_name: { Args: { _n: string }; Returns: string }
       normalize_city_name: { Args: { _c: string }; Returns: string }
