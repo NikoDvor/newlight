@@ -7,7 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { createZoomMeeting } from "../_shared/zoom.ts";
 import { attendeeEmail, type MeetingAttendee } from "../_shared/meetingAttendees.ts";
 import { esc, fmtMoney, buildServiceAgreementHtml, applyPlanTerms, AGREEMENT_VERSION } from "../_shared/service-agreement-html.ts";
-import { mergeDefaults, defaultPrices, needsApproval, buildPlan, pacificDate, type PackageKey } from "../_shared/packages.ts";
+import { mergeDefaults, defaultPrices, buildPlan, pacificDate, type PackageKey } from "../_shared/packages.ts";
 import { sendEmail as nlSendEmail, emailHtml as nlEmailHtml, OPS_EMAIL as NL_OPS_EMAIL, APP_BASE_URL as NL_APP_BASE } from "../_shared/nlBilling.ts";
 
 // Short, distinct receipt/terms-summary document (separate from the full 16-section agreement).
@@ -364,10 +364,8 @@ Deno.serve(async (req) => {
       const dflt = defaultPrices(pkg, Number(avg_client_value || 0));
       const setupN = Number(initial_fee || 0), monthlyN = Number(recurring_fee || (isCommission ? 0 : 0));
       const custom = Math.abs(setupN - dflt.setup) > 0.5 || (!isCommission && Math.abs(monthlyN - dflt.monthly) > 0.5);
-      const lowCommission = isCommission && (
-        Number(commission_rate ?? 0) < pkg.commission_rate * (1 - pkg.discount_approval_pct / 100) ||
-        Number(commission_rate_ongoing ?? 0) < pkg.commission_rate_ongoing * (1 - pkg.discount_approval_pct / 100));
-      const approval = (lowCommission || needsApproval(pkg, setupN, isCommission ? dflt.monthly : monthlyN, dflt)) ? "pending" : "not_needed";
+      // No approval gate: custom prices go straight through; admins can reject a deal afterwards.
+      const approval = "not_needed";
       const preview = buildPlan({ pkg, setup: setupN, monthly: monthlyN, cadence, paymentPlan, ongoing: isCommission ? "commission" : "retainer",
         commissionRate: commission_rate != null ? Number(commission_rate) : undefined, commissionRateOngoing: commission_rate_ongoing != null ? Number(commission_rate_ongoing) : undefined, signDate: pacificDate() });
       planInfo = { pkg, dflt, custom, approval, preview };
@@ -496,15 +494,6 @@ Deno.serve(async (req) => {
       plan_preview: planInfo.preview, recurring_fee: isCommission ? null : Number(recurring_fee || 0),
     });
     await supabase.from("crm_deals").update(dealPatch as any).eq("id", dealId);
-    if (planInfo?.approval === "pending") {
-      try {
-        await nlSendEmail([NL_OPS_EMAIL], `Price approval needed — ${lead.business_name}`, nlEmailHtml(`Custom price needs your approval`, [
-          `${lead.business_name} — ${planInfo.pkg.label}.`,
-          `Entered: setup ${fmtMoney(Number(initial_fee || 0))}${isCommission ? "" : `, monthly ${fmtMoney(Number(recurring_fee || 0))}`}. Default: setup ${fmtMoney(planInfo.dflt.setup)}, monthly ${fmtMoney(planInfo.dflt.monthly)}.`,
-          "The Pay & Sign link can't be used until you approve.",
-        ], `${NL_APP_BASE}/admin/packages-pricing`, "Review in Packages & Pricing"));
-      } catch (e) { console.error("[close-prep] approval email failed", e); }
-    }
 
     // 6. Link back to lead + create close_prep_links row
     const { error: linkErr } = await supabase.from("nl_bdr_leads").update({

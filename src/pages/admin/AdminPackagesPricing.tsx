@@ -62,7 +62,7 @@ function Approvals() {
   const load = useCallback(async () => {
     const db = supabase as any;
     const { data } = await db.from("crm_deals").select("id, deal_name, package, billing_cadence, initial_fee, recurring_fee, pricing_model, avg_client_value, pricing_defaults, assigned_user, created_at")
-      .eq("price_approval_status", "pending").order("created_at", { ascending: false });
+      .eq("custom_pricing", true).in("price_approval_status", ["pending", "not_needed"]).order("created_at", { ascending: false }).limit(50);
     const ids = Array.from(new Set((data || []).map((d: any) => d.assigned_user).filter(Boolean)));
     const { data: emps } = ids.length ? await db.from("employee_profiles").select("user_id, full_name").in("user_id", ids) : { data: [] };
     const nm = new Map((emps || []).map((e: any) => [e.user_id, e.full_name]));
@@ -81,9 +81,9 @@ function Approvals() {
   if (!rows) return <Loader2 className="h-5 w-5 animate-spin text-white/40" />;
   return (
     <div className={card}>
-      <div className="text-sm font-semibold text-white mb-1">Custom prices waiting for approval</div>
-      <p className="text-xs text-white/45 mb-3">Prices more than the allowed % under the default. The Pay &amp; Sign link is locked until you approve.</p>
-      {rows.length === 0 ? <p className="py-4 text-center text-sm text-white/40">Nothing waiting.</p> : (
+      <div className="text-sm font-semibold text-white mb-1">Custom-priced deals (reject if needed)</div>
+      <p className="text-xs text-white/45 mb-3">Salesmen can price freely. Reject a deal here to lock its Pay &amp; Sign link and notify the salesman.</p>
+      {rows.length === 0 ? <p className="py-4 text-center text-sm text-white/40">No custom-priced deals.</p> : (
         <div className="space-y-2">
           {rows.map((d) => {
             const dflt = d.pricing_defaults || {};
@@ -97,7 +97,6 @@ function Approvals() {
                   {d.avg_client_value && <div className="text-white/45">Average client {money(d.avg_client_value)}</div>}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" disabled={busy === d.id} onClick={() => decide(d.id, true)}><Check className="h-3.5 w-3.5 mr-1" />Approve</Button>
                   <Button size="sm" variant="outline" disabled={busy === d.id} onClick={() => decide(d.id, false)}><X className="h-3.5 w-3.5 mr-1" />Reject</Button>
                 </div>
               </div>
