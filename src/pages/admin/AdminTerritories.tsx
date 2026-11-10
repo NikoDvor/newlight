@@ -40,6 +40,9 @@ function RepCard({ rep, terrs, lastPull, perDay, reload }: {
   const [firm, setFirm] = useState("any"); const [count, setCount] = useState(50);
   const [busy, setBusy] = useState(false);
   const states = Array.from(new Set(terrs.map(t => t.state)));
+  const cityRows = terrs.filter(t => t.city);
+  const pendingStates = terrs.filter(t => !t.city && !cityRows.some(c => c.state === t.state)).map(t => t.state);
+  const [showCity, setShowCity] = useState(false);
   const waiting = terrs.filter(t => t.status !== "done").reduce((x, t) => x + (t.available || 0), 0);
 
   const add = async () => {
@@ -94,7 +97,7 @@ function RepCard({ rep, terrs, lastPull, perDay, reload }: {
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          {rep.salesman ? `Gets ${perDay} new leads the evening before each work day, city by city in this order.` : "Not a salesman — no daily pull."}
+          {rep.salesman ? `Gets ${perDay} new leads at 6pm Pacific the evening before each work day, city by city in this order. New cities are added automatically.` : "Not a salesman — no daily pull."}
           {rep.salesman && terrs.length > 0 && ` ${waiting} loaded and waiting${waiting < perDay ? " — below one day's pull" : ""}.`}
         </p>
         {lastPull && (
@@ -105,13 +108,18 @@ function RepCard({ rep, terrs, lastPull, perDay, reload }: {
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        {terrs.length === 0 ? <p className="text-sm text-muted-foreground">No cities yet. Add the first city they should work.</p> : (
-          <ol className="space-y-1">{terrs.map((t, i) => {
+        {pendingStates.length > 0 && (
+          <p className="text-xs rounded-md bg-sky-500/10 text-sky-300 px-2.5 py-1.5">
+            {pendingStates.join(", ")}: the starting city is picked automatically at 2:30pm Pacific (the city with the most advisor firms that no one else has). First leads arrive at 6pm that day.
+          </p>
+        )}
+        {terrs.length === 0 ? <p className="text-sm text-muted-foreground">No state yet. Assign a state below.</p> : (
+          <ol className="space-y-1">{terrs.filter(t => t.city || !cityRows.some(c => c.state === t.state)).map((t, i, list) => {
             const style = STATUS_STYLE[t.status] || STATUS_STYLE.queued;
             return (
               <li key={t.id} className="flex items-center gap-2 text-sm">
                 <span className="w-6 text-right tabular-nums text-muted-foreground">{i + 1}.</span>
-                <span className="flex-1 min-w-0 truncate">{t.city || "Whole state"}, {t.state}</span>
+                <span className="flex-1 min-w-0 truncate">{t.city ? `${t.city}, ${t.state}` : `${t.state} — starting city coming`}</span>
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${style.cls}`}>{style.label}</span>
                 <span className="w-24 text-right text-xs tabular-nums text-muted-foreground" title="Loaded in the pool and not yet pulled">
                   {t.available} waiting
@@ -120,7 +128,7 @@ function RepCard({ rep, terrs, lastPull, perDay, reload }: {
                   {t.source_exhausted ? "AdvizorPro: all loaded" : "AdvizorPro: more to load"}
                 </span>
                 <Button size="icon" variant="ghost" className="h-7 w-7" disabled={i === 0} onClick={() => move(t.id, -1)} aria-label="Move up"><ArrowUp className="h-3.5 w-3.5" /></Button>
-                <Button size="icon" variant="ghost" className="h-7 w-7" disabled={i === terrs.length - 1} onClick={() => move(t.id, 1)} aria-label="Move down"><ArrowDown className="h-3.5 w-3.5" /></Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" disabled={i === list.length - 1} onClick={() => move(t.id, 1)} aria-label="Move down"><ArrowDown className="h-3.5 w-3.5" /></Button>
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => del(t.id)} aria-label="Remove"><Trash2 className="h-3.5 w-3.5" /></Button>
               </li>
             );
@@ -128,9 +136,16 @@ function RepCard({ rep, terrs, lastPull, perDay, reload }: {
         )}
         <div className="flex flex-wrap gap-2 items-center">
           <StateSelect value={st} onChange={setSt} />
-          <Input placeholder="City" value={city} onChange={e => setCity(e.target.value)} className="w-44"
-            onKeyDown={e => { if (e.key === "Enter") add(); }} />
-          <Button variant="outline" onClick={add} disabled={!st}>Add city to the end</Button>
+          {showCity && (
+            <Input placeholder="City (optional)" value={city} onChange={e => setCity(e.target.value)} className="w-44"
+              onKeyDown={e => { if (e.key === "Enter") add(); }} />
+          )}
+          <Button variant="outline" onClick={add} disabled={!st}>{city.trim() ? "Add city to the end" : "Assign state"}</Button>
+          {!showCity && (
+            <button type="button" onClick={() => setShowCity(true)} className="text-xs text-muted-foreground hover:text-foreground">
+              or add a specific city
+            </button>
+          )}
         </div>
         <div className="flex flex-wrap gap-2 items-center border-t border-border pt-3">
           <span className="text-xs text-muted-foreground">Assign leads by hand:</span>
@@ -214,11 +229,11 @@ export default function AdminTerritories() {
           </label>
           <span className="text-muted-foreground">Every salesman gets</span>
           <Input type="number" min={1} max={500} value={perDayDraft} onChange={e => setPerDayDraft(e.target.value)} className="w-20" />
-          <span className="text-muted-foreground">new leads, Sunday–Thursday at 5pm Pacific (6pm in summer).</span>
+          <span className="text-muted-foreground">new leads, Sunday–Thursday at 6pm Pacific.</span>
           <Button size="sm" variant="outline" disabled={!settings || Number(perDayDraft) === settings.leads_per_day || !(Number(perDayDraft) >= 1 && Number(perDayDraft) <= 500)}
             onClick={() => saveSettings({ leads_per_day: Math.round(Number(perDayDraft)) })}>Save</Button>
           <p className="basis-full text-xs text-muted-foreground">
-            Each salesman works their cities top to bottom. A city is done when AdvizorPro has nothing new there and every loaded firm has been pulled; then the next city starts. A city belongs to one salesman.
+            Assign a salesman a state. The system picks their starting city, then works city by city: when a city has nothing new left in AdvizorPro and every loaded firm has been pulled, it moves to the closest city no one else has. A city belongs to one salesman.
           </p>
         </CardContent>
       </Card>
