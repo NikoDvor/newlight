@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { supabase } from "@/integrations/supabase/client";
 import { rangeStart, type RangeKey } from "@/components/insights/PipelineInsightsView";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
-import { buildLeadJourney, furthestStageLabel, journeyStatusText } from "@/lib/leadJourney";
+import { buildLeadJourney, furthestStageLabel, journeyStatusText, type LeadJourney } from "@/lib/leadJourney";
 import { ANOTHER_MEETING_REASONS, LOST_REASONS, MEETING_KINDS, RESCHEDULE_REASONS, type LostReason } from "@/lib/meetingOutcomes";
 
 const NEON = "hsl(211,96%,60%)";
@@ -51,6 +51,29 @@ async function inChunks<T>(ids: string[], fn: (chunk: string[]) => Promise<T[]>)
   const res: T[] = [];
   for (let i = 0; i < ids.length; i += 200) res.push(...(await fn(ids.slice(i, i + 200))));
   return res;
+}
+
+/** Per lead: meetings held at each stage until the next form, extra meetings, last outcome and the objection. */
+function stageCounts(j: LeadJourney) {
+  const rows = j.timeline.filter((r) => r.outcome && r.kind !== "pay_sign");
+  const held = (k: string) => rows.filter((r) => r.kind === k && r.outcome!.attendance === "attended").length;
+  const reached = (k: string) => rows.some((r) => r.kind === k && r.outcome!.result === "won");
+  const disc = held("discovery"), clos = held("closing");
+  const last = j.timeline.filter((r) => r.outcome).sort((a, b) => String(a.outcome!.logged_at).localeCompare(String(b.outcome!.logged_at))).pop()?.outcome || null;
+  const resultText: Record<string, string> = { won: "Moved forward", another_meeting: "Wanted another meeting", rescheduled: "Rescheduled", lost: "Lost" };
+  const lostOut = j.timeline.map((r) => r.outcome).filter((o) => o && o.result === "lost").pop() || null;
+  const objections = lostOut ? [lostOut.primary_lost_reason, ...((lostOut.lost_reasons || []) as string[])].filter((x, i, a) => x && a.indexOf(x) === i) as string[] : [];
+  const lastReason = last?.result === "another_meeting" && last.reschedule_reason
+    ? ANOTHER_MEETING_REASONS[last.reschedule_reason as keyof typeof ANOTHER_MEETING_REASONS] || last.reschedule_reason
+    : last?.result === "rescheduled" && last.reschedule_reason
+    ? RESCHEDULE_REASONS[last.reschedule_reason as keyof typeof RESCHEDULE_REASONS] || last.reschedule_reason : null;
+  return {
+    toForm2: disc ? `${disc}${reached("discovery") ? " ✓" : " so far"}` : "—",
+    toPaySign: clos ? `${clos}${reached("closing") ? " ✓" : " so far"}` : "—",
+    extras: j.extraMeetings,
+    lastOutcome: last ? `${resultText[last.result] || last.result}${lastReason ? ` (${lastReason})` : ""}` : "—",
+    objection: objections.length ? objections.map((o) => reasonLabel(o)).join(", ") : "—",
+  };
 }
 
 /* ─── metric engine ─── */
@@ -229,8 +252,11 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
       const att = os.filter((o) => o.attendance === "attended" || o.attendance === "no_show");
       const n = os.length;
       const r = (res: string) => ({ num: os.filter((o) => o.result === res).length, den: n, items: os.filter((o) => o.result === res).map((o) => ({ out: o, ev: evById.get(o.event_id) })) });
+      const lostC = new Map<string, number>();
+      os.filter((o) => o.result === "lost").forEach((o) => { const r = o.primary_lost_reason || "other"; lostC.set(r, (lostC.get(r) || 0) + 1); });
+      const topLost = Array.from(lostC.entries()).sort((a, b) => b[1] - a[1])[0] || null;
       return {
-        label, n, items: os.map((o) => ({ out: o, ev: evById.get(o.event_id) })),
+        label, n, items: os.map((o) => ({ out: o, ev: evById.get(o.event_id) })), topLost,
         show: { num: att.filter((o) => o.attendance === "attended").length, den: att.length, items: att.map((o) => ({ out: o, ev: evById.get(o.event_id) })) },
         forward: r("won"), another: r("another_meeting"), resched: r("rescheduled"), lost: r("lost"),
       };
@@ -349,6 +375,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
         meetings: j.meetings, attended: j.attended, noShows: j.noShows, reschedules: j.reschedules, cancellations: j.cancellations,
         attendance: j.attendanceRate == null ? null : Math.round(j.attendanceRate * 100),
         furthest: furthestStageLabel(j.furthestStage), status: journeyStatusText(j, reasonLabel),
+        ...stageCounts(j),
       };
     }).filter((r) => !q || r.business.toLowerCase().includes(q) || r.salesman.toLowerCase().includes(q) || r.status.toLowerCase().includes(q));
     const dir = jSortAsc ? 1 : -1;
@@ -362,7 +389,10 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
     { key: "business", label: "Business" }, ...(repUserId ? [] : [{ key: "salesman", label: "Salesman" }]),
     { key: "meetings", label: "Meetings" }, { key: "attended", label: "Attended" }, { key: "noShows", label: "No-shows" },
     { key: "reschedules", label: "Reschedules" }, { key: "cancellations", label: "Cancellations" },
-    { key: "attendance", label: "Attendance %" }, { key: "furthest", label: "Furthest stage" }, { key: "status", label: "Status" },
+    { key: "attendance", label: "Attendance %" },
+    { key: "toForm2", label: "Discovery mtgs → Form 2" }, { key: "toPaySign", label: "Closing mtgs → Pay & Sign" },
+    { key: "extras", label: "Extra mtgs" }, { key: "lastOutcome", label: "Last outcome" }, { key: "objection", label: "Objection" },
+    { key: "furthest", label: "Furthest stage" }, { key: "status", label: "Status" },
   ];
   const evItems = (es: Ev[]): Item[] => es.map((ev) => ({ ev }));
 
@@ -520,12 +550,13 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 <div key={title}>
                   <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">{title}</p>
                   <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
-                    <table className="w-full min-w-[760px] text-xs">
+                    <table className="w-full min-w-[900px] text-xs">
                       <thead><tr className="text-left text-white/40">
                         <th className="px-3 py-2 font-medium">Meeting</th><th className="px-3 py-2 font-medium text-right">Logged</th>
                         <th className="px-3 py-2 font-medium text-right">Show-up %</th><th className="px-3 py-2 font-medium text-right">Moved forward %</th>
                         <th className="px-3 py-2 font-medium text-right">Another meeting %</th><th className="px-3 py-2 font-medium text-right">Rescheduled %</th>
                         <th className="px-3 py-2 font-medium text-right">Lost %</th>
+                        <th className="px-3 py-2 font-medium">Top objection</th>
                       </tr></thead>
                       <tbody>
                         {rows.map((r) => (
@@ -537,6 +568,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                                 <button className="hover:underline" onClick={() => open(r.label, x.items)}>{pct(x) == null ? "—" : `${pct(x)}%`}</button>
                               </td>
                             ))}
+                            <td className="px-3 py-1.5 text-white/60">{r.topLost ? `${reasonLabel(r.topLost[0])} (${r.topLost[1]})` : "—"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -691,7 +723,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                   className="h-8 w-64 max-w-full rounded-md border border-white/10 bg-white/[0.04] px-2.5 text-xs text-white placeholder:text-white/30" />
               </div>
               <div className="overflow-x-auto rounded-lg border border-white/[0.06] max-h-[520px] overflow-y-auto">
-                <table className="w-full text-xs min-w-[980px]">
+                <table className="w-full text-xs min-w-[1400px]">
                   <thead><tr className="text-white/40 text-left">
                     {JCOLS.map((c) => (
                       <th key={c.key} className="p-2 font-medium cursor-pointer select-none whitespace-nowrap hover:text-white/70"
