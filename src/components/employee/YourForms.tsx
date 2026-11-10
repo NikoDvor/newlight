@@ -5,7 +5,7 @@ import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
 import { FormLeadPickerCard } from "@/components/employee/FormLeadPicker";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 import LogExternalMeetingDialog from "@/components/employee/LogExternalMeetingDialog";
-import { ClipboardCheck, ScrollText, Users, type LucideIcon } from "lucide-react";
+import { CalendarPlus, ClipboardCheck, ScrollText, Users, type LucideIcon } from "lucide-react";
 
 type LinkedForm = {
   kind: "link";
@@ -46,6 +46,7 @@ export function YourForms() {
 
   if (!cal) return null;
 
+  const meetingUrl = cal.booking_slug ? `${origin}/bdr/meet/${cal.booking_slug}` : "";
   const forms: FormItem[] = [
     {
       kind: "link",
@@ -84,7 +85,7 @@ export function YourForms() {
     <Card data-tour="forms" className="border border-primary/20 bg-card/60 backdrop-blur-xl shadow-[0_0_0_1px_hsla(211,96%,60%,0.05),0_8px_32px_-12px_hsla(211,96%,40%,0.25),inset_0_1px_0_hsla(200,100%,80%,0.06)] p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-foreground">Your Forms</h2>
-        <Badge variant="outline" className="text-[10px]">3 forms · one per step</Badge>
+        <Badge variant="outline" className="text-[10px]">3 forms · one per step · plus your meeting link</Badge>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {forms.map((f) => {
@@ -124,6 +125,15 @@ export function YourForms() {
             </div>
           );
         })}
+      </div>
+      {/* Regular meeting link: any extra meeting before the next form. Bookings from a lead you've already met
+          attach to that lead automatically as a follow-up, so they count in your meeting stats. */}
+      <div className="mt-4 border-t border-border pt-4">
+        <BookingLinkCard name="Meeting link · Any extra meeting" badge="Before the next form" url={meetingUrl} />
+        <div className="mt-1.5 flex items-start gap-2 text-[10px] text-muted-foreground">
+          <CalendarPlus className="h-3 w-3 shrink-0 mt-px" />
+          <span>Send this when a lead wants another meeting before Form 2 or Pay &amp; Sign. They enter name, phone, email and notes and pick a time; they get the Zoom link and reminders. It's logged on their lead as a follow-up.</span>
+        </div>
       </div>
       <LogExternalMeetingDialog open={logOpen} lead={null} onClose={() => setLogOpen(false)} />
     </Card>

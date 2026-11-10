@@ -571,10 +571,10 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: "disco
         {!showFormStep && isMeeting && (
           <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
             <Field label="Your name" required><Input value={contact.customer_name} onChange={e => setContact({ ...contact, customer_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
-            <Field label="Email" required><Input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
-            <Field label="Phone (optional)"><Input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+            <Field label="Phone" required><Input type="tel" inputMode="tel" autoComplete="tel" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+            <Field label="Email" required><Input type="email" autoComplete="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
             <Field label="Company (optional)"><Input value={contact.business_name} onChange={e => setContact({ ...contact, business_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
-            <Field label="Notes (optional)">
+            <Field label="Additional notes (optional)">
               <textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} rows={2}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
             </Field>
@@ -591,12 +591,12 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: "disco
 
             <BookingSlotPicker slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} />
 
-            <Button onClick={submitMeeting} disabled={submitting || !contact.customer_name || !contact.email || !selectedSlot}
+            <Button onClick={submitMeeting} disabled={submitting || !contact.customer_name || !contact.email || !contact.phone.trim() || !selectedSlot}
               className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Book meeting"}
             </Button>
-            {!contact.customer_name || !contact.email || !selectedSlot ? (
-              <p className="text-sm text-red-400 text-center">Please fill in your name, email and select a time slot.</p>
+            {!contact.customer_name || !contact.email || !contact.phone.trim() || !selectedSlot ? (
+              <p className="text-sm text-red-400 text-center">Please fill in your name, phone, email and select a time slot.</p>
             ) : null}
           </div>
         )}

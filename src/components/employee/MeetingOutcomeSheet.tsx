@@ -118,6 +118,8 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
   const attempt = event?.attempt_number ?? 1;
   const [followup, setFollowup] = useState<number>(0);
   const [moreReason, setMoreReason] = useState<AnotherMeetingReason | "">("");
+  const [howBook, setHowBook] = useState<"now" | "link">("now");
+  const [meetSlug, setMeetSlug] = useState<string>("");
   // Callers don't all load followup_number; read it from the meeting so titles and outcomes are right.
   useEffect(() => {
     if (!event) return;
@@ -143,7 +145,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
   useEffect(() => {
     if (!open) return;
     setAttendance(isCancel ? "cancelled" : null); setResult(isPaySign ? "lost" : null); setSlot(""); setReason("");
-    setPrimary(""); setOthers(new Set()); setNotes(""); setSaving(false); setMoreReason("");
+    setPrimary(""); setOthers(new Set()); setNotes(""); setSaving(false); setMoreReason(""); setHowBook("now");
   }, [open, event?.id, isPaySign, isCancel]);
 
   useEffect(() => {
@@ -160,6 +162,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
       const cal = await ensureBdrCalendar();
       setAvailability(cal?.availability || null);
       setCalTimezone(cal?.timezone || "America/Los_Angeles");
+      setMeetSlug((cal as any)?.booking_slug || "");
     })();
   }, [open, result, availability]);
 
@@ -260,8 +263,20 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
 
   // Attended, but they want another meeting before the next form. Logged as its own outcome (not a reschedule),
   // and the new meeting is numbered as follow-up N so close rates can count meetings needed before each form.
+  const meetingUrl = meetSlug ? `${window.location.origin}/bdr/meet/${meetSlug}` : "";
   const saveAnotherMeeting = () => run(async () => {
-    if (!slot || !moreReason) throw new Error("Pick a time and why they want another meeting.");
+    if (!moreReason) throw new Error("Pick why they want another meeting.");
+    if (howBook === "link") {
+      // They'll book from the rep's meeting link. The booking attaches to this lead and this outcome automatically.
+      await insertOutcome({ result: "another_meeting", next_step: "extra_meeting", reschedule_reason: moreReason, notes: notes.trim() || null });
+      await setEventAttendance("attended");
+      let copied = false;
+      try { if (meetingUrl) { await navigator.clipboard.writeText(meetingUrl); copied = true; } } catch { /* clipboard blocked */ }
+      toast({ title: "Logged — send your meeting link", description: copied ? "Link copied. When they book, it's added to this lead as the next follow-up." : meetingUrl });
+      onDone();
+      return;
+    }
+    if (!slot) throw new Error("Pick a time, or choose to send your meeting link.");
     const isClosing = kind === "closing";
     const newId = await createExtraMeeting({
       leadId: lead.id,
@@ -410,17 +425,30 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
                 (not a reschedule). The lead stays where it is until the form is filled.
               </p>
               <div className="space-y-1.5">
-                <Label className="text-xs">Next meeting (1-hour block)</Label>
-                {slots.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">{availability ? "No open times in the next 14 days." : "No availability configured on your calendar yet."}</p>
-                ) : (
-                  <select value={slot} onChange={(e) => setSlot(e.target.value)}
-                    className="w-full bg-muted/30 border border-border rounded-md px-3 py-2 text-sm text-foreground">
-                    <option value="">— Select a time —</option>
-                    {slots.map((s) => <option key={s.date.toISOString()} value={s.date.toISOString()}>{s.label}</option>)}
-                  </select>
-                )}
+                <Label className="text-xs">How will the next meeting be booked?</Label>
+                <div className="flex flex-wrap gap-2">
+                  <button className={chip(howBook === "now")} onClick={() => setHowBook("now")}>Pick a time now</button>
+                  <button className={chip(howBook === "link")} onClick={() => setHowBook("link")}>Send my meeting link</button>
+                </div>
               </div>
+              {howBook === "now" ? (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Next meeting (1-hour block)</Label>
+                  {slots.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">{availability ? "No open times in the next 14 days." : "No availability configured on your calendar yet."}</p>
+                  ) : (
+                    <select value={slot} onChange={(e) => setSlot(e.target.value)}
+                      className="w-full bg-muted/30 border border-border rounded-md px-3 py-2 text-sm text-foreground">
+                      <option value="">— Select a time —</option>
+                      {slots.map((s) => <option key={s.date.toISOString()} value={s.date.toISOString()}>{s.label}</option>)}
+                    </select>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground rounded-md bg-muted/30 px-2.5 py-2 break-all">
+                  Your meeting link{meetingUrl ? `: ${meetingUrl}` : ""}. When they book with the same email or phone, it's added to this lead as the next follow-up and linked to this outcome.
+                </p>
+              )}
               <div className="space-y-1.5">
                 <Label className="text-xs">Why another meeting?</Label>
                 <div className="flex flex-wrap gap-2">
@@ -433,8 +461,8 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
                 <Label className="text-xs">Note (optional)</Label>
                 <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
               </div>
-              <Button className="w-full" disabled={saving || !slot || !moreReason} onClick={saveAnotherMeeting}>
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Book the next meeting
+              <Button className="w-full" disabled={saving || !moreReason || (howBook === "now" && !slot)} onClick={saveAnotherMeeting}>
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {howBook === "now" ? "Book the next meeting" : "Log it and copy my meeting link"}
               </Button>
             </div>
           )}
