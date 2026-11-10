@@ -219,3 +219,46 @@ export function computeMeetingCloseRates(deals: MCDeal[], meetings: MCMeeting[],
 
   return { main, mainByTier, booked: booked.length, stages: [first, closing, onboarding] };
 }
+
+/* ─── NewLight's own salesmen pipeline ───
+ * NewLight's salesmen log meetings in bdr_calendar_events + bdr_meeting_outcomes on nl_bdr_leads (not sales_meetings).
+ * These convert those rows into the same inputs, so AI Insights shows the same maths for NewLight's own workspace. */
+export interface BdrLeadRow { id: string; pipeline_stage: string | null; status: string | null; crm_deal_id: string | null }
+export interface BdrEventRow { id: string; lead_id: string | null; meeting_kind: string | null; attendance: string | null; starts_at: string | null }
+export interface BdrOutcomeRow { event_id: string; lead_id: string | null; result: string | null; primary_lost_reason: string | null; logged_at: string | null; attendance?: string | null }
+export interface BdrDealRow { id: string; pay_sign_status: string | null }
+
+export function bdrCloseRateInputs(leads: BdrLeadRow[], events: BdrEventRow[], outcomes: BdrOutcomeRow[], deals: BdrDealRow[]): { deals: MCDeal[]; meetings: MCMeeting[] } {
+  const paid = new Set(deals.filter((d) => d.pay_sign_status === "paid_signed").map((d) => d.id));
+  const lostBy = new Map<string, BdrOutcomeRow>();
+  for (const o of outcomes) {
+    if (o.result !== "lost" || !o.lead_id) continue;
+    const prev = lostBy.get(o.lead_id);
+    if (!prev || String(o.logged_at) > String(prev.logged_at)) lostBy.set(o.lead_id, o);
+  }
+  const outByEvent = new Map(outcomes.map((o) => [o.event_id, o]));
+  const TYPE: Record<string, string> = { discovery: "discovery_call", closing: "closing_call", onboarding: "onboarding_call" };
+  const STATUS: Record<string, string> = { attended: "completed", no_show: "no_show", rescheduled: "rescheduled", cancelled: "cancelled" };
+  const mcDeals: MCDeal[] = leads.map((l) => {
+    const won = (l.crm_deal_id && paid.has(l.crm_deal_id)) || l.pipeline_stage === "won";
+    const lost = !won && (l.status === "closed_lost" || lostBy.has(l.id));
+    return {
+      id: l.id,
+      pipeline_stage: won ? "won" : lost ? "lost" : (l.pipeline_stage || "cold"),
+      lost_reason: lost ? lostBy.get(l.id)?.primary_lost_reason ?? null : null,
+    };
+  });
+  const mcMeetings: MCMeeting[] = events
+    .filter((e) => e.lead_id && e.meeting_kind && TYPE[e.meeting_kind])
+    .map((e) => {
+      const att = outByEvent.get(e.id)?.attendance ?? e.attendance;
+      return {
+        deal_id: e.lead_id,
+        meeting_type: TYPE[e.meeting_kind!],
+        status: STATUS[att || ""] || "scheduled",
+        attended: att === "attended",
+        start_time: e.starts_at,
+      };
+    });
+  return { deals: mcDeals, meetings: mcMeetings };
+}

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { computeMeetingCloseRates } from "../_shared/meetingCloseRates.ts";
+import { bdrCloseRateInputs, computeMeetingCloseRates } from "../_shared/meetingCloseRates.ts";
+const NEWLIGHT_INTERNAL_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,7 +102,32 @@ serve(async (req) => {
         .eq("pipeline_stage", "closed_won").gte("close_date", yearAgo.slice(0, 10)),
     ]);
     // Main close rate = first booked meeting → won client (decided deals); plus each meeting's own rates.
-    const mc = computeMeetingCloseRates((yearDeals ?? []) as any, (yearMeetings ?? []) as any);
+    // NewLight's own workspace: salesmen log meetings on nl_bdr_leads / bdr_calendar_events / bdr_meeting_outcomes.
+    let mcInput: { deals: any[]; meetings: any[] } = { deals: (yearDeals ?? []) as any, meetings: (yearMeetings ?? []) as any };
+    if (client_id === NEWLIGHT_INTERNAL_CLIENT_ID) {
+      const { data: bEvents } = await sb.from("bdr_calendar_events").select("id, lead_id, meeting_kind, attendance, starts_at")
+        .eq("client_id", client_id).in("meeting_kind", ["discovery", "closing", "onboarding"]).not("lead_id", "is", null)
+        .gte("starts_at", yearAgo).limit(20000);
+      const ids = Array.from(new Set((bEvents ?? []).map((e: any) => e.lead_id)));
+      const bLeads: any[] = [], bOuts: any[] = [];
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data } = await sb.from("nl_bdr_leads").select("id, pipeline_stage, status, crm_deal_id").in("id", ids.slice(i, i + 200));
+        bLeads.push(...(data ?? []));
+      }
+      const evIds = (bEvents ?? []).map((e: any) => e.id);
+      for (let i = 0; i < evIds.length; i += 200) {
+        const { data } = await sb.from("bdr_meeting_outcomes").select("event_id, lead_id, result, primary_lost_reason, logged_at, attendance").in("event_id", evIds.slice(i, i + 200));
+        bOuts.push(...(data ?? []));
+      }
+      const dIds = bLeads.map((l) => l.crm_deal_id).filter(Boolean);
+      const bDeals: any[] = [];
+      for (let i = 0; i < dIds.length; i += 200) {
+        const { data } = await sb.from("crm_deals").select("id, pay_sign_status").in("id", dIds.slice(i, i + 200));
+        bDeals.push(...(data ?? []));
+      }
+      mcInput = bdrCloseRateInputs(bLeads, (bEvents ?? []) as any, bOuts, bDeals);
+    }
+    const mc = computeMeetingCloseRates(mcInput.deals as any, mcInput.meetings as any);
     const [mFirst, mClosing, mOnb] = mc.stages;
 
     const industry = mapIndustry(client?.industry);
