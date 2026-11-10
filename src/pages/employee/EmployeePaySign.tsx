@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { BackLink } from "@/components/ui/back-link";
 
 /**
  * Employee-facing Form 3 entry point.
@@ -85,6 +86,7 @@ export default function EmployeePaySign() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
       <div>
+        <BackLink fallback={`/employee/close-prep/${leadId}`} className="mb-3 !text-muted-foreground hover:!text-foreground" />
         <p className="text-xs text-muted-foreground">Form 3 · Pay &amp; Sign</p>
         <h1 className="text-2xl font-bold text-foreground">{deal.deal_name || "Untitled deal"}</h1>
         <p className="text-xs text-muted-foreground mt-1">

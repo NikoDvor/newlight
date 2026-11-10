@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { BackLink } from "@/components/ui/back-link";
 import { ensureBdrCalendar } from "@/lib/bdrCalendar";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 import { TEAM_SIZES, form1Modules } from "@/lib/form1Modules";
@@ -267,6 +268,7 @@ export default function ClosePrep() {
   return (
     <div className="max-w-3xl mx-auto py-6 px-0 sm:px-4 space-y-5">
       <div>
+        <BackLink fallback="/employee/leads" className="mb-3" />
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-white/45 mb-1">
           <CalIcon className="h-3.5 w-3.5" /> Form 2 · Close Prep
         </div>

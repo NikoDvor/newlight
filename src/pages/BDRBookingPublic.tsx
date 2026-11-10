@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BookingSlotPicker } from "@/components/BookingSlotPicker";
 import { useParams } from "react-router-dom";
-import { Loader2, Check, Calendar as CalIcon, ChevronRight } from "lucide-react";
+import { Loader2, Check, Calendar as CalIcon, ChevronRight, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -385,6 +385,12 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: "disco
     const err = validateFormStep();
     if (err) { alert(err); return; }
     setSubmitting(true);
+    // Came back from the time step and changed answers: update the saved response instead of adding a second one.
+    if (savedSubmissionId) {
+      const { error: upErr } = await (supabase as any).from("form_submissions")
+        .update({ submission_data: formValues, submitted_at: new Date().toISOString() }).eq("id", savedSubmissionId);
+      if (!upErr) { setSubmitting(false); setFormStepComplete(true); return; }
+    }
     // Insert into form_submissions using the form's own client_id (RLS allows anon insert
     // when form.is_active and client_id matches).
     const { data, error } = await (supabase as any)
@@ -553,6 +559,13 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: "disco
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (formDef.button_text || "Continue to time selection")}
             </Button>
           </div>
+        )}
+
+        {!showFormStep && totalSteps === 2 && formFields.length > 0 && (
+          <button type="button" onClick={() => { setFormStepComplete(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            className="inline-flex items-center gap-1.5 text-[13px] text-white/60 hover:text-white transition-colors">
+            <ArrowLeft className="h-4 w-4" />Back to details
+          </button>
         )}
 
         {!showFormStep && isMeeting && (
