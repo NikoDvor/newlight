@@ -26,7 +26,7 @@ export async function rescheduleMeeting(args: {
   const db = supabase as any;
 
   const { data: old, error: readErr } = await db.from("bdr_calendar_events")
-    .select("user_id, client_id, calendar_id, lead_id, title, description, source, metadata, zoom_meeting_id, zoom_join_url, zoom_start_url, meeting_kind, reschedule_count, starts_at, is_extra, extra_type, is_external")
+    .select("user_id, client_id, calendar_id, lead_id, title, description, source, metadata, zoom_meeting_id, zoom_join_url, zoom_start_url, meeting_kind, reschedule_count, starts_at, is_extra, extra_type, is_external, followup_number")
     .eq("id", eventId).single();
   if (readErr || !old) throw new Error(readErr?.message || "Meeting not found");
 

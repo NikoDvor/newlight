@@ -12,9 +12,10 @@ import { ensureBdrCalendar } from "@/lib/bdrCalendar";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 import { rescheduleMeeting } from "@/lib/meetingReschedule";
 import {
-  LOST_REASONS, MEETING_KINDS, RESCHEDULE_REASONS,
-  type LostReason, type MeetingKind, type RescheduleReason,
+  ANOTHER_MEETING_REASONS, LOST_REASONS, MEETING_KINDS, RESCHEDULE_REASONS,
+  type AnotherMeetingReason, type LostReason, type MeetingKind, type RescheduleReason,
 } from "@/lib/meetingOutcomes";
+import { createExtraMeeting, meetingLabel } from "@/lib/extraMeeting";
 
 export interface OutcomeEvent {
   id: string;
@@ -23,6 +24,7 @@ export interface OutcomeEvent {
   attempt_number: number | null;
   starts_at: string;
   source?: string | null;
+  followup_number?: number | null;
 }
 export interface OutcomeLead {
   id: string;
@@ -36,24 +38,25 @@ export interface OutcomeRow {
   lead_id: string | null;
   meeting_kind: string;
   attempt_number: number;
-  result: "won" | "rescheduled" | "lost";
+  result: "won" | "rescheduled" | "lost" | "another_meeting";
   next_step: string | null;
   primary_lost_reason: string | null;
   reschedule_reason: string | null;
   logged_at: string;
-  next_event?: { starts_at: string; attempt_number: number | null; meeting_kind: string | null } | null;
+  followup_number?: number | null;
+  next_event?: { starts_at: string; attempt_number: number | null; meeting_kind: string | null; followup_number?: number | null } | null;
 }
 
 export const OUTCOME_SELECT =
-  "id, event_id, lead_id, meeting_kind, attempt_number, result, next_step, primary_lost_reason, reschedule_reason, logged_at, next_event:bdr_calendar_events!bdr_meeting_outcomes_next_event_id_fkey(starts_at, attempt_number, meeting_kind)";
+  "id, event_id, lead_id, meeting_kind, attempt_number, followup_number, result, next_step, primary_lost_reason, reschedule_reason, logged_at, next_event:bdr_calendar_events!bdr_meeting_outcomes_next_event_id_fkey(starts_at, attempt_number, meeting_kind, followup_number)";
 
 export const OUTCOME_KINDS = ["discovery", "closing", "onboarding", "check_in"] as const;
 
 const KIND_SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", pay_sign: "Pay & Sign", check_in: "Check-in" };
-const NEXT_LABEL: Record<string, string> = { form_2: "Form 2", form_3: "Pay & Sign", activated: "Activated", completed: "Completed" };
+const NEXT_LABEL: Record<string, string> = { form_2: "Form 2", form_3: "Pay & Sign", activated: "Activated", completed: "Completed", extra_meeting: "another meeting" };
 
-export function kindAttemptLabel(kind: string | null | undefined, attempt: number | null | undefined) {
-  return `${KIND_SHORT[kind || ""] || "Meeting"} #${attempt ?? 1}`;
+export function kindAttemptLabel(kind: string | null | undefined, attempt: number | null | undefined, followup?: number | null) {
+  return meetingLabel(kind, attempt, followup);
 }
 
 /** Event needs an outcome: tracked kind, start passed, not rescheduled, no outcome yet. */
@@ -68,7 +71,16 @@ export function needsOutcome(
 }
 
 export function formatOutcomeSummary(o: OutcomeRow) {
-  const head = kindAttemptLabel(o.meeting_kind, o.attempt_number);
+  const head = kindAttemptLabel(o.meeting_kind, o.attempt_number, o.followup_number);
+  if (o.result === "another_meeting") {
+    const n = o.next_event;
+    const why = o.reschedule_reason ? ANOTHER_MEETING_REASONS[o.reschedule_reason as AnotherMeetingReason] || "" : "";
+    if (n) {
+      const d = new Date(n.starts_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      return `${head} · Wanted another meeting${why ? ` (${why})` : ""} → ${kindAttemptLabel(n.meeting_kind || o.meeting_kind, n.attempt_number, n.followup_number)} ${d}`;
+    }
+    return `${head} · Wanted another meeting${why ? ` (${why})` : ""}`;
+  }
   if (o.result === "lost") {
     const r = o.primary_lost_reason ? LOST_REASONS[o.primary_lost_reason as LostReason] || o.primary_lost_reason : "";
     return `${head} · Lost${r ? ` — ${r}` : ""}`;
@@ -77,7 +89,7 @@ export function formatOutcomeSummary(o: OutcomeRow) {
     const n = o.next_event;
     if (n) {
       const d = new Date(n.starts_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-      return `${head} · Rescheduled → ${kindAttemptLabel(n.meeting_kind || o.meeting_kind, n.attempt_number)} ${d}`;
+      return `${head} · Rescheduled → ${kindAttemptLabel(n.meeting_kind || o.meeting_kind, n.attempt_number, n.followup_number)} ${d}`;
     }
     return `${head} · Rescheduled`;
   }
@@ -85,7 +97,7 @@ export function formatOutcomeSummary(o: OutcomeRow) {
 }
 
 type Attendance = "attended" | "no_show" | "cancelled";
-type Result = "won" | "rescheduled" | "lost";
+type Result = "won" | "rescheduled" | "lost" | "another_meeting";
 
 interface Props {
   event: OutcomeEvent | null;
@@ -104,6 +116,18 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
   const isCancel = mode === "cancel";
   const kind = (event?.meeting_kind || "discovery") as MeetingKind;
   const attempt = event?.attempt_number ?? 1;
+  const [followup, setFollowup] = useState<number>(0);
+  const [moreReason, setMoreReason] = useState<AnotherMeetingReason | "">("");
+  // Callers don't all load followup_number; read it from the meeting so titles and outcomes are right.
+  useEffect(() => {
+    if (!event) return;
+    if (event.followup_number != null) { setFollowup(event.followup_number); return; }
+    let off = false;
+    (supabase as any).from("bdr_calendar_events").select("followup_number").eq("id", event.id).maybeSingle()
+      .then(({ data }: any) => { if (!off) setFollowup(data?.followup_number ?? 0); });
+    return () => { off = true; };
+  }, [event?.id, event?.followup_number]); // eslint-disable-line react-hooks/exhaustive-deps
+  const canAskForMore = !isPaySign && !isCancel && (kind === "discovery" || kind === "closing");
 
   const [attendance, setAttendance] = useState<Attendance | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -119,19 +143,19 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
   useEffect(() => {
     if (!open) return;
     setAttendance(isCancel ? "cancelled" : null); setResult(isPaySign ? "lost" : null); setSlot(""); setReason("");
-    setPrimary(""); setOthers(new Set()); setNotes(""); setSaving(false);
+    setPrimary(""); setOthers(new Set()); setNotes(""); setSaving(false); setMoreReason("");
   }, [open, event?.id, isPaySign, isCancel]);
 
   useEffect(() => {
     if (attendance === "no_show") {
       setReason("no_show");
-      if (result === "won") setResult(null);
+      if (result === "won" || result === "another_meeting") setResult(null);
     } else if (reason === "no_show") setReason("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendance]);
 
   useEffect(() => {
-    if (!open || result !== "rescheduled" || availability) return;
+    if (!open || (result !== "rescheduled" && result !== "another_meeting") || availability) return;
     (async () => {
       const cal = await ensureBdrCalendar();
       setAvailability(cal?.availability || null);
@@ -152,7 +176,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
     ? `Pay & Sign — ${lead.business_name}`
     : isCancel
     ? `Cancel ${MEETING_KINDS[kind]?.split(" (")[0] || "Meeting"} #${attempt} — ${lead.business_name}`
-    : `${MEETING_KINDS[kind]?.split(" (")[0] || "Meeting"} #${attempt} — ${lead.business_name}`;
+    : `${meetingLabel(kind, attempt, followup)} — ${lead.business_name}`;
 
   const baseRow = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -164,6 +188,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
       rep_user_id: user.id,
       meeting_kind: isPaySign ? "pay_sign" : kind,
       attempt_number: attempt,
+      followup_number: isPaySign ? 0 : followup,
       attendance: isPaySign ? null : attendance,
     };
   };
@@ -230,6 +255,28 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
     });
     await insertOutcome({ result: "rescheduled", reschedule_reason: reason, next_event_id: newId });
     toast({ title: "Meeting rescheduled" });
+    onDone();
+  });
+
+  // Attended, but they want another meeting before the next form. Logged as its own outcome (not a reschedule),
+  // and the new meeting is numbered as follow-up N so close rates can count meetings needed before each form.
+  const saveAnotherMeeting = () => run(async () => {
+    if (!slot || !moreReason) throw new Error("Pick a time and why they want another meeting.");
+    const isClosing = kind === "closing";
+    const newId = await createExtraMeeting({
+      leadId: lead.id,
+      kind: isClosing ? "closing" : "discovery",
+      extraType: isClosing ? "closing_followup" : "discovery_followup",
+      label: isClosing ? "Closing follow-up" : "Discovery follow-up",
+      start: new Date(slot),
+      notes: notes.trim() || null,
+    });
+    await insertOutcome({
+      result: "another_meeting", next_step: "extra_meeting", next_event_id: newId,
+      reschedule_reason: moreReason, notes: notes.trim() || null,
+    });
+    await setEventAttendance("attended");
+    toast({ title: "Next meeting booked", description: "Logged as attended — they wanted another meeting first." });
     onDone();
   });
 
@@ -306,6 +353,11 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
                     {kind === "onboarding" || kind === "check_in" ? "Completed" : "Won"}
                   </button>
                 )}
+                {canAskForMore && attendance === "attended" && (
+                  <button className={chip(result === "another_meeting")} onClick={() => setResult("another_meeting")}>
+                    Wants another meeting first
+                  </button>
+                )}
                 {!isPaySign && <button className={chip(result === "rescheduled")} onClick={() => setResult("rescheduled")}>Reschedule</button>}
                 <button className={chip(result === "lost")} onClick={() => setResult("lost")}>Lost</button>
               </div>
@@ -347,6 +399,42 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
               </div>
               <Button className="w-full" disabled={saving || !slot || !reason} onClick={saveReschedule}>
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save reschedule
+              </Button>
+            </div>
+          )}
+
+          {result === "another_meeting" && canAskForMore && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                They came, but aren't ready for {kind === "closing" ? "Pay & Sign" : "Form 2"} yet. This books a {kind === "closing" ? "closing" : "discovery"} follow-up
+                (not a reschedule). The lead stays where it is until the form is filled.
+              </p>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Next meeting (1-hour block)</Label>
+                {slots.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">{availability ? "No open times in the next 14 days." : "No availability configured on your calendar yet."}</p>
+                ) : (
+                  <select value={slot} onChange={(e) => setSlot(e.target.value)}
+                    className="w-full bg-muted/30 border border-border rounded-md px-3 py-2 text-sm text-foreground">
+                    <option value="">— Select a time —</option>
+                    {slots.map((s) => <option key={s.date.toISOString()} value={s.date.toISOString()}>{s.label}</option>)}
+                  </select>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Why another meeting?</Label>
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(ANOTHER_MEETING_REASONS) as AnotherMeetingReason[]).map((k) => (
+                    <button key={k} className={chip(moreReason === k)} onClick={() => setMoreReason(k)}>{ANOTHER_MEETING_REASONS[k]}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Note (optional)</Label>
+                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+              </div>
+              <Button className="w-full" disabled={saving || !slot || !moreReason} onClick={saveAnotherMeeting}>
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Book the next meeting
               </Button>
             </div>
           )}

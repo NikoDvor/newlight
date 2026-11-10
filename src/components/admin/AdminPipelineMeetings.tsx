@@ -9,7 +9,7 @@ import { OUTCOME_KINDS, kindAttemptLabel } from "@/components/employee/MeetingOu
  * need an outcome (the salesman logs it; this is the admin's watch-list),
  * plus every upcoming meeting in the next 14 days. Click → Customer profile.
  */
-interface Row { id: string; lead_id: string; user_id: string; meeting_kind: string; attempt_number: number | null; starts_at: string; is_external: boolean; business_name?: string }
+interface Row { id: string; lead_id: string; user_id: string; meeting_kind: string; attempt_number: number | null; followup_number?: number | null; starts_at: string; is_external: boolean; business_name?: string }
 
 export default function AdminPipelineMeetings({ repUserId, since }: { repUserId?: string; since?: string | null }) {
   const [pending, setPending] = useState<Row[]>([]);
@@ -26,7 +26,7 @@ export default function AdminPipelineMeetings({ repUserId, since }: { repUserId?
       const now = new Date();
       const base = () => {
         let q = db.from("bdr_calendar_events")
-          .select("id, lead_id, user_id, meeting_kind, attempt_number, starts_at, is_external")
+          .select("id, lead_id, user_id, meeting_kind, attempt_number, followup_number, starts_at, is_external")
           .in("meeting_kind", OUTCOME_KINDS as unknown as string[])
           .not("lead_id", "is", null)
           .or("attendance.is.null,attendance.not.in.(rescheduled,cancelled)");
@@ -87,7 +87,7 @@ export default function AdminPipelineMeetings({ repUserId, since }: { repUserId?
                 <td className="py-2 pr-3 whitespace-nowrap">{names[r.user_id] || "Salesman"}</td>
                 <td className="py-2 pr-3 whitespace-nowrap">{r.business_name}</td>
                 <td className="py-2 pr-3 whitespace-nowrap">
-                  {kindAttemptLabel(r.meeting_kind as any, r.attempt_number)}
+                  {kindAttemptLabel(r.meeting_kind as any, r.attempt_number, r.followup_number)}
                   {r.is_external && <span className="ml-1.5 text-[10px] text-amber-300">away</span>}
                 </td>
                 <td className="py-2 pr-3 whitespace-nowrap tabular-nums">{when(r.starts_at)}</td>

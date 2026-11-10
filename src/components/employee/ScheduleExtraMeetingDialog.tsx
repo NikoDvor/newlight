@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar } from "@/lib/bdrCalendar";
+import { createExtraMeeting, sendExtraMeetingNotice } from "@/lib/extraMeeting";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
 /**
@@ -73,46 +74,17 @@ export default function ScheduleExtraMeetingDialog({
     const def = EXTRA_MEETING_TYPES.find((t) => t.key === type)!;
     setSaving(true);
     try {
-      const cal = await ensureBdrCalendar();
-      if (!cal) throw new Error("No calendar found");
       const start = new Date(startIso);
-      const end = new Date(start.getTime() + 60 * 60_000);
-      const { data: created, error } = await (supabase as any).from("bdr_calendar_events").insert({
-        user_id: (cal as any).user_id,
-        client_id: lead.client_id || (cal as any).client_id,
-        calendar_id: (cal as any).id,
-        lead_id: lead.id,
-        title: `${def.label}: ${lead.business_name}`,
-        description: notes.trim() || null,
-        notes: notes.trim() || null,
-        starts_at: start.toISOString(),
-        ends_at: end.toISOString(),
-        source: "extra_meeting",
-        meeting_kind: def.kind,
-        is_extra: true,
-        extra_type: def.key,
-        is_external: away,
-        attendance: "pending",
-        metadata: {
-          customer_name: lead.owner_name || null,
-          business_name: lead.business_name,
-          phone: lead.phone || null,
-          email: lead.email || null,
-          extra_type: def.key,
-        },
-      }).select("id").single();
-      if (error) throw error;
+      const createdId = await createExtraMeeting({
+        leadId: lead.id, kind: def.kind as any, extraType: def.key, label: def.label, start, notes, away, notify: false,
+      });
+      const created = { id: createdId };
 
       if (attendees.length) {
         try { await insertAttendees(created.id, lead.id, attendees); }
         catch (e: any) { toast({ title: "Meeting scheduled, but attendees didn't save", description: e?.message, variant: "destructive" }); }
       }
-
-      // Zoom link + client/rep notice (fire-and-forget; never blocks scheduling).
-      supabase.functions
-        .invoke("meeting-reschedule-notice", { body: { event_id: created.id, mode: "scheduled" } })
-        .then(({ error: nErr }) => { if (nErr) console.error("extra meeting notice failed", nErr); })
-        .catch((e) => console.error("extra meeting notice failed", e));
+      sendExtraMeetingNotice(created.id);
 
       toast({ title: `${def.label} scheduled`, description: start.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) });
       onScheduled?.();

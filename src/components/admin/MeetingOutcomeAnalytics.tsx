@@ -5,17 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { rangeStart, type RangeKey } from "@/components/insights/PipelineInsightsView";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { buildLeadJourney, furthestStageLabel, journeyStatusText } from "@/lib/leadJourney";
-import { LOST_REASONS, MEETING_KINDS, RESCHEDULE_REASONS, type LostReason } from "@/lib/meetingOutcomes";
+import { ANOTHER_MEETING_REASONS, LOST_REASONS, MEETING_KINDS, RESCHEDULE_REASONS, type LostReason } from "@/lib/meetingOutcomes";
 
 const NEON = "hsl(211,96%,60%)";
 const KINDS = ["discovery", "closing", "onboarding"] as const;
 
-interface Ev { id: string; user_id: string; lead_id: string | null; meeting_kind: string; attempt_number: number | null; meeting_sequence?: number | null; created_at?: string | null; starts_at: string; ends_at: string | null; attendance: string | null }
+interface Ev { id: string; user_id: string; lead_id: string | null; meeting_kind: string; attempt_number: number | null; meeting_sequence?: number | null; followup_number?: number | null; created_at?: string | null; starts_at: string; ends_at: string | null; attendance: string | null }
 interface Out {
   id: string; event_id: string; lead_id: string | null; rep_user_id: string; meeting_kind: string; attempt_number: number;
-  attendance: string | null; result: "won" | "rescheduled" | "lost"; next_step: string | null; reschedule_reason: string | null;
+  attendance: string | null; result: "won" | "rescheduled" | "lost" | "another_meeting"; next_step: string | null; reschedule_reason: string | null;
   primary_lost_reason: string | null; lost_reasons: string[] | null; notes: string | null; logged_at: string;
   meeting_sequence?: number | null;
+  followup_number?: number | null;
 }
 interface Lead { id: string; business_name: string; user_id: string; crm_deal_id: string | null }
 interface Deal { id: string; pay_sign_status: string | null; paid_signed_at: string | null; fully_activated_at: string | null }
@@ -142,7 +143,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
       const since = rangeStart(range);
       const evs = await pageAll<Ev>((f, t) => {
         let q = db.from("bdr_calendar_events")
-          .select("id, user_id, lead_id, meeting_kind, attempt_number, meeting_sequence, created_at, starts_at, ends_at, attendance")
+          .select("id, user_id, lead_id, meeting_kind, attempt_number, meeting_sequence, followup_number, created_at, starts_at, ends_at, attendance")
           .in("meeting_kind", KINDS as unknown as string[]).order("starts_at", { ascending: false });
         if (since) q = q.gte("starts_at", since);
         if (repUserId) q = q.eq("user_id", repUserId);
@@ -217,6 +218,82 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
   }, [repRows, sortKey, sortAsc]);
 
   const open = (title: string, items: Item[]) => setDrill({ title, items });
+
+  /* Every meeting step: the form's own meeting vs extra meetings they asked for, and each try after a reschedule. */
+  const steps = useMemo(() => {
+    const evById = new Map(fEvents.map((e) => [e.id, e]));
+    const fu = (o: Out) => o.followup_number ?? evById.get(o.event_id)?.followup_number ?? 0;
+    const tryOf = (o: Out) => o.attempt_number ?? 1;
+    const NEXT_FORM: Record<string, string> = { discovery: "Form 2", closing: "Pay & Sign" };
+    const rowOf = (label: string, os: Out[]) => {
+      const att = os.filter((o) => o.attendance === "attended" || o.attendance === "no_show");
+      const n = os.length;
+      const r = (res: string) => ({ num: os.filter((o) => o.result === res).length, den: n, items: os.filter((o) => o.result === res).map((o) => ({ out: o, ev: evById.get(o.event_id) })) });
+      return {
+        label, n, items: os.map((o) => ({ out: o, ev: evById.get(o.event_id) })),
+        show: { num: att.filter((o) => o.attendance === "attended").length, den: att.length, items: att.map((o) => ({ out: o, ev: evById.get(o.event_id) })) },
+        forward: r("won"), another: r("another_meeting"), resched: r("rescheduled"), lost: r("lost"),
+      };
+    };
+    const kinds = ["discovery", "closing"] as const;
+    const byFollowup = kinds.flatMap((k) => {
+      const os = fOuts.filter((o) => o.meeting_kind === k);
+      return [
+        rowOf(`${SHORT[k]} — the form's meeting`, os.filter((o) => fu(o) === 0)),
+        rowOf(`${SHORT[k]} — extra meeting 1`, os.filter((o) => fu(o) === 1)),
+        rowOf(`${SHORT[k]} — extra meeting 2`, os.filter((o) => fu(o) === 2)),
+        rowOf(`${SHORT[k]} — extra meeting 3+`, os.filter((o) => fu(o) >= 3)),
+      ].map((row) => ({ ...row, kind: k, next: NEXT_FORM[k] }));
+    });
+    const byTry = kinds.flatMap((k) => {
+      const os = fOuts.filter((o) => o.meeting_kind === k);
+      return [
+        rowOf(`${SHORT[k]} — first booking`, os.filter((o) => tryOf(o) <= 1)),
+        rowOf(`${SHORT[k]} — after 1 reschedule / no-show`, os.filter((o) => tryOf(o) === 2)),
+        rowOf(`${SHORT[k]} — after 2`, os.filter((o) => tryOf(o) === 3)),
+        rowOf(`${SHORT[k]} — after 3 or more`, os.filter((o) => tryOf(o) >= 4)),
+      ].map((row) => ({ ...row, kind: k, next: NEXT_FORM[k] }));
+    });
+
+    // Close rate by how many extra meetings a lead needed at each stage (decided leads only).
+    const dealOf = (l: string) => { const ld = leads.get(l); return ld?.crm_deal_id ? deals.get(ld.crm_deal_id) : undefined; };
+    const needed = kinds.map((k) => {
+      const byLead = new Map<string, Out[]>();
+      fOuts.filter((o) => o.meeting_kind === k && o.lead_id).forEach((o) => { const a = byLead.get(o.lead_id!) || []; a.push(o); byLead.set(o.lead_id!, a); });
+      const lostLeads = new Set(fOuts.filter((o) => o.result === "lost" && o.lead_id).map((o) => o.lead_id!));
+      const buckets = ["0", "1", "2", "3+"].map((b) => {
+        const ids = Array.from(byLead.entries()).filter(([, os]) => {
+          const x = os.filter((o) => o.result === "another_meeting").length;
+          return b === "3+" ? x >= 3 : x === Number(b);
+        }).map(([id]) => id);
+        const moved = ids.filter((id) => byLead.get(id)!.some((o) => o.result === "won"));
+        const decidedStage = ids.filter((id) => byLead.get(id)!.some((o) => o.result === "won" || o.result === "lost"));
+        const wonClient = ids.filter((id) => dealOf(id)?.pay_sign_status === "paid_signed");
+        const decidedClient = ids.filter((id) => dealOf(id)?.pay_sign_status === "paid_signed" || lostLeads.has(id));
+        const items = ids.flatMap((id) => byLead.get(id)!.map((o) => ({ out: o, ev: evById.get(o.event_id) })));
+        return {
+          b, leads: ids.length, items,
+          forward: { num: moved.length, den: decidedStage.length, items },
+          won: { num: wonClient.length, den: decidedClient.length, items },
+        };
+      });
+      // average meetings held at this stage for leads that moved forward
+      const movedLeads = Array.from(byLead.entries()).filter(([, os]) => os.some((o) => o.result === "won"));
+      const held = movedLeads.map(([, os]) => os.filter((o) => o.attendance === "attended").length);
+      const avgHeld = held.length ? held.reduce((a, b) => a + b, 0) / held.length : null;
+      const attended = fOuts.filter((o) => o.meeting_kind === k && o.attendance === "attended");
+      const notReady = attended.filter((o) => o.result === "another_meeting");
+      const reasons = new Map<string, number>();
+      notReady.forEach((o) => { const r = o.reschedule_reason || "other"; reasons.set(r, (reasons.get(r) || 0) + 1); });
+      const topReason = Array.from(reasons.entries()).sort((a, b) => b[1] - a[1])[0] || null;
+      return {
+        kind: k, next: NEXT_FORM[k], buckets, avgHeld, movedN: movedLeads.length,
+        notReady: { num: notReady.length, den: attended.length, items: notReady.map((o) => ({ out: o, ev: evById.get(o.event_id) })) },
+        topReason,
+      };
+    });
+    return { byFollowup, byTry, needed };
+  }, [fEvents, fOuts, leads, deals]);
 
   /* journeys */
   const journeys = useMemo(() => buildLeadJourney(fEvents as any, fOuts as any), [fEvents, fOuts]);
@@ -390,6 +467,84 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                   })}
                 </div>
               )}
+            </div>
+
+            {/* 1d. Every meeting step */}
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Extra meetings before the next form</p>
+                <p className="text-[11px] text-white/40 mt-0.5">
+                  When a lead attends but wants another meeting before Form 2 or Pay &amp; Sign. Not a reschedule — the meeting happened.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {steps.needed.map((n) => (
+                  <button key={n.kind + "nr"} onClick={() => open(`${SHORT[n.kind]} — wanted another meeting`, n.notReady.items)} className="text-left rounded-xl bg-white/[0.04] p-4 hover:bg-white/[0.07] transition-colors">
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{SHORT[n.kind]}: wanted another meeting</p>
+                    <p className="text-2xl font-bold text-white mt-1">{pct(n.notReady) == null ? "—" : `${pct(n.notReady)}%`}</p>
+                    <p className="text-[11px] text-white/35 mt-1">
+                      {n.notReady.den ? `${n.notReady.num} of ${n.notReady.den} attended` : "no meetings yet"}
+                      {n.topReason ? ` · top: ${ANOTHER_MEETING_REASONS[n.topReason[0] as keyof typeof ANOTHER_MEETING_REASONS] || n.topReason[0]}` : ""}
+                    </p>
+                  </button>
+                ))}
+                {steps.needed.map((n) => (
+                  <div key={n.kind + "avg"} className="rounded-xl bg-white/[0.04] p-4">
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{SHORT[n.kind]} meetings held before {n.next}</p>
+                    <p className="text-2xl font-bold text-white mt-1">{n.avgHeld == null ? "—" : n.avgHeld.toFixed(1)}</p>
+                    <p className="text-[11px] text-white/35 mt-1">{n.movedN ? `average, ${n.movedN} lead${n.movedN === 1 ? "" : "s"} moved on` : "no leads moved on yet"}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
+                <table className="w-full min-w-[640px] text-xs">
+                  <thead><tr className="text-left text-white/40">
+                    <th className="px-3 py-2 font-medium">Extra meetings needed</th><th className="px-3 py-2 font-medium text-right">Leads</th>
+                    <th className="px-3 py-2 font-medium text-right">→ next form %</th><th className="px-3 py-2 font-medium text-right">→ won client %</th>
+                  </tr></thead>
+                  <tbody>
+                    {steps.needed.flatMap((n) => n.buckets.map((b) => (
+                      <tr key={n.kind + b.b} className="border-t border-white/[0.06] text-white/80">
+                        <td className="px-3 py-1.5">{SHORT[n.kind]}: {b.b === "0" ? "none (moved on from the form's meeting)" : `${b.b} extra meeting${b.b === "1" ? "" : "s"}`}</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums">{b.leads}</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums"><button className="hover:underline" onClick={() => open(`${SHORT[n.kind]} · ${b.b} extra → ${n.next}`, b.forward.items)}>{pct(b.forward) == null ? "—" : `${pct(b.forward)}%`}</button> <span className="text-white/35">({b.forward.num}/{b.forward.den})</span></td>
+                        <td className="px-3 py-1.5 text-right tabular-nums">{pct(b.won) == null ? "—" : `${pct(b.won)}%`} <span className="text-white/35">({b.won.num}/{b.won.den})</span></td>
+                      </tr>
+                    )))}
+                  </tbody>
+                </table>
+              </div>
+
+              {([["Every meeting — the form's meeting and each extra meeting", steps.byFollowup], ["Every meeting — by try (after reschedules and no-shows)", steps.byTry]] as const).map(([title, rows]) => (
+                <div key={title}>
+                  <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">{title}</p>
+                  <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
+                    <table className="w-full min-w-[760px] text-xs">
+                      <thead><tr className="text-left text-white/40">
+                        <th className="px-3 py-2 font-medium">Meeting</th><th className="px-3 py-2 font-medium text-right">Logged</th>
+                        <th className="px-3 py-2 font-medium text-right">Show-up %</th><th className="px-3 py-2 font-medium text-right">Moved forward %</th>
+                        <th className="px-3 py-2 font-medium text-right">Another meeting %</th><th className="px-3 py-2 font-medium text-right">Rescheduled %</th>
+                        <th className="px-3 py-2 font-medium text-right">Lost %</th>
+                      </tr></thead>
+                      <tbody>
+                        {rows.map((r) => (
+                          <tr key={r.label} className={`border-t border-white/[0.06] ${r.n ? "text-white/80" : "text-white/30"}`}>
+                            <td className="px-3 py-1.5"><button className="hover:underline text-left" onClick={() => open(r.label, r.items)}>{r.label}</button></td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{r.n}</td>
+                            {[r.show, r.forward, r.another, r.resched, r.lost].map((x, i) => (
+                              <td key={i} className="px-3 py-1.5 text-right tabular-nums">
+                                <button className="hover:underline" onClick={() => open(r.label, x.items)}>{pct(x) == null ? "—" : `${pct(x)}%`}</button>
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+              <p className="text-[11px] text-white/35">"Moved forward" = discovery → Form 2, closing → Pay &amp; Sign sent. Percentages are of logged outcomes for that meeting.</p>
             </div>
 
             {/* 2. Where lost */}

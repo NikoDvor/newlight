@@ -13,6 +13,7 @@ export interface JourneyEvent {
   meeting_kind: string | null;
   attempt_number: number | null;
   meeting_sequence?: number | null;
+  followup_number?: number | null;
   attendance: string | null;
   starts_at: string;
   created_at?: string | null;
@@ -28,7 +29,8 @@ export interface JourneyOutcome {
   attempt_number: number | null;
   meeting_sequence?: number | null;
   attendance: string | null;
-  result: "won" | "rescheduled" | "lost";
+  result: "won" | "rescheduled" | "lost" | "another_meeting";
+  followup_number?: number | null;
   next_step: string | null;
   reschedule_reason: string | null;
   primary_lost_reason: string | null;
@@ -42,6 +44,7 @@ export interface JourneyTimelineRow {
   sequence: number | null;
   kind: string;
   attempt: number;
+  followup: number;
 }
 
 export interface LostAt {
@@ -60,6 +63,8 @@ export interface LeadJourney {
   noShows: number;
   reschedules: number;
   cancellations: number;
+  /** Attended meetings where they wanted another meeting before the next form. */
+  extraMeetings: number;
   attendanceRate: number | null;
   rescheduleRate: number | null;
   stages: Record<JourneyKind, { held: number; booked: number }>;
@@ -94,7 +99,7 @@ export function buildLeadJourney(events: JourneyEvent[], outcomes: JourneyOutcom
       String(a.created_at || a.starts_at).localeCompare(String(b.created_at || b.starts_at)));
     const outs = outsByLead.get(leadId) || [];
 
-    let attended = 0, noShows = 0, reschedules = 0, cancellations = 0;
+    let attended = 0, noShows = 0, reschedules = 0, cancellations = 0, extraMeetings = 0;
     const stages: LeadJourney["stages"] = {
       discovery: { held: 0, booked: 0 }, closing: { held: 0, booked: 0 }, onboarding: { held: 0, booked: 0 }, check_in: { held: 0, booked: 0 },
     };
@@ -105,13 +110,14 @@ export function buildLeadJourney(events: JourneyEvent[], outcomes: JourneyOutcom
       else if (att === "no_show") noShows++;
       if (e.attendance === "rescheduled") reschedules++;
       if (e.attendance === "cancelled" || o?.attendance === "cancelled") cancellations++;
+      if (o?.result === "another_meeting") extraMeetings++;
       const k = e.meeting_kind as JourneyKind;
       stages[k].booked++;
       if (att === "attended") stages[k].held++;
-      return { event: e, outcome: o, sequence: e.meeting_sequence ?? null, kind: k, attempt: e.attempt_number ?? 1 };
+      return { event: e, outcome: o, sequence: e.meeting_sequence ?? null, kind: k, attempt: e.attempt_number ?? 1, followup: e.followup_number ?? 0 };
     });
     const ps = paySignByLead.get(leadId) || null;
-    if (ps) timeline.push({ event: null, outcome: ps, sequence: null, kind: "pay_sign", attempt: ps.attempt_number ?? 1 });
+    if (ps) timeline.push({ event: null, outcome: ps, sequence: null, kind: "pay_sign", attempt: ps.attempt_number ?? 1, followup: 0 });
 
     const meetings = evs.length;
     const activated = outs.some((o) => o.meeting_kind === "onboarding" && o.result === "won");
@@ -139,7 +145,7 @@ export function buildLeadJourney(events: JourneyEvent[], outcomes: JourneyOutcom
     }
 
     result.set(leadId, {
-      leadId, meetings, attended, noShows, reschedules, cancellations,
+      leadId, meetings, attended, noShows, reschedules, cancellations, extraMeetings,
       attendanceRate: attended + noShows ? attended / (attended + noShows) : null,
       rescheduleRate: meetings ? reschedules / meetings : null,
       stages, furthestStage: furthest,
@@ -151,7 +157,11 @@ export function buildLeadJourney(events: JourneyEvent[], outcomes: JourneyOutcom
 }
 
 const SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", check_in: "Check-in", pay_sign: "Pay & Sign", activated: "Activated" };
-export const journeyKindLabel = (k: string, attempt?: number | null) => (k === "pay_sign" ? "Pay & Sign" : `${SHORT[k] || k} #${attempt ?? 1}`);
+export const journeyKindLabel = (k: string, attempt?: number | null, followup?: number | null) => {
+  if (k === "pay_sign") return "Pay & Sign";
+  const f = followup ?? 0, a = attempt ?? 1;
+  return f > 0 ? `${SHORT[k] || k} follow-up ${f}${a > 1 ? ` · try ${a}` : ""}` : `${SHORT[k] || k} #${a}`;
+};
 export const furthestStageLabel = (s: LeadJourney["furthestStage"]) => (s ? SHORT[s] : "—");
 
 /** "Lost at meeting 3 — Closing #1 — Too expensive" style status text. */

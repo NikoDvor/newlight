@@ -1,8 +1,8 @@
 /** Shared constants for BDR meeting outcomes (Discovery / Closing / Onboarding / Pay & Sign). */
 
 export type MeetingKind = "discovery" | "closing" | "onboarding" | "pay_sign" | "check_in";
-export type MeetingResult = "won" | "rescheduled" | "lost";
-export type NextStep = "form_2" | "form_3" | "activated" | "completed";
+export type MeetingResult = "won" | "rescheduled" | "lost" | "another_meeting";
+export type NextStep = "form_2" | "form_3" | "activated" | "completed" | "extra_meeting";
 
 export const MEETING_KINDS: Record<MeetingKind, string> = {
   discovery: "Discovery (Form 1)",
@@ -19,6 +19,17 @@ export const RESCHEDULE_REASONS = {
   needs_decision_maker: "Needs decision-maker there",
 } as const;
 export type RescheduleReason = keyof typeof RESCHEDULE_REASONS;
+
+/** They came to the meeting but aren't ready for the next step yet — why another meeting first. */
+export const ANOTHER_MEETING_REASONS = {
+  needs_decision_maker: "Wants a decision-maker there",
+  needs_more_info: "Wants more information first",
+  needs_to_think: "Needs time to think",
+  review_numbers: "Wants to review the numbers / plan",
+  ran_out_of_time: "Ran out of time",
+  other: "Other",
+} as const;
+export type AnotherMeetingReason = keyof typeof ANOTHER_MEETING_REASONS;
 
 /** Ordered list of lost reasons (key → label). Order is the display order. */
 export const LOST_REASONS = {

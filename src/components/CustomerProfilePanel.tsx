@@ -46,6 +46,7 @@ interface EventRow {
   source: string;
   meeting_kind: string | null;
   attempt_number: number | null;
+  followup_number?: number | null;
   is_external?: boolean | null;
 }
 
@@ -133,7 +134,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
     }
     const { data: ev } = await (supabase as any)
       .from("bdr_calendar_events")
-      .select("id, calendar_id, title, starts_at, ends_at, attendance, outcome, notes, source, meeting_kind, attempt_number, is_external")
+      .select("id, calendar_id, title, starts_at, ends_at, attendance, outcome, notes, source, meeting_kind, attempt_number, followup_number, is_external")
       .eq("lead_id", leadId)
       .order("starts_at", { ascending: false });
     setEvents((ev || []) as EventRow[]);
@@ -344,7 +345,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
                                 <Button size="sm" className="h-6 text-[11px] px-2" onClick={() => setOutcomeEvent(e)}>Log meeting outcome</Button>
                               </div>
                             ) : (
-                              <div className="text-xs text-white/50">{kindAttemptLabel(e.meeting_kind, e.attempt_number)}</div>
+                              <div className="text-xs text-white/50">{kindAttemptLabel(e.meeting_kind, e.attempt_number, e.followup_number)}</div>
                             )}
                           </div>
                         ) : (

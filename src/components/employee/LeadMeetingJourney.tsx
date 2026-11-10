@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LOST_REASONS, RESCHEDULE_REASONS, type LostReason } from "@/lib/meetingOutcomes";
+import { ANOTHER_MEETING_REASONS, LOST_REASONS, RESCHEDULE_REASONS, type LostReason } from "@/lib/meetingOutcomes";
 import {
   JOURNEY_KINDS, buildLeadJourney, journeyKindLabel, journeyStatusText,
   type JourneyEvent, type JourneyOutcome, type LeadJourney,
 } from "@/lib/leadJourney";
 
-export const JOURNEY_EVENT_SELECT = "id, lead_id, meeting_kind, attempt_number, meeting_sequence, attendance, starts_at, created_at, user_id";
-export const JOURNEY_OUTCOME_SELECT = "id, event_id, lead_id, rep_user_id, meeting_kind, attempt_number, meeting_sequence, attendance, result, next_step, reschedule_reason, primary_lost_reason, lost_reasons, logged_at";
+export const JOURNEY_EVENT_SELECT = "id, lead_id, meeting_kind, attempt_number, meeting_sequence, followup_number, attendance, starts_at, created_at, user_id";
+export const JOURNEY_OUTCOME_SELECT = "id, event_id, lead_id, rep_user_id, meeting_kind, attempt_number, meeting_sequence, followup_number, attendance, result, next_step, reschedule_reason, primary_lost_reason, lost_reasons, logged_at";
 
 const reasonLabel = (k: string) => LOST_REASONS[k as LostReason] || k;
 const NEXT: Record<string, string> = { form_2: "Form 2", form_3: "Pay & Sign", activated: "Activated" };
@@ -42,9 +42,10 @@ function rowText(r: LeadJourney["timeline"][number]) {
   }
   let res = "";
   if (o.result === "won") res = `Won${o.next_step ? ` → ${NEXT[o.next_step] || o.next_step}` : ""}`;
+  else if (o.result === "another_meeting") res = `Wanted another meeting${o.reschedule_reason ? ` (${ANOTHER_MEETING_REASONS[o.reschedule_reason as keyof typeof ANOTHER_MEETING_REASONS] || o.reschedule_reason})` : ""}`;
   else if (o.result === "rescheduled") res = `Rescheduled${o.reschedule_reason ? ` (${RESCHEDULE_REASONS[o.reschedule_reason as keyof typeof RESCHEDULE_REASONS] || o.reschedule_reason})` : ""}`;
   else res = `Lost${o.primary_lost_reason ? ` — ${reasonLabel(o.primary_lost_reason)}` : ""}`;
-  const tone = o.result === "won" ? "green" : o.result === "lost" ? "red" : "muted";
+  const tone = o.result === "won" ? "green" : o.result === "lost" ? "red" : o.result === "another_meeting" ? "amber" : "muted";
   return { text: `${attText && r.kind !== "pay_sign" ? `${attText} → ` : ""}${res}`, tone };
 }
 
@@ -87,14 +88,14 @@ export default function LeadMeetingJourney({ leadId, compact, journey: provided,
   if (j.status === "in_progress") {
     const next = j.timeline.find((r) => r.event && !r.outcome && new Date(r.event.starts_at).getTime() > Date.now() && (!r.event.attendance || r.event.attendance === "pending"));
     headline = next?.event
-      ? `In progress — next: ${journeyKindLabel(next.kind, next.attempt)}, ${new Date(next.event.starts_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+      ? `In progress — next: ${journeyKindLabel(next.kind, next.attempt, next.followup)}, ${new Date(next.event.starts_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
       : "In progress";
   }
   const tone = j.status === "won" ? "text-emerald-400" : j.status === "lost" ? "text-destructive" : "text-foreground";
 
   const chips: [string, string][] = [
     ["Meetings", String(j.meetings)], ["Attended", String(j.attended)], ["No-shows", String(j.noShows)],
-    ["Reschedules", String(j.reschedules)], ["Cancellations", String(j.cancellations)],
+    ["Reschedules", String(j.reschedules)], ["Extra meetings", String(j.extraMeetings)], ["Cancellations", String(j.cancellations)],
     ["Attendance", pctText(j.attendanceRate)], ["Reschedule", pctText(j.rescheduleRate)],
     ...JOURNEY_KINDS.map((k) => [k === "check_in" ? "Check-ins" : k[0].toUpperCase() + k.slice(1), `${j.stages[k].held}/${j.stages[k].booked}`] as [string, string]),
   ];
@@ -112,11 +113,11 @@ export default function LeadMeetingJourney({ leadId, compact, journey: provided,
       <div className="space-y-1.5">
         {j.timeline.map((r, i) => {
           const t = rowText(r);
-          const c = t.tone === "red" ? "text-destructive" : t.tone === "green" ? "text-emerald-400" : "text-muted-foreground";
+          const c = t.tone === "red" ? "text-destructive" : t.tone === "green" ? "text-emerald-400" : t.tone === "amber" ? "text-amber-400" : "text-muted-foreground";
           const when = r.event ? fmtDate(r.event.starts_at) : r.outcome ? fmtDate(r.outcome.logged_at) : "";
           return (
             <div key={(r.event?.id || r.outcome?.id || "") + i} className="text-xs rounded-md bg-muted/20 border border-border px-2.5 py-1.5">
-              <span className="text-foreground">{r.sequence ? `Meeting ${r.sequence} · ` : ""}{journeyKindLabel(r.kind, r.attempt)}</span>
+              <span className="text-foreground">{r.sequence ? `Meeting ${r.sequence} · ` : ""}{journeyKindLabel(r.kind, r.attempt, r.followup)}</span>
               <span className="text-muted-foreground"> · {when} · </span>
               <span className={c}>{t.text}</span>
             </div>
