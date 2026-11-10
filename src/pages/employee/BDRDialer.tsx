@@ -331,13 +331,43 @@ export default function BDRDialer() {
     return () => io.disconnect();
   }, [renderCount, visibleLeads.length]);
 
+  // Search by owner, business name, or any phone number (front desk, owner, or any decision maker at a pool firm).
+  const searchDigits = ownerSearch.replace(/\D/g, "");
+  const isPhoneSearch = searchDigits.length >= 4 && /^[\d\s()+.\-]+$/.test(ownerSearch.trim());
+  const [contactHits, setContactHits] = useState<{ lead_id: string; matched_name: string | null; matched_phone: string | null }[]>([]);
+  useEffect(() => {
+    if (!isPhoneSearch) { setContactHits([]); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const { data } = await (supabase as any).rpc("nl_dialer_find_by_phone", { _digits: searchDigits });
+      if (!cancelled) setContactHits(data || []);
+    }, 250);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [isPhoneSearch, searchDigits]);
   const searchMatches = useMemo(() => {
     const q = ownerSearch.trim().toLowerCase();
-    if (!q) return [] as Lead[];
-    return leads
-      .filter(l => (l.owner_name || "").toLowerCase().includes(q))
-      .slice(0, 8);
-  }, [leads, ownerSearch]);
+    if (!q) return [] as (Lead & { matchNote?: string })[];
+    const digitsOf = (v?: string | null) => (v || "").replace(/\D/g, "");
+    const out = new Map<string, Lead & { matchNote?: string }>();
+    for (const l of leads) {
+      if (out.size >= 8) break;
+      if (isPhoneSearch) {
+        const hit = [l.front_desk_phone, l.owner_direct_phone, l.phone].find(v => digitsOf(v).includes(searchDigits));
+        if (hit) out.set(l.id, { ...l, matchNote: hit });
+      } else if ((l.owner_name || "").toLowerCase().includes(q) || (l.business_name || "").toLowerCase().includes(q)) {
+        out.set(l.id, l);
+      }
+    }
+    if (isPhoneSearch) {
+      const byId = new Map(leads.map(l => [l.id, l]));
+      for (const h of contactHits) {
+        if (out.size >= 8) break;
+        const l = byId.get(h.lead_id);
+        if (l && !out.has(l.id)) out.set(l.id, { ...l, matchNote: [h.matched_name, h.matched_phone].filter(Boolean).join(" · ") });
+      }
+    }
+    return [...out.values()];
+  }, [leads, ownerSearch, isPhoneSearch, searchDigits, contactHits]);
 
   const jumpToLead = useCallback((lead: Lead) => {
     if (lead.pipeline_stage === "won") {
@@ -626,7 +656,7 @@ export default function BDRDialer() {
           <input
             value={ownerSearch}
             onChange={(e) => setOwnerSearch(e.target.value)}
-            placeholder="Search owner name..."
+            placeholder="Search owner, business, or phone number..."
             className="bg-transparent outline-none text-sm text-white placeholder:text-white/35 w-full"
           />
           {ownerSearch && (
@@ -639,12 +669,13 @@ export default function BDRDialer() {
           <div className="absolute z-40 mt-1 w-full rounded-lg overflow-hidden shadow-lg"
             style={{ background: "hsl(215,35%,10%)", border: "1px solid hsla(211,96%,60%,.25)" }}>
             {searchMatches.length === 0 ? (
-              <div className="px-3 py-3 text-xs text-white/40">No owners match "{ownerSearch}".</div>
+              <div className="px-3 py-3 text-xs text-white/40">No leads match "{ownerSearch}".</div>
             ) : searchMatches.map(m => (
               <button key={m.id} onClick={() => jumpToLead(m)}
                 className="w-full text-left px-3 py-2 hover:bg-white/[0.06] transition-colors border-b border-white/5 last:border-b-0">
                 <div className="text-sm text-white break-words">{stripLeadFlags(m.owner_name) || <span className="italic text-white/40">No owner name</span>}</div>
                 <div className="text-[11px] text-white/50 break-words">{m.business_name}{m.list_name ? ` · ${m.list_name}` : ""}</div>
+                {m.matchNote && <div className="text-[11px] text-[hsl(197,100%,68%)] break-words">Number: {m.matchNote}</div>}
               </button>
             ))}
           </div>
