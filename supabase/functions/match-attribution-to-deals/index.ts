@@ -3,6 +3,7 @@
 // Never writes to financial_adjustments — a human approves suggestions in the admin UI.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { cronAuthorized } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,10 +31,10 @@ serve(async (req) => {
     const clientId = typeof body?.client_id === "string" && body.client_id ? body.client_id : null;
 
     // Auth: scheduled invocation via shared secret, otherwise admin/operator JWT.
+    // Also accepts the shared cron secret (vault NL_BILLING_CRON_SECRET), like every other scheduled function.
     const providedCronSecret = req.headers.get("x-cron-secret") || "";
-    const isCron = Boolean(cronSecret) && providedCronSecret === cronSecret;
-
     const supabase = createClient(supabaseUrl, serviceKey);
+    const isCron = (Boolean(cronSecret) && providedCronSecret === cronSecret) || (await cronAuthorized(req, supabase));
 
     if (!isCron) {
       const token = (req.headers.get("Authorization") || "").replace("Bearer ", "").trim();
