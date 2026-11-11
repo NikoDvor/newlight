@@ -1,6 +1,7 @@
 // Speed alerts (pg_cron every 5 minutes). Tells the salesman the moment a lead shows buying intent but stops:
 //   A) Booking page: the lead entered their details on Form 1 but didn't pick a time (10+ minutes ago).
 //   B) Pay & Sign: the client opened their Pay & Sign page but hasn't paid and signed (15+ minutes later).
+//   C) Callback due: a callback the salesman scheduled in the Dialer is due within 5 minutes.
 // Each alert is sent once (nl_speed_alerts), by text (if the rep has a phone on file), email, and in-app notification.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { cronAuthorized, requireStaff, authJson } from "../_shared/auth.ts";
@@ -104,6 +105,25 @@ Deno.serve(async (req) => {
       `${who} opened their Pay & Sign page and hasn't paid and signed yet. Call now${ph ? `: ${ph}` : ""}.`,
       "crm_deal", deal.id);
     sent.push(`pay_sign:${deal.id}`);
+  }
+
+  // C) Scheduled callbacks coming due (within the next 5 minutes, or missed in the last 30).
+  const { data: cbs } = await admin.from("nl_bdr_leads")
+    .select("id, user_id, client_id, business_name, owner_name, owner_direct_phone, phone, callback_at")
+    .not("callback_at", "is", null)
+    .gte("callback_at", new Date(now - 30 * MIN).toISOString())
+    .lte("callback_at", new Date(now + 5 * MIN).toISOString())
+    .limit(200);
+  for (const l of cbs || []) {
+    if (!l.user_id) continue;
+    if (!(await claim("callback_due", `${l.id}:${l.callback_at}`))) continue;
+    const who = [l.owner_name, l.business_name].filter(Boolean).join(" · ") || "A lead";
+    const ph = l.owner_direct_phone || l.phone || "";
+    const at = new Date(l.callback_at).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", minute: "2-digit" });
+    await alertRep(l.user_id, l.client_id, "Callback due",
+      `${who}: you scheduled a callback for ${at} PT. Call now${ph ? `: ${ph}` : ""}.`,
+      "nl_bdr_lead", l.id);
+    sent.push(`callback:${l.id}`);
   }
 
   return json({ ok: true, sent });

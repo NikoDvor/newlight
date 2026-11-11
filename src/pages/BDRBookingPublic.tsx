@@ -83,7 +83,8 @@ function buildSlots(
     durationMinutes: 60,
     slotIntervalMinutes: 30,
     minNoticeMinutes: minNoticeMinutes ?? DEFAULT_MIN_NOTICE_MINUTES,
-    daysAhead: 15,
+    // 7 calendar days = about 5 business days. Cold-call bookings far out no-show far more often.
+    daysAhead: 7,
     timeZone,
     booked,
   });
@@ -219,7 +220,7 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: "disco
       // marked attendance = 'rescheduled' (superseded, not real conflicts).
       if (data) {
         const now = new Date();
-        const windowEnd = new Date(now.getTime() + 16 * 24 * 60 * 60_000); // daysAhead is 15
+        const windowEnd = new Date(now.getTime() + 8 * 24 * 60 * 60_000); // daysAhead is 7
         const { data: bookedRows } = await (supabase as any)
           .rpc("get_public_bdr_booked_slots", {
             _calendar_id: data.id,
