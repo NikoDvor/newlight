@@ -149,6 +149,8 @@ export default function BDRDialer() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [outcomes, setOutcomes] = useState<OutcomeRow[]>([]);
   const [dialLog, setDialLog] = useState<DialLogRow[]>([]);
+  // First discovery meetings this rep booked (not reschedules, not extra meetings) — for dials per meeting.
+  const [firstMeetings, setFirstMeetings] = useState<string[]>([]);
   const [latestOutcomeByLead, setLatestOutcomeByLead] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -212,7 +214,7 @@ export default function BDRDialer() {
       // Supabase returns at most 1000 rows per request. With 150 new leads a day the Dialer passes that within a week,
       // so read every table in pages.
       const db = supabase as any;
-      const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
+      const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }, { data: meetRows }] = await Promise.all([
         fetchAllRows((from, to) => db.from("nl_bdr_leads")
           .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, state, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id, pool_firm_id")
           .eq("user_id", user.id)
@@ -225,7 +227,12 @@ export default function BDRDialer() {
         fetchAllRows((from, to) => db.from("nl_bdr_dial_log")
           .select("dialed_at")
           .eq("bdr_user_id", user.id).order("dialed_at").range(from, to)),
+        fetchAllRows((from, to) => db.from("bdr_calendar_events")
+          .select("created_at, reschedule_count")
+          .eq("user_id", user.id).eq("meeting_kind", "discovery").eq("is_extra", false)
+          .order("created_at").range(from, to)),
       ]);
+      setFirstMeetings((meetRows || []).filter((m: any) => !m.reschedule_count).map((m: any) => m.created_at));
       setLeads(leadRows || []);
       const all: OutcomeRow[] = (outcomeRows || []).map((r: any) => ({
         lead_id: r.lead_id, outcome: r.outcome, objection_type: r.objection_type,
@@ -418,6 +425,23 @@ export default function BDRDialer() {
     }
     return result;
   }, [dialLog]);
+
+  // Connect rate = calls where they reached the owner or a decision maker ÷ dials. Dials per meeting = dials ÷ first meetings booked.
+  const NO_CONNECT = new Set(["Didn't Answer", "Gatekeeper", "Didn't Get Past Gatekeeper"]);
+  const effectiveness = useMemo(() => {
+    const calc = (b: "week" | "month" | "all") => {
+      const dials = dialLog.filter(d => inBucket(d.dialed_at, b)).length;
+      const talks = outcomes.filter(o => inBucket(o.logged_at, b) && !NO_CONNECT.has(o.outcome)).length;
+      const meetings = firstMeetings.filter(m => inBucket(m, b)).length;
+      return {
+        dials, talks, meetings,
+        connect: dials ? Math.round((talks / dials) * 1000) / 10 : null,
+        perMeeting: meetings ? Math.round((dials / meetings) * 10) / 10 : null,
+      };
+    };
+    return { week: calc("week"), month: calc("month"), all: calc("all") };
+  }, [dialLog, outcomes, firstMeetings]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [effRange, setEffRange] = useState<"week" | "month" | "all">("month");
 
   const recordDial = useCallback(async (leadId: string) => {
     if (!userId) return;
@@ -701,6 +725,31 @@ export default function BDRDialer() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Effectiveness: connect rate and dials per meeting */}
+      <div className="grid-preserve grid grid-cols-2 gap-2">
+        {(() => {
+          const e = effectiveness[effRange];
+          return ([
+            { label: "Connect rate", value: e.connect == null ? "—" : `${e.connect}%`, sub: `${e.talks} conversations / ${e.dials} dials`, tone: "hsl(168,76%,48%)" },
+            { label: "Dials per meeting", value: e.perMeeting == null ? "—" : String(e.perMeeting), sub: `${e.dials} dials / ${e.meetings} first meetings`, tone: "hsl(28,90%,60%)" },
+          ]).map(t => (
+            <div key={t.label} className="rounded-lg px-3 py-2 min-w-0" style={{ background: "hsla(215,35%,10%,.8)", border: `1px solid ${t.tone}33` }}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[9px] uppercase tracking-wider text-white/55">{t.label}</span>
+                {t.label === "Connect rate" && (
+                  <select value={effRange} onChange={(ev) => setEffRange(ev.target.value as any)} aria-label="Period"
+                    className="bg-transparent text-[10px] text-white/60 outline-none" style={{ colorScheme: "dark" }}>
+                    <option value="week">This week</option><option value="month">This month</option><option value="all">All time</option>
+                  </select>
+                )}
+              </div>
+              <span className="block text-lg font-bold mt-1 tabular-nums" style={{ color: t.tone }}>{t.value}</span>
+              <span className="block text-[10px] text-white/45 truncate">{t.sub}</span>
+            </div>
+          ));
+        })()}
       </div>
 
       {/* Stats bar */}

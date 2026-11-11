@@ -119,6 +119,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
   const [followup, setFollowup] = useState<number>(0);
   const [moreReason, setMoreReason] = useState<AnotherMeetingReason | "">("");
   const [howBook, setHowBook] = useState<"now" | "link">("now");
+  const [rebookHow, setRebookHow] = useState<"now" | "link">("now");
   const [meetSlug, setMeetSlug] = useState<string>("");
   // Callers don't all load followup_number; read it from the meeting so titles and outcomes are right.
   useEffect(() => {
@@ -145,7 +146,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
   useEffect(() => {
     if (!open) return;
     setAttendance(isCancel ? "cancelled" : null); setResult(isPaySign ? "lost" : null); setSlot(""); setReason("");
-    setPrimary(""); setOthers(new Set()); setNotes(""); setSaving(false); setMoreReason(""); setHowBook("now");
+    setPrimary(""); setOthers(new Set()); setNotes(""); setSaving(false); setMoreReason(""); setHowBook("now"); setRebookHow("now");
   }, [open, event?.id, isPaySign, isCancel]);
 
   useEffect(() => {
@@ -249,6 +250,27 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
   });
 
   const saveReschedule = () => run(async () => {
+    if (rebookHow === "link") {
+      // No new time yet: we send them a rebook link now. When they book from it, the database files it as the
+      // next try of this same meeting. The 72-hour clock runs until they rebook.
+      if (!reason) throw new Error("Pick a reason.");
+      await insertOutcome({ result: "rescheduled", reschedule_reason: reason });
+      await setEventAttendance(attendance === "no_show" ? "no_show" : "rescheduled");
+      const db = supabase as any;
+      const { data: l } = await db.from("nl_bdr_leads").select("unattended_since, pipeline_stage").eq("id", lead.id).maybeSingle();
+      if (l && !l.unattended_since) {
+        await db.from("nl_bdr_leads").update({ unattended_since: new Date().toISOString(), unattended_return_stage: l.pipeline_stage || "warm" }).eq("id", lead.id);
+      }
+      const { data: sent, error: sendErr } = await supabase.functions.invoke("meeting-rebook-request", { body: { event_id: event.id, reason } });
+      const via = [sent?.email === true ? "email" : null, sent?.sms === true ? "text" : null].filter(Boolean).join(" and ");
+      toast({
+        title: sendErr ? "Logged — rebook link not sent" : via ? `Rebook link sent by ${via}` : "Logged — no email or phone to send the link to",
+        description: sendErr ? "Send them your meeting link yourself." : "When they book, it's filed as the next try of this meeting.",
+        variant: sendErr ? "destructive" : undefined,
+      });
+      onDone();
+      return;
+    }
     if (!slot || !reason) throw new Error("Pick a new time and a reason.");
     const newId = await rescheduleMeeting({
       eventId: event.id,
@@ -389,6 +411,18 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
           {result === "rescheduled" && !isPaySign && (
             <div className="space-y-3">
               <div className="space-y-1.5">
+                <Label className="text-xs">How will they rebook?</Label>
+                <div className="flex flex-wrap gap-2">
+                  <button className={chip(rebookHow === "now")} onClick={() => setRebookHow("now")}>Pick a time now</button>
+                  <button className={chip(rebookHow === "link")} onClick={() => setRebookHow("link")}>Send them a rebook link</button>
+                </div>
+              </div>
+              {rebookHow === "link" ? (
+                <p className="text-xs text-muted-foreground rounded-md bg-muted/30 px-2.5 py-2">
+                  We email them your meeting link now (and text it if they agreed to texts){attendance === "no_show" ? ', with "sorry we missed you"' : ""}. When they book, it's filed as the next try of this meeting. The 72-hour clock runs until then.
+                </p>
+              ) : (
+              <div className="space-y-1.5">
                 <Label className="text-xs">New time (1-hour block)</Label>
                 {slots.length === 0 ? (
                   <p className="text-xs text-muted-foreground">{availability ? "No open times in the next 14 days." : "No availability configured on your calendar yet."}</p>
@@ -400,6 +434,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
                   </select>
                 )}
               </div>
+              )}
               <div className="space-y-1.5">
                 <Label className="text-xs">Reason</Label>
                 <div className="flex flex-wrap gap-2">
@@ -412,8 +447,8 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
                   ))}
                 </div>
               </div>
-              <Button className="w-full" disabled={saving || !slot || !reason} onClick={saveReschedule}>
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save reschedule
+              <Button className="w-full" disabled={saving || !reason || (rebookHow === "now" && !slot)} onClick={saveReschedule}>
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {rebookHow === "now" ? "Save reschedule" : "Log it and send the rebook link"}
               </Button>
             </div>
           )}

@@ -144,6 +144,7 @@ export default function AdminBDRPerformance() {
   const [calls, setCalls] = useState<any[]>([]);
   const [dialEvents, setDialEvents] = useState<{ user_id: string; starts_at: string }[]>([]);
   const [dialLog, setDialLog] = useState<{ bdr_user_id: string; dialed_at: string }[]>([]);
+  const [firstMeetings, setFirstMeetings] = useState<{ user_id: string; reschedule_count: number | null }[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRangeKey>("all");
@@ -153,13 +154,15 @@ export default function AdminBDRPerformance() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: l }, { data: o }, { data: c }, { data: dEvts }, { data: dLog }] = await Promise.all([
+      const [{ data: l }, { data: o }, { data: c }, { data: dEvts }, { data: dLog }, { data: fm }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("nl_bdr_objections").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes").select("*").order("logged_at", { ascending: false }),
         (supabase as any).from("bdr_calendar_events").select("user_id, starts_at").eq("source", "dialer"),
         (supabase as any).from("nl_bdr_dial_log").select("bdr_user_id, dialed_at"),
+        (supabase as any).from("bdr_calendar_events").select("user_id, reschedule_count").eq("meeting_kind", "discovery").eq("is_extra", false),
       ]);
+      setFirstMeetings((fm || []).filter((m: any) => !m.reschedule_count));
       setLeads(l || []);
       setObjections(o || []);
       setCalls(c || []);
@@ -239,8 +242,18 @@ export default function AdminBDRPerformance() {
       metrics: computeCallMetrics(calls.filter((c: any) => c.bdr_user_id === uid)),
       dialCounts: computeDialCounts(dialLog.filter(d => d.bdr_user_id === uid)),
       dialDays: computeDaysHitMissed(dialEvents.filter((e) => e.user_id === uid).map((e) => e.starts_at)),
+      // Connect rate = calls where they reached someone (not no answer / gatekeeper) ÷ dials; dials per first meeting booked.
+      connect: (() => {
+        const dials = dialLog.filter(d => d.bdr_user_id === uid).length;
+        const talks = calls.filter((c: any) => c.bdr_user_id === uid && !["Didn't Answer", "Gatekeeper", "Didn't Get Past Gatekeeper"].includes(c.outcome)).length;
+        const meetings = firstMeetings.filter((m) => m.user_id === uid).length;
+        return {
+          rate: dials ? Math.round((talks / dials) * 1000) / 10 : null,
+          perMeeting: meetings ? Math.round((dials / meetings) * 10) / 10 : null,
+        };
+      })(),
     })).sort((a, b) => b.dialCounts.all - a.dialCounts.all);
-  }, [calls, dialEvents, dialLog, profiles]);
+  }, [calls, dialEvents, dialLog, profiles, firstMeetings]);
 
   // Objection leaderboard
   const objLeaderboard = useMemo(() => {
@@ -414,9 +427,10 @@ export default function AdminBDRPerformance() {
           <p className="text-sm text-muted-foreground text-center py-8">No calls logged yet.</p>
         ) : (
           <div className="space-y-1.5">
-            <div className="hidden sm:grid grid-cols-9 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
+            <div className="hidden sm:grid grid-cols-11 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
               <span className="col-span-2">BDR</span>
               <span>Today</span><span>Week</span><span>Month</span><span>Total</span>
+              <span>Connect %</span><span>Dials / mtg</span>
               <span>Sched % (Total)</span><span>250+ days / other</span><span>Top Outcome</span>
             </div>
             {bdrCallRows.map(row => {
@@ -424,12 +438,14 @@ export default function AdminBDRPerformance() {
               const dd = row.dialDays;
               return (
                 <div key={row.uid} className="rounded-xl px-4 py-3" style={cardStyle}>
-                  <div className="grid-preserve grid grid-cols-3 gap-x-3 gap-y-1.5 sm:grid-cols-9 sm:gap-2 sm:items-center">
+                  <div className="grid-preserve grid grid-cols-3 gap-x-3 gap-y-1.5 sm:grid-cols-11 sm:gap-2 sm:items-center">
                     <span className="col-span-3 sm:col-span-2 font-medium text-foreground truncate">{row.name}</span>
                     <span className="text-sm text-foreground"><MobileLabel>Today</MobileLabel>{row.dialCounts.today}</span>
                     <span className="text-sm text-foreground"><MobileLabel>Week</MobileLabel>{row.dialCounts.week}</span>
                     <span className="text-sm text-foreground"><MobileLabel>Month</MobileLabel>{row.dialCounts.month}</span>
                     <span className="text-sm text-foreground"><MobileLabel>Total</MobileLabel>{row.dialCounts.all}</span>
+                    <span className="text-sm text-foreground"><MobileLabel>Connect %</MobileLabel>{row.connect.rate == null ? "—" : `${row.connect.rate}%`}</span>
+                    <span className="text-sm text-foreground"><MobileLabel>Dials / mtg</MobileLabel>{row.connect.perMeeting ?? "—"}</span>
                     <span className="text-sm text-foreground"><MobileLabel>Sched %</MobileLabel>{row.metrics.all.schedPct}%</span>
                     <span className="text-xs whitespace-nowrap" title={`${DAILY_DIAL_GOAL}+ dials = hit; 1–${DAILY_DIAL_GOAL - 1} = missed; 0 = not counted`}>
                       <span className="text-emerald-400 font-semibold tabular-nums">{dd.hit}</span>
