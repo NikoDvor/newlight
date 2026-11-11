@@ -321,6 +321,74 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
     return { byFollowup, byTry, needed };
   }, [fEvents, fOuts, leads, deals]);
 
+  /* Between the forms: every meeting in order between Form 1 → Form 2 (discovery) and Form 2 → Form 3 (closing),
+     counting no-shows, reschedules and extra meetings. How many it took, what happened at each, where leads were lost. */
+  const between = useMemo(() => {
+    const outByEv = new Map(fOuts.map((o) => [o.event_id, o]));
+    const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+    const bucket = (n: number) => (n >= 4 ? "4+" : String(n));
+    const BUCKETS = ["1", "2", "3", "4+"];
+    const leadEvents = (k: string) => {
+      const m = new Map<string, Ev[]>();
+      fEvents.filter((e) => e.meeting_kind === k && e.lead_id).forEach((e) => { const a = m.get(e.lead_id!) || []; a.push(e); m.set(e.lead_id!, a); });
+      m.forEach((a) => a.sort((x, y) => String(x.starts_at).localeCompare(String(y.starts_at))));
+      return m;
+    };
+    const stages = (["discovery", "closing"] as const).map((k) => {
+      const byLead = leadEvents(k);
+      const rowsMap = new Map<string, { ev: Ev; out?: Out }[]>(BUCKETS.map((b) => [b, []]));
+      const reached: { n: number; held: number }[] = [];
+      const lostAt = new Map<string, number>(BUCKETS.map((b) => [b, 0]));
+      const lostReasons = new Map<string, number>();
+      const reachedItems: Item[] = [], lostItems: Item[] = [];
+      byLead.forEach((evs) => {
+        let held = 0;
+        for (let i = 0; i < evs.length; i++) {
+          const ev = evs[i], out = outByEv.get(ev.id);
+          rowsMap.get(bucket(i + 1))!.push({ ev, out });
+          if (out?.attendance === "attended") held++;
+          if (out?.result === "won") { reached.push({ n: i + 1, held }); reachedItems.push({ ev, out }); break; }
+          if (out?.result === "lost") {
+            lostAt.set(bucket(i + 1), (lostAt.get(bucket(i + 1)) || 0) + 1);
+            const r = out.primary_lost_reason || "other";
+            lostReasons.set(r, (lostReasons.get(r) || 0) + 1);
+            lostItems.push({ ev, out });
+            break;
+          }
+        }
+      });
+      const rows = BUCKETS.map((b) => {
+        const list = rowsMap.get(b)!;
+        const os = list.map((x) => x.out).filter(Boolean) as Out[];
+        const att = os.filter((o) => o.attendance === "attended" || o.attendance === "no_show");
+        const r = (res: string) => ({ num: os.filter((o) => o.result === res).length, den: os.length, items: list.filter((x) => x.out?.result === res) as Item[] });
+        const lc = new Map<string, number>();
+        os.filter((o) => o.result === "lost").forEach((o) => { const k2 = o.primary_lost_reason || "other"; lc.set(k2, (lc.get(k2) || 0) + 1); });
+        const top = Array.from(lc.entries()).sort((a, b2) => b2[1] - a[1])[0] || null;
+        return {
+          b, booked: list.length, logged: os.length, items: list as Item[], top,
+          show: { num: att.filter((o) => o.attendance === "attended").length, den: att.length, items: list as Item[] },
+          forward: r("won"), another: r("another_meeting"), resched: r("rescheduled"), lost: r("lost"),
+        };
+      });
+      const dist = BUCKETS.map((b) => ({ b, n: reached.filter((x) => bucket(x.n) === b).length }));
+      const topLost = Array.from(lostReasons.entries()).sort((a, b2) => b2[1] - a[1])[0] || null;
+      return {
+        kind: k, from: k === "discovery" ? "Form 1" : "Form 2", to: k === "discovery" ? "Form 2" : "Form 3",
+        rows, dist, reachedN: reached.length, reachedItems,
+        avgAll: avg(reached.map((x) => x.n)), avgHeld: avg(reached.map((x) => x.held)),
+        lostN: lostItems.length, lostItems, lostAt: BUCKETS.map((b) => ({ b, n: lostAt.get(b) || 0 })), topLost,
+      };
+    });
+    // Whole way: Form 1 → Form 3 paid, for won clients.
+    const won = Array.from(leads.values()).filter((l) => l.crm_deal_id && deals.get(l.crm_deal_id)?.pay_sign_status === "paid_signed");
+    const toClose = won.map((l) => {
+      const evs = fEvents.filter((e) => e.lead_id === l.id && (e.meeting_kind === "discovery" || e.meeting_kind === "closing"));
+      return { all: evs.length, held: evs.filter((e) => outByEv.get(e.id)?.attendance === "attended").length };
+    }).filter((x) => x.all > 0);
+    return { stages, toCloseAll: avg(toClose.map((x) => x.all)), toCloseHeld: avg(toClose.map((x) => x.held)), wonN: toClose.length };
+  }, [fEvents, fOuts, leads, deals]);
+
   /* journeys */
   const journeys = useMemo(() => buildLeadJourney(fEvents as any, fOuts as any), [fEvents, fOuts]);
   const jx = useMemo(() => {
@@ -497,6 +565,75 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                   })}
                 </div>
               )}
+            </div>
+
+            {/* 1c. Between the forms */}
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Between the forms</p>
+                <p className="text-[11px] text-white/40 mt-0.5">
+                  Every meeting in order from one form to the next — no-shows, reschedules and extra meetings all count as a meeting. Click any number to see the meetings.
+                </p>
+              </div>
+              <div className="rounded-xl bg-white/[0.04] p-4">
+                <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Meetings to close · Form 1 → Form 3 paid</p>
+                <p className="text-2xl font-bold text-white mt-1">
+                  {between.toCloseAll == null ? "—" : between.toCloseAll.toFixed(1)}
+                  <span className="text-sm font-normal text-white/45"> booked · {between.toCloseHeld == null ? "—" : between.toCloseHeld.toFixed(1)} held</span>
+                </p>
+                <p className="text-[11px] text-white/35 mt-1">{between.wonN ? `average across ${between.wonN} won client${between.wonN === 1 ? "" : "s"}` : "no won clients yet"}</p>
+              </div>
+              {between.stages.map((st) => (
+                <div key={st.kind} className="rounded-xl border border-white/[0.06] p-4 space-y-3">
+                  <p className="text-sm font-semibold text-white">{st.from} → {st.to} <span className="text-white/40 font-normal">· {SHORT[st.kind]} meetings</span></p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button onClick={() => open(`Reached ${st.to}`, st.reachedItems)} className="text-left rounded-lg bg-white/[0.04] p-3 hover:bg-white/[0.07]">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Reached {st.to}</p>
+                      <p className="text-xl font-bold text-white mt-1">{st.reachedN}</p>
+                      <p className="text-[11px] text-white/35">{st.dist.filter((d) => d.n).map((d) => `${d.n} after ${d.b} mtg${d.b === "1" ? "" : "s"}`).join(" · ") || "none yet"}</p>
+                    </button>
+                    <div className="rounded-lg bg-white/[0.04] p-3">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Meetings it took (avg)</p>
+                      <p className="text-xl font-bold text-white mt-1">{st.avgAll == null ? "—" : st.avgAll.toFixed(1)} <span className="text-xs font-normal text-white/45">booked · {st.avgHeld == null ? "—" : st.avgHeld.toFixed(1)} held</span></p>
+                      <p className="text-[11px] text-white/35">for leads that reached {st.to}</p>
+                    </div>
+                    <button onClick={() => open(`Lost between ${st.from} and ${st.to}`, st.lostItems)} className="text-left rounded-lg bg-white/[0.04] p-3 hover:bg-white/[0.07]">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Lost here</p>
+                      <p className="text-xl font-bold text-red-400 mt-1">{st.lostN}</p>
+                      <p className="text-[11px] text-white/35">
+                        {st.lostAt.filter((d) => d.n).map((d) => `${d.n} at mtg ${d.b}`).join(" · ") || "none yet"}
+                        {st.topLost ? ` · top: ${reasonLabel(st.topLost[0])}` : ""}
+                      </p>
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
+                    <table className="w-full min-w-[900px] text-xs">
+                      <thead><tr className="text-left text-white/40">
+                        <th className="px-3 py-2 font-medium">Meeting # since {st.from}</th><th className="px-3 py-2 font-medium text-right">Booked</th>
+                        <th className="px-3 py-2 font-medium text-right">Logged</th><th className="px-3 py-2 font-medium text-right">Show-up %</th>
+                        <th className="px-3 py-2 font-medium text-right">→ {st.to} %</th><th className="px-3 py-2 font-medium text-right">Another meeting %</th>
+                        <th className="px-3 py-2 font-medium text-right">Rescheduled %</th><th className="px-3 py-2 font-medium text-right">Lost %</th>
+                        <th className="px-3 py-2 font-medium">Top objection</th>
+                      </tr></thead>
+                      <tbody>
+                        {st.rows.map((r) => (
+                          <tr key={r.b} className={`border-t border-white/[0.06] ${r.booked ? "text-white/80" : "text-white/30"}`}>
+                            <td className="px-3 py-1.5"><button className="hover:underline" onClick={() => open(`${st.from} → ${st.to}: meeting ${r.b}`, r.items)}>Meeting {r.b}</button></td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{r.booked}</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums">{r.logged}</td>
+                            {[r.show, r.forward, r.another, r.resched, r.lost].map((x, i) => (
+                              <td key={i} className="px-3 py-1.5 text-right tabular-nums">
+                                <button className="hover:underline" onClick={() => open(`${st.from} → ${st.to}: meeting ${r.b}`, x.items)}>{pct(x) == null ? "—" : `${pct(x)}%`}</button>
+                              </td>
+                            ))}
+                            <td className="px-3 py-1.5 text-white/60">{r.top ? `${reasonLabel(r.top[0])} (${r.top[1]})` : "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* 1d. Every meeting step */}
