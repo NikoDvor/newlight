@@ -10153,7 +10153,10 @@ export type Database = {
           name: string
           owner_rep_id: string | null
           previous_owner_ids: string[]
+          reactivated_at: string | null
           recycle_count: number
+          rest_reason: string | null
+          rested_at: string | null
           services: string[] | null
           signal: string | null
           signal_date: string | null
@@ -10203,7 +10206,10 @@ export type Database = {
           name: string
           owner_rep_id?: string | null
           previous_owner_ids?: string[]
+          reactivated_at?: string | null
           recycle_count?: number
+          rest_reason?: string | null
+          rested_at?: string | null
           services?: string[] | null
           signal?: string | null
           signal_date?: string | null
@@ -10253,7 +10259,10 @@ export type Database = {
           name?: string
           owner_rep_id?: string | null
           previous_owner_ids?: string[]
+          reactivated_at?: string | null
           recycle_count?: number
+          rest_reason?: string | null
+          rested_at?: string | null
           services?: string[] | null
           signal?: string | null
           signal_date?: string | null
@@ -10808,6 +10817,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nl_speed_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          ref_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          ref_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          ref_id?: string
+        }
+        Relationships: []
       }
       nl_training_activity_days: {
         Row: {
@@ -17478,6 +17508,7 @@ export type Database = {
         Returns: string
       }
       nl_billing_cron_ok: { Args: { p: string }; Returns: boolean }
+      nl_close_stalled_deals: { Args: never; Returns: number }
       nl_commission_cleared_on: {
         Args: { p_method: string; p_received: string }
         Returns: string
@@ -17678,6 +17709,16 @@ export type Database = {
         }
         Returns: number
       }
+      nl_pool_reactivation: {
+        Args: never
+        Returns: {
+          back_in_pool: number
+          booked_after_return: number
+          booked_pct: number
+          rest_reason: string
+          rested: number
+        }[]
+      }
       nl_pool_recycle: { Args: never; Returns: Json }
       nl_pool_release_untouched: { Args: never; Returns: number }
       nl_pool_stats: {
@@ -17692,6 +17733,7 @@ export type Database = {
           total: number
         }[]
       }
+      nl_rest_days: { Args: { _reason: string }; Returns: number }
       nl_territory_move: {
         Args: { _dir: number; _id: string }
         Returns: undefined
