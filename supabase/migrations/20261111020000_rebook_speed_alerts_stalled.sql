@@ -122,7 +122,7 @@ begin
       outcome_history = coalesce(outcome_history, '[]'::jsonb) || jsonb_build_array(jsonb_build_object(
         'label', 'Lost — went silent (auto-closed: proposal expired, no activity 14 days)', 'timestamp', now(), 'meeting_kind', 'closing'))
     where id = r.lead_id;
-    update crm_deals set status = 'lost', lost_at = now(), lost_reason = 'went_silent' where id = r.deal_id;
+    update crm_deals set status = 'lost', lost_at = now(), lost_reason = 'unresponsive' where id = r.deal_id; -- deals table only allows its own short list
     n := n + 1;
   end loop;
   return n;

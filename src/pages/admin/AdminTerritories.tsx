@@ -169,6 +169,7 @@ export default function AdminTerritories() {
   const [logs, setLogs] = useState<Record<string, PullLog>>({});
   const [settings, setSettings] = useState<{ enabled: boolean; leads_per_day: number } | null>(null);
   const [perDayDraft, setPerDayDraft] = useState("150");
+  const [react, setReact] = useState<{ rest_reason: string; rested: number; back_in_pool: number; booked_after_return: number; booked_pct: number | null }[]>([]);
   const [stats, setStats] = useState<any[]>([]);
   const totals = stats.reduce((a, s) => ({
     available: a.available + (s.available ?? 0),
@@ -213,6 +214,8 @@ export default function AdminTerritories() {
       if (cfg) { setSettings(cfg); setPerDayDraft(String(cfg.leads_per_day)); }
       loadTerrs();
       const { data: st } = await (supabase as any).rpc("nl_pool_stats");
+      const { data: re } = await (supabase as any).rpc("nl_pool_reactivation");
+      setReact((re as any[]) || []);
       setStats(((st as any[]) || []).slice().sort((a, b) => (b.available ?? 0) - (a.available ?? 0)));
     })();
   }, []);
@@ -275,6 +278,38 @@ export default function AdminTerritories() {
                     <td className="pr-3 py-1 text-right tabular-nums">{totals.removed}</td>
                     <td className="py-1 text-right tabular-nums">{totals.total}</td>
                   </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Resting leads — by reason</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            A "no" rests before it can be called again: went silent 60 days · too expensive / no budget 90 · doesn't see the value / too risky 120 ·
+            not interested / bad experience 180 · already has someone / chose a competitor 270 · in-house team / firm sold / retiring 365.
+            "Booked after coming back" shows which rests pay off.
+          </p>
+          {react.length === 0 ? <span className="text-muted-foreground text-sm">No rested leads yet.</span> : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[520px]">
+                <thead><tr className="text-left text-xs text-muted-foreground">
+                  <th className="pr-3 py-1 font-medium">Reason</th><th className="pr-3 py-1 font-medium text-right">Rested</th>
+                  <th className="pr-3 py-1 font-medium text-right">Back in pool</th><th className="pr-3 py-1 font-medium text-right">Booked after coming back</th>
+                  <th className="py-1 font-medium text-right">Booked %</th>
+                </tr></thead>
+                <tbody>
+                  {react.map((r) => (
+                    <tr key={r.rest_reason} className="border-t border-border">
+                      <td className="pr-3 py-1">{r.rest_reason}</td>
+                      <td className="pr-3 py-1 text-right tabular-nums">{r.rested}</td>
+                      <td className="pr-3 py-1 text-right tabular-nums">{r.back_in_pool}</td>
+                      <td className="pr-3 py-1 text-right tabular-nums">{r.booked_after_return}</td>
+                      <td className="py-1 text-right tabular-nums">{r.booked_pct == null ? "—" : `${r.booked_pct}%`}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
