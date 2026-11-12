@@ -420,9 +420,9 @@ function DiscoveryCalc() {
 }
 
 const STEPS3 = [
-  { n: "01", t: "Optimal online exposure", s: "Get found.", b: ["Organic content", "SEO", "AI visibility", "Social + LinkedIn posting"] },
-  { n: "02", t: "Generate appointments", s: "Fill the calendar.", b: ["Seeded posts", "Paid ads", "Boosted content", "Paid traffic → booking"] },
-  { n: "03", t: "Optimize conversion", s: "Win the client.", b: ["Client onboarding pipeline", "Every outcome logged", "Leaks found and fixed", "Strategy from the data"] },
+  { n: "01", t: "Get Found", s: "Market research + organic visibility.", b: ["Market and competitor research", "Website and SEO", "AI search visibility", "Content and social that build authority"] },
+  { n: "02", t: "Fill the Calendar", s: "Paid traffic → qualified appointments.", b: ["Paid campaigns to the ideal client", "Landing pages and booking forms", "Qualifying questions", "Automatic confirmations, reminders, follow-up"] },
+  { n: "03", t: "Win the Client", s: "Booked appointment → won client.", b: ["Client onboarding pipeline", "Every meeting outcome logged", "Leaks and objections flagged", "Strategy adjusted from the data"] },
 ];
 function ThreeSteps() {
   const [open, setOpen] = useState(0);

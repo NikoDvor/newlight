@@ -60,19 +60,19 @@ function AvgSlider({ avg, setAvg }: { avg: number; setAvg: (n: number) => void }
 const PKG_INFO: Record<PackageKey, { who: string; get: string[]; guarantee: string; ongoing: string }> = {
   growth: {
     who: "Firms that want more booked meetings and want to pay on results.",
-    get: ["Step 2 — paid traffic, ads and landing pages", "Booked meetings on their calendar", "A simple pipeline to track the clients we bring"],
+    get: ["Step 2 · Fill the Calendar — paid campaigns, landing pages, booking forms", "Booked meetings on their calendar", "A simple pipeline to track the clients we bring"],
     guarantee: "Yes — 90 days",
     ongoing: "½ an average client a month, or commission (25% year one, 10% after)",
   },
   command_center: {
     who: "Firms that already get meetings but lose too many of them.",
-    get: ["Step 3 — their own Command Center app", "Client onboarding pipeline, every stage", "Leaks and objections flagged, strategy adjusted"],
+    get: ["Step 3 · Win the Client — their own Command Center app", "Client onboarding pipeline, every stage", "Leaks and objections flagged, strategy adjusted"],
     guarantee: "No",
     ongoing: "Monthly retainer: 1 average client a month",
   },
   enterprise: {
     who: "Firms that want the whole system and to own their market.",
-    get: ["Steps 1 + 2 + 3 — everything", "Exclusive metro market — we won't work with their competitors there", "A dedicated strategist"],
+    get: ["Steps 1 + 2 + 3 — Get Found, Fill the Calendar, Win the Client", "Exclusive metro market — we won't work with their competitors there", "A dedicated strategist"],
     guarantee: "No",
     ongoing: "Monthly retainer: 2 average clients a month",
   },
