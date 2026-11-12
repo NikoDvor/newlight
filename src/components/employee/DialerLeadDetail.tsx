@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Phone, Mail, Linkedin, Ban, Loader2, ChevronDown, ChevronUp, Crown } from "lucide-react";
+import { Phone, Mail, Linkedin, Ban, Loader2, ChevronDown, ChevronUp, Crown, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { callingHoursBlock } from "@/lib/callingHours";
@@ -217,6 +217,25 @@ export default function DialerLeadDetail({ open, onOpenChange, leadId, businessN
           style={{ color: "hsl(211,96%,68%)" }}
         >
           <Phone className="h-3 w-3" /> {phone}
+        </a>
+      )}
+      {!dnc && (
+        <a
+          href={`sms:${phone.replace(/[^\d+]/g, "")}`}
+          onClick={(e) => {
+            const block = callingHoursBlock(firm?.state);
+            if (block) {
+              e.preventDefault();
+              toast({ title: "Can't text right now", description: block, variant: "destructive" });
+              return;
+            }
+            if (leadId) (supabase as any).from("nl_lead_texts").insert({ lead_id: leadId, phone }).then(() => {});
+          }}
+          className="inline-flex items-center gap-1 rounded-full border border-white/15 px-1.5 py-0.5 text-[10px] font-bold hover:border-white/35"
+          style={{ color: "hsl(152,62%,62%)" }}
+          title="Text this number (opens Messages)"
+        >
+          <MessageSquare className="h-2.5 w-2.5" /> Text
         </a>
       )}
       {dnc ? (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, Navigate, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Presentation, Calculator, FileSignature, Film, Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints, GraduationCap, Lock, LogOut, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
+import { Presentation, Calculator, FileSignature, Film, Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Footprints, GraduationCap, Lock, LogOut, Mail, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,7 @@ const navGroups: { label?: string; items: { title: string; url: string; icon: an
     label: "Get leads",
     items: [
       { title: "Dialer", url: "/employee/dialer", icon: Phone },
+      { title: "Email", url: "/employee/email", icon: Mail },
       { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
     ],
   },

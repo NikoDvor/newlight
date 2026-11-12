@@ -196,6 +196,7 @@ const ClientRecordings = lazy(() => import("./pages/recordings/RecordingsPages")
 const BDRMyLeads = lazy(() => import("./pages/employee/BDRMyLeads"));
 const BDRMyStats = lazy(() => import("./pages/employee/BDRMyStats"));
 const BDRDialer = lazy(() => import("./pages/employee/BDRDialer"));
+const BDREmail = lazy(() => import("./pages/employee/BDREmail"));
 
 
 
@@ -421,6 +422,7 @@ const App = () => {
                 <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><SellGate><BDRDialer /></SellGate></ClientFlagGate>} />
+                <Route path="email" element={<ClientFlagGate flag="has_sales_team" source="employee"><SellGate><BDREmail /></SellGate></ClientFlagGate>} />
 
 
 
