@@ -28,7 +28,7 @@ const ROLE: Record<Exclude<Who, "">, { l: string; c: string }> = {
   data: { l: "Saved", c: "hsl(215,20%,62%)" },
 };
 const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
-const panel = "rounded-2xl border border-white/[0.16] bg-[hsl(220,36%,11%)]";
+const panel = "rounded-2xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px]";
 const eyebrow = "font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70";
 
 type Role = Exclude<Who, "" | "data"> | "";
@@ -52,7 +52,7 @@ export default function ClientShowcase() {
   const dim = (w: Who) => (role && w !== role ? "opacity-25" : "opacity-100");
 
   return (
-    <div className="mx-auto max-w-[1200px] rounded-3xl bg-[hsla(222,46%,5%,.82)] px-4 pb-24 pt-4 text-white shadow-[0_0_0_1px_hsla(211,96%,60%,.12),0_30px_80px_-30px_rgba(0,0,0,.8)] backdrop-blur-xl sm:px-7 [text-shadow:0_1px_2px_rgba(0,0,0,.55)]">
+    <div className="mx-auto max-w-[1200px] rounded-3xl bg-[hsla(222,46%,5%,.30)] px-4 pb-24 pt-4 text-white sm:px-7 [text-shadow:0_1px_2px_rgba(0,0,0,.9),0_0_14px_rgba(0,0,0,.65)]">
       {/* header */}
       <header className="grid gap-3 pb-5 pt-2">
         <span className={eyebrow}>NewLight · the system we build for your firm</span>
@@ -65,7 +65,7 @@ export default function ClientShowcase() {
       </header>
 
       {/* controls */}
-      <div className="sticky top-0 z-20 -mx-2 mb-2 grid gap-2 border-b border-white/[0.16] bg-[hsla(222,46%,5%,.94)] px-2 py-2.5 backdrop-blur-xl">
+      <div className="sticky top-0 z-20 -mx-2 mb-2 grid gap-2 border-b border-white/[0.16] bg-[hsla(222,46%,5%,.72)] px-2 py-2.5 backdrop-blur-md">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Seg label="Firm" items={NICHES} value={niche} onChange={setNiche} />
           <Seg label="Package" items={PKGS} value={pkg} onChange={setPkg} />
@@ -94,7 +94,7 @@ export default function ClientShowcase() {
         </div>
         <div className="grid gap-2 sm:grid-cols-3">
           {[1, 2, 3].map((s) => (
-            <div key={s} className={"grid content-start gap-1 rounded-2xl border border-white/[0.16] bg-[hsl(220,36%,11%)] p-4 " + (has(s) ? "" : "opacity-50")}
+            <div key={s} className={"grid content-start gap-1 rounded-2xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] p-4 " + (has(s) ? "" : "opacity-50")}
               style={{ borderTop: `4px solid ${has(s) ? COL[STEPS[s].c] : "rgba(255,255,255,.1)"}` }}>
               <span className={eyebrow}>Step {s}</span>
               <b className="text-[17px]">{STEPS[s].t}</b>
@@ -119,7 +119,7 @@ export default function ClientShowcase() {
       <Section eyebrowText="What runs by itself" title="The automatic clock" lede="Things that happen without anyone clicking anything.">
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {CLOCK(niche, pkg).map(([w, when, what]) => (
-            <div key={when + what} className={"grid gap-1 rounded-xl border border-white/[0.16] bg-[hsl(220,36%,11%)] p-3.5 transition-opacity " + dim(w)} style={{ borderTop: `3px solid ${ROLE[w as Exclude<Who, "">]?.c}` }}>
+            <div key={when + what} className={"grid gap-1 rounded-xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] p-3.5 transition-opacity " + dim(w)} style={{ borderTop: `3px solid ${ROLE[w as Exclude<Who, "">]?.c}` }}>
               <span className="font-mono text-[14px] font-bold">{when}</span>
               <span className="text-[13.5px] text-white/88">{what}</span>
             </div>
@@ -172,7 +172,7 @@ function Seg<T extends string>({ label, items, value, onChange }: { label: strin
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className={eyebrow}>{label}</span>
-      <div className="inline-flex flex-wrap gap-0.5 rounded-xl border border-white/[0.16] bg-[hsl(220,34%,14%)] p-0.5" role="group" aria-label={label}>
+      <div className="inline-flex flex-wrap gap-0.5 rounded-xl border border-white/[0.16] bg-[hsla(220,36%,13%,.78)] p-0.5" role="group" aria-label={label}>
         {items.map((it) => (
           <button key={it.k} type="button" aria-pressed={value === it.k} onClick={() => onChange(it.k)}
             className={"min-h-[34px] rounded-lg px-3 text-[13.5px] font-semibold transition " + (value === it.k ? "bg-[linear-gradient(120deg,hsl(217,90%,52%),hsl(197,100%,48%))] text-white shadow-[0_0_18px_-6px_hsla(197,100%,60%,.9)]" : "text-white/72 hover:text-white")}>
@@ -219,7 +219,7 @@ function Belt({ st, niche, dim }: { st: Station[]; niche: Niche; dim: (w: Who) =
   const grad = "linear-gradient(90deg," + zones.map((z) => { const a = (acc / st.length) * 100; acc += z.n; return `${zc(z.z)} ${a}% ${(acc / st.length) * 100}%`; }).join(",") + ")";
   const go = (id: string) => document.getElementById("st-" + id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   return (
-    <div className="overflow-x-auto rounded-2xl border border-white/[0.16] bg-[hsl(222,40%,8%)]">
+    <div className="overflow-x-auto rounded-2xl border border-white/[0.16] bg-[hsla(222,40%,7%,.62)] backdrop-blur-[3px]">
       <div className="relative px-6 pb-4 pt-5" style={{ width: Math.max(st.length * 168, 900) }}>
         <div className="relative grid" style={{ gridTemplateColumns: `repeat(${st.length}, 1fr)` }}>
           <div className="absolute left-[3%] right-[3%] top-[82px] h-1 rounded" style={{ background: grad }} />
@@ -234,7 +234,7 @@ function Belt({ st, niche, dim }: { st: Station[]; niche: Niche; dim: (w: Who) =
               <span className="mt-2.5 grid w-full gap-1.5">
                 {s.hang.map(([w, t]) => (
                   <span key={t} className={"rounded-lg border-l-[3px] px-2 py-1.5 text-left text-[12px] leading-snug transition-opacity " + (w === "data" ? "" : dim(w))}
-                    style={{ borderColor: ROLE[w as Exclude<Who, "">]?.c, background: `color-mix(in srgb, ${ROLE[w as Exclude<Who, "">]?.c} 20%, hsl(220,36%,11%))` }}>{t}</span>
+                    style={{ borderColor: ROLE[w as Exclude<Who, "">]?.c, background: `color-mix(in srgb, ${ROLE[w as Exclude<Who, "">]?.c} 24%, hsla(220,40%,9%,.8))` }}>{t}</span>
                 ))}
               </span>
             </button>
@@ -259,7 +259,7 @@ function StationCard({ s, i, allKid, allDet, dim }: { s: Station; i: number; all
   useEffect(() => setDet(allDet), [allDet]);
   const c = zc(s.z);
   return (
-    <article id={"st-" + s.id} className="grid scroll-mt-36 gap-4 border-t border-white/[0.16] py-7 first:border-t-0 sm:grid-cols-[56px_minmax(0,1fr)]" style={{ "--z": c } as CSSProperties}>
+    <article id={"st-" + s.id} className="my-3 grid scroll-mt-36 gap-4 rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.5)] p-4 sm:grid-cols-[56px_minmax(0,1fr)] sm:p-5" style={{ "--z": c } as CSSProperties}>
       <div className="flex items-center gap-2 font-extrabold text-white/60 sm:grid sm:content-start sm:justify-items-center">
         <span className="text-[30px] leading-none">{i + 1}</span>
         <span className="hidden min-h-[60px] w-1 rounded sm:block" style={{ background: c }} />
@@ -271,7 +271,7 @@ function StationCard({ s, i, allKid, allDet, dim }: { s: Station; i: number; all
           {s.tag && <Tag kind={s.tag[0]}>{s.tag[1]}</Tag>}
         </div>
         <p className="max-w-[72ch] text-[16px] text-white/92">{s.d}</p>
-        <div className="flex flex-wrap gap-1.5">{s.feat.map((f) => <span key={f} className="rounded-full border border-white/[0.16] bg-[hsl(220,34%,14%)] px-2.5 py-1 text-[12px] font-semibold text-white/88">{f}</span>)}</div>
+        <div className="flex flex-wrap gap-1.5">{s.feat.map((f) => <span key={f} className="rounded-full border border-white/[0.16] bg-[hsla(220,36%,13%,.78)] px-2.5 py-1 text-[12px] font-semibold text-white/88">{f}</span>)}</div>
         {s.results && (
           <div className="flex flex-wrap gap-1.5 font-mono text-[11.5px] font-semibold">
             {[["Moved forward", COL.won], ["Another meeting first", COL.warm], ["Rescheduled", COL.cold], ["Lost + reason", COL.bad]].map(([t, cc]) => <span key={t} className="rounded-md border px-2 py-0.5" style={{ color: cc, borderColor: cc }}>{t}</span>)}
@@ -285,7 +285,7 @@ function StationCard({ s, i, allKid, allDet, dim }: { s: Station; i: number; all
         {det && (
           <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {s.boxes.map((b) => (
-              <div key={b.h} className={"min-w-0 rounded-xl border border-white/[0.16] p-3.5 " + (b.h === "Goal" ? "bg-[hsl(220,34%,15%)]" : "bg-[hsl(220,36%,11%)]")}>
+              <div key={b.h} className={"min-w-0 rounded-xl border border-white/[0.16] p-3.5 " + (b.h === "Goal" ? "bg-[hsla(220,36%,15%,.8)]" : "bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px]")}>
                 <h4 className="mb-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-white/68">{b.h}</h4>
                 <ul className="grid gap-1.5">
                   {b.items.map(([w, t]) => (
@@ -306,7 +306,7 @@ function StationCard({ s, i, allKid, allDet, dim }: { s: Station; i: number; all
 
 function Kid({ c, children }: { c: string; children: ReactNode }) {
   return (
-    <p className="max-w-[72ch] rounded-xl border px-3.5 py-3 text-[16.5px]" style={{ borderColor: `color-mix(in srgb, ${c} 40%, transparent)`, background: `color-mix(in srgb, ${c} 16%, hsl(220,36%,11%))` }}>
+    <p className="max-w-[72ch] rounded-xl border px-3.5 py-3 text-[16.5px]" style={{ borderColor: `color-mix(in srgb, ${c} 40%, transparent)`, background: `color-mix(in srgb, ${c} 20%, hsla(220,40%,9%,.8))` }}>
       <span className="mb-1 block font-mono text-[10.5px] font-semibold uppercase tracking-[0.1em]" style={{ color: c }}>In simple words</span>
       {children}
     </p>
@@ -316,7 +316,7 @@ function Kid({ c, children }: { c: string; children: ReactNode }) {
 function Toggle({ on, c, onClick, children }: { on: boolean; c: string; onClick: () => void; children: ReactNode }) {
   return (
     <button type="button" aria-expanded={on} onClick={onClick}
-      className="inline-flex min-h-[36px] items-center rounded-lg border bg-[hsl(220,36%,11%)] px-3 text-[13.5px] font-semibold transition"
+      className="inline-flex min-h-[36px] items-center rounded-lg border bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] px-3 text-[13.5px] font-semibold transition"
       style={on ? { borderColor: c, color: c } : { borderColor: "rgba(255,255,255,.12)" }}>
       {children}
     </button>
@@ -326,7 +326,7 @@ function Toggle({ on, c, onClick, children }: { on: boolean; c: string; onClick:
 function Step3Extra({ niche, allKid }: { niche: Niche; allKid: boolean }) {
   const w = WON(niche);
   const iv = inv(niche);
-  const card = "grid content-start gap-1.5 rounded-xl border border-white/[0.16] bg-[hsl(220,36%,11%)] p-4";
+  const card = "grid content-start gap-1.5 rounded-xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] p-4";
   return (
     <>
       <Section eyebrowText="After every meeting" title="The meeting loop" lede="Two meetings by default: Discovery, then Closing. Every meeting ends the same way, in two taps: did they show up, and how did it go. Need more meetings? Add them to the cadence.">
@@ -344,7 +344,7 @@ function Step3Extra({ niche, allKid }: { niche: Niche; allKid: boolean }) {
         <h3 className="mb-2.5 mt-7 text-lg font-bold">Two kinds of "another meeting", counted separately</h3>
         <div className="overflow-x-auto rounded-xl border border-white/[0.16]">
           <table className="w-full min-w-[640px] text-[13.5px]">
-            <thead><tr className="bg-[hsl(220,34%,14%)] text-left font-mono text-[11px] uppercase tracking-wider text-white/68"><th className="p-2.5" /><th className="p-2.5">Reschedule</th><th className="p-2.5">Extra meeting</th></tr></thead>
+            <thead><tr className="bg-[hsla(220,36%,13%,.78)] text-left font-mono text-[11px] uppercase tracking-wider text-white/68"><th className="p-2.5" /><th className="p-2.5">Reschedule</th><th className="p-2.5">Extra meeting</th></tr></thead>
             <tbody className="[&_td]:border-t [&_td]:border-white/[0.16] [&_td]:p-2.5 [&_td]:align-top">
               <tr><td>What happened</td><td>The meeting didn't happen</td><td>The meeting happened; they want one more before deciding</td></tr>
               <tr><td>Counted as</td><td>Try 2, try 3 of the same meeting</td><td>Follow-up 1, 2, 3 (its own meeting)</td></tr>
@@ -368,9 +368,9 @@ function Step3Extra({ niche, allKid }: { niche: Niche; allKid: boolean }) {
           <div className="grid min-w-[900px] grid-cols-6 gap-2">
             {[["Booked", COL.cold, "Dana R. · website", "Meeting Tue 10am"], ["Met", COL.warm, "Lee family · referral", "Form 2 due"], ["Proposal", COL.hot, "M. Ortiz · ad", "Meeting 2 Thu"],
               ["Signing", COL.hot, "K. Patel · event", "Form 3 sent"], [iv ? "Funding" : "Placing", COL.won, iv ? "J. Chen · CPA" : "J. Chen · partner", iv ? "Transfer started" : "Underwriting"], ["Client", COL.won, "A. Brooks · website", w + " Oct 30"]].map(([t, c, a, b]) => (
-              <div key={t} className="grid content-start gap-1.5 rounded-xl border border-white/[0.16] bg-[hsl(220,36%,11%)] p-2.5" style={{ borderTop: `4px solid ${c}` }}>
+              <div key={t} className="grid content-start gap-1.5 rounded-xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] p-2.5" style={{ borderTop: `4px solid ${c}` }}>
                 <b>{t}</b>
-                <div className="rounded-lg bg-[hsl(220,34%,15%)] px-2 py-1.5 text-[12.5px]">{a}<small className="block text-[11px] text-white/68">{b}</small></div>
+                <div className="rounded-lg bg-[hsla(220,36%,15%,.8)] px-2 py-1.5 text-[12.5px]">{a}<small className="block text-[11px] text-white/68">{b}</small></div>
               </div>
             ))}
           </div>
@@ -388,11 +388,11 @@ function Step3Extra({ niche, allKid }: { niche: Niche; allKid: boolean }) {
       </Section>
 
       <Section eyebrowText="What gets measured" title="The numbers the firm sees" lede="Every number comes from the outcomes logged after each meeting. The bars are an example.">
-        <div className="grid gap-2 rounded-2xl border border-white/[0.16] bg-[hsl(220,36%,11%)] p-4">
+        <div className="grid gap-2 rounded-2xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] p-4">
           {[["Meetings booked", 100, COL.cold], ["Showed up", 78, COL.cold], ["Reached a proposal", 46, COL.warm], ["Signed", 27, COL.hot], [w, 24, COL.won]].map(([l, v, c]) => (
             <div key={l as string} className="grid grid-cols-[1fr_56px] items-center gap-x-3 gap-y-1 text-[14px] sm:grid-cols-[190px_minmax(0,1fr)_56px]">
               <span>{l}</span>
-              <span className="col-span-2 row-start-2 h-6 overflow-hidden rounded-md bg-[hsl(220,34%,15%)] sm:col-span-1 sm:row-start-auto"><i className="block h-full rounded-md" style={{ width: `${v}%`, background: c as string }} /></span>
+              <span className="col-span-2 row-start-2 h-6 overflow-hidden rounded-md bg-[hsla(220,36%,15%,.8)] sm:col-span-1 sm:row-start-auto"><i className="block h-full rounded-md" style={{ width: `${v}%`, background: c as string }} /></span>
               <span className="text-right font-mono text-[13px] tabular-nums">{v}</span>
             </div>
           ))}
@@ -413,7 +413,7 @@ function Step3Extra({ niche, allKid }: { niche: Niche; allKid: boolean }) {
       <Section eyebrowText="Nothing lost" title="Where everything is saved" lede="Every meeting, message and document is kept on the prospect's record and can be exported.">
         <div className="overflow-x-auto rounded-xl border border-white/[0.16]">
           <table className="w-full min-w-[640px] text-[13.5px]">
-            <thead><tr className="bg-[hsl(220,34%,14%)] text-left font-mono text-[11px] uppercase tracking-wider text-white/68"><th className="p-2.5">What</th><th className="p-2.5">Saved on</th><th className="p-2.5">Who sees it</th></tr></thead>
+            <thead><tr className="bg-[hsla(220,36%,13%,.78)] text-left font-mono text-[11px] uppercase tracking-wider text-white/68"><th className="p-2.5">What</th><th className="p-2.5">Saved on</th><th className="p-2.5">Who sees it</th></tr></thead>
             <tbody className="[&_td]:border-t [&_td]:border-white/[0.16] [&_td]:p-2.5 [&_td]:align-top">
               <tr><td>Booking and where they came from</td><td>Prospect record</td><td>Advisor, firm owner</td></tr>
               <tr><td>Form 1 answers</td><td>Prospect record and meeting card</td><td>Advisor, firm owner</td></tr>
@@ -434,7 +434,7 @@ function OrgCard({ k, t, d, kid, allKid }: { k: string; t: string; d: string; ki
   const [on, setOn] = useState(allKid);
   useEffect(() => setOn(allKid), [allKid]);
   return (
-    <div className="grid content-start gap-1.5 rounded-xl border border-white/[0.16] bg-[hsl(220,36%,11%)] p-4">
+    <div className="grid content-start gap-1.5 rounded-xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] p-4">
       <span className="font-mono text-[10.5px] font-semibold uppercase tracking-wider text-[hsl(197,100%,62%)]">{k}</span>
       <b className="text-[16px]">{t}</b>
       <p className="text-[14px] text-white/78">{d}</p>
