@@ -8,7 +8,7 @@ import { useLocation } from "react-router-dom";
  * breathing glow and a cursor/touch glow. three.js is loaded on demand.
  *
  * Built-in (not user options): phones draw fewer objects at 1x resolution and 30fps; it pauses while the app
- * is hidden; it freezes on the Calculator's Calculations page so screen-sharing stays crisp.
+ * is hidden. It keeps moving everywhere, including the Calculator and Client Showcase.
  * Public pages (Pay & Sign, booking) pass force="calm": same lines and glow without the 3D scene.
  * Layouts render it OUTSIDE the scrolling <main> (iOS composites it separately → scrolling never repaints it).
  */
@@ -17,11 +17,12 @@ export default function NeuralBackground({ force }: { force?: "calm" }) {
   const loc = useLocation();
   const reduce = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   void reduce; // the background always moves (it never freezes for the OS "reduce motion" setting)
-  // Client Showcase is screen-shared to prospects: no 3D scene and no motion behind it.
-  const showcase = /\/showcase$/.test(loc.pathname);
-  const still = showcase || (/\/calculator\//.test(loc.pathname) && new URLSearchParams(loc.search).get("view") === "calc");
+  // Always moving, including the Calculator and Client Showcase (Niko, Nov 12 2026). Readability comes from the
+  // pages' own frosted panels, not from freezing the background.
+  void loc;
+  const still = false;
   const [webglFailed, setWebglFailed] = useState(false);
-  const calm = force === "calm" || webglFailed || showcase;
+  const calm = force === "calm" || webglFailed;
 
   return (
     <div className="nl-bg pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden data-still={still ? "1" : "0"}

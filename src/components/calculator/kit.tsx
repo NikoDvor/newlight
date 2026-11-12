@@ -16,7 +16,7 @@ export const C = {
 
 export const glass =
   "rounded-2xl border border-[hsla(211,96%,60%,.18)] bg-[linear-gradient(155deg,hsla(215,42%,11%,.9),hsla(222,44%,6%,.94)_60%,hsla(211,60%,10%,.88))] shadow-[0_24px_60px_-32px_hsla(211,96%,50%,.6),inset_0_1px_0_hsla(211,96%,80%,.08)]";
-export const glassSoft = "rounded-xl border border-[hsla(211,96%,60%,.12)] bg-[hsla(215,38%,10%,.62)]";
+export const glassSoft = "rounded-xl border border-[hsla(211,96%,60%,.16)] bg-[hsla(215,38%,10%,.86)] backdrop-blur-md";
 
 export const money = (n: number | null | undefined) =>
   n == null || !Number.isFinite(n) ? "—" : `$${Math.round(n).toLocaleString("en-US")}`;

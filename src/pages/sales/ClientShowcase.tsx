@@ -52,7 +52,7 @@ export default function ClientShowcase() {
   const dim = (w: Who) => (role && w !== role ? "opacity-25" : "opacity-100");
 
   return (
-    <div className="mx-auto max-w-[1200px] rounded-3xl bg-[hsl(222,44%,6%)] px-4 pb-24 pt-4 text-white shadow-[0_0_0_1px_hsla(211,96%,60%,.10)] sm:px-7">
+    <div className="mx-auto max-w-[1200px] rounded-3xl bg-[hsla(222,46%,5%,.82)] px-4 pb-24 pt-4 text-white shadow-[0_0_0_1px_hsla(211,96%,60%,.12),0_30px_80px_-30px_rgba(0,0,0,.8)] backdrop-blur-xl sm:px-7 [text-shadow:0_1px_2px_rgba(0,0,0,.55)]">
       {/* header */}
       <header className="grid gap-3 pb-5 pt-2">
         <span className={eyebrow}>NewLight · the system we build for your firm</span>
@@ -65,7 +65,7 @@ export default function ClientShowcase() {
       </header>
 
       {/* controls */}
-      <div className="sticky top-0 z-20 -mx-2 mb-2 grid gap-2 border-b border-white/[0.16] bg-[hsl(222,44%,6%)] px-2 py-2.5">
+      <div className="sticky top-0 z-20 -mx-2 mb-2 grid gap-2 border-b border-white/[0.16] bg-[hsla(222,46%,5%,.94)] px-2 py-2.5 backdrop-blur-xl">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Seg label="Firm" items={NICHES} value={niche} onChange={setNiche} />
           <Seg label="Package" items={PKGS} value={pkg} onChange={setPkg} />
