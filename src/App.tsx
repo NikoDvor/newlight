@@ -103,6 +103,7 @@ const AdminSalesDemoCreator = lazy(() => import("./pages/admin/AdminSalesDemoCre
 const AdminProposalWizard = lazy(() => import("./pages/admin/AdminProposalWizard"));
 const AdminBilling = lazy(() => import("./pages/admin/AdminBilling"));
 const CalculatorPage = lazy(() => import("./pages/calculator/CalculatorPage"));
+const ClientShowcase = lazy(() => import("./pages/sales/ClientShowcase"));
 const AdminPackagesPricing = lazy(() => import("./pages/admin/AdminPackagesPricing"));
 const AdminClientRevenue = lazy(() => import("./pages/admin/AdminClientRevenue"));
 const AdminAutomations = lazy(() => import("./pages/admin/AdminAutomations"));
@@ -348,6 +349,7 @@ const App = () => {
                 <Route path="packages-pricing" element={<AdminPackagesPricing />} />
                 <Route path="calculator" element={<CalculatorPage />} />
                 <Route path="calculator/:leadId" element={<CalculatorPage />} />
+                <Route path="showcase" element={<ClientShowcase />} />
                 <Route path="client-revenue" element={<AdminClientRevenue />} />
                 <Route path="automations" element={<AdminAutomations />} />
                 <Route path="executive" element={<Navigate to="/admin/clients-overview" replace />} />
@@ -406,6 +408,7 @@ const App = () => {
                 <Route path="training" element={<AcademyHub />} />
                 <Route path="calculator" element={<CalculatorPage />} />
                 <Route path="calculator/:leadId" element={<CalculatorPage />} />
+                <Route path="showcase" element={<ClientShowcase />} />
                 <Route path="recordings" element={<EmployeeRecordings />} />
                 <Route path="training/m/:n" element={<AcademyModule />} />
                 <Route path="training/m/:n/c/:c" element={<AcademyChapter />} />
