@@ -54,7 +54,7 @@ export default function ClientShowcase() {
   return (
     <div className="mx-auto max-w-[1200px] pb-24 pt-2 text-white [text-shadow:0_1px_2px_rgba(0,0,0,.95),0_0_16px_rgba(0,0,0,.8)]">
       {/* header */}
-      <header className="grid gap-3 pb-5 pt-2">
+      <header className="mb-4 inline-grid max-w-full gap-3 rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.62)] px-5 py-4">
         <span className={eyebrow}>NewLight · the system we build for your firm</span>
         <h1 className="text-[clamp(1.9rem,4.4vw,3rem)] font-extrabold leading-[1.05] tracking-tight">Your client pipeline</h1>
         <p className="max-w-[68ch] text-[15.5px] text-white/82">
@@ -94,7 +94,7 @@ export default function ClientShowcase() {
         </div>
         <div className="grid gap-2 sm:grid-cols-3">
           {[1, 2, 3].map((s) => (
-            <div key={s} className={"grid content-start gap-1 rounded-2xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] p-4 " + (has(s) ? "" : "opacity-50")}
+            <div key={s} className={"grid content-start gap-1 rounded-2xl border border-white/[0.16] bg-[hsla(220,40%,9%,.72)] backdrop-blur-[3px] p-4 " + (has(s) ? "" : "[&_*]:!text-white/45")}
               style={{ borderTop: `4px solid ${has(s) ? COL[STEPS[s].c] : "rgba(255,255,255,.1)"}` }}>
               <span className={eyebrow}>Step {s}</span>
               <b className="text-[17px]">{STEPS[s].t}</b>
@@ -157,7 +157,7 @@ export default function ClientShowcase() {
         </div>
       </Section>
 
-      <p className="border-t border-white/[0.16] pt-6 text-[13px] text-white/82">
+      <p className="mt-2 rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.62)] px-4 py-3 text-[13px] text-white/82">
         <Tag kind="tpl">Template</Tag> forms each firm can edit · <Tag kind="plan">Planned</Tag> being built · <Tag kind="dec">To decide</Tag> open question. Example numbers are examples, not results.
       </p>
 
@@ -197,7 +197,7 @@ function Chip({ on, color, onClick, children }: { on: boolean; color?: string; o
 function Section({ eyebrowText, title, lede, children }: { eyebrowText: string; title: string; lede?: string; children: ReactNode }) {
   return (
     <section className="py-9">
-      <div className="mb-5 grid gap-1.5">
+      <div className="mb-5 inline-grid max-w-full gap-1.5 rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.62)] px-4 py-3">
         <span className={eyebrow}>{eyebrowText}</span>
         <h2 className="text-[clamp(1.4rem,3vw,1.9rem)] font-bold">{title}</h2>
         {lede && <p className="max-w-[66ch] text-white/78">{lede}</p>}
@@ -375,7 +375,7 @@ function Step3Extra({ niche, allKid }: { niche: Niche; allKid: boolean }) {
             ))}
           </div>
         </div>
-        <p className="mt-2 text-[12.5px] text-white/82">Example names. Each card shows the person, where they came from and their next step.</p>
+        <p className="mt-2 inline-block rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.62)] px-3 py-1.5 text-[12.5px] text-white/82">Example names. Each card shows the person, where they came from and their next step.</p>
         <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {[["Source", "Where they came from", "Every prospect is tagged: website, ads, referral, event, " + (iv ? "CPA or attorney." : "partner."), "We remember how each person found you, so you know what's working."],
             ["Owner", "Who's working them", "Meetings route to the right advisor. The firm owner sees every advisor's board.", "Each person has one advisor in charge, and the boss can see everyone."],
@@ -397,7 +397,7 @@ function Step3Extra({ niche, allKid }: { niche: Niche; allKid: boolean }) {
             </div>
           ))}
         </div>
-        <p className="mt-2 text-[12.5px] text-white/82">Example: out of 100 booked meetings. Not a promise of results.</p>
+        <p className="mt-2 inline-block rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.62)] px-3 py-1.5 text-[12.5px] text-white/82">Example: out of 100 booked meetings. Not a promise of results.</p>
         <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {[["Show-up rate", "showed up ÷ booked", "Tells you if booking and reminders are working."],
             ["Close rate", w.toLowerCase() + " ÷ first meetings held", "Only decided prospects count, so open deals don't drag it down."],

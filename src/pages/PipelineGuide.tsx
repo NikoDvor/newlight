@@ -43,10 +43,10 @@ export default function PipelineGuide() {
 
   return (
     <div className="mx-auto max-w-[1200px] pb-24 text-white">
-      <Link to={isAdmin ? "/admin/training-center" : "/employee/training"} className="inline-flex items-center gap-2 text-[14px] text-white/80 hover:text-white">
+      <Link to={isAdmin ? "/admin/training-center" : "/employee/training"} className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.62)] px-3 py-1.5 text-[14px] text-white/90 hover:text-white">
         <ArrowLeft className="h-4 w-4" />Training Center
       </Link>
-      <header className="grid gap-3 pb-5 pt-5">
+      <header className="mb-4 mt-4 inline-grid max-w-full gap-3 rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.62)] px-5 py-4">
         <span className={eyebrow}>Training · how a lead becomes a client</span>
         <h1 className="text-[clamp(1.9rem,4.4vw,3rem)] font-extrabold leading-[1.05] tracking-tight">Pipeline Guide</h1>
         <p className="max-w-[66ch] text-[15.5px] text-white/85">Pick your role. You'll see only your steps: how you get started, then every stop from {has("bdr") ? "the first call" : "the booked meeting"} to {has("sdr") ? "the signed client" : "the hand-off"}, in simple words first and full detail one tap away.</p>
@@ -164,7 +164,7 @@ export default function PipelineGuide() {
 
 function RoleCard({ on, title, pay, lines, c }: { on: boolean; title: string; pay: string; lines: string[]; c: string }) {
   return (
-    <div className={surface + " grid content-start gap-1.5 p-4 transition-opacity " + (on ? "" : "opacity-45")} style={{ borderTop: `4px solid ${on ? c : "rgba(255,255,255,.15)"}` }}>
+    <div className={surface + " grid content-start gap-1.5 p-4 transition-opacity " + (on ? "" : "[&_*]:!text-white/45")} style={{ borderTop: `4px solid ${on ? c : "rgba(255,255,255,.15)"}` }}>
       <div className="flex items-baseline justify-between gap-2"><b className="text-[19px]">{title}</b><span className="font-mono text-[12px] text-white/80">{pay}</span></div>
       <ul className="ml-4 list-disc space-y-0.5 text-[14px] text-white/88">{lines.map((l) => <li key={l}>{l}</li>)}</ul>
       {!on && <span className="font-mono text-[10.5px] font-semibold uppercase tracking-wider text-white/60">Not your role</span>}
@@ -185,7 +185,7 @@ function Chip({ on, color, onClick, children }: { on: boolean; color?: string; o
 function Section({ eyebrowText, title, lede, children }: { eyebrowText: string; title: string; lede?: string; children: ReactNode }) {
   return (
     <section className="py-9">
-      <div className="mb-5 grid gap-1.5">
+      <div className="mb-5 inline-grid max-w-full gap-1.5 rounded-2xl border border-white/[0.12] bg-[hsla(222,44%,6%,.62)] px-4 py-3">
         <span className={eyebrow}>{eyebrowText}</span>
         <h2 className="text-[clamp(1.4rem,3vw,1.9rem)] font-bold">{title}</h2>
         {lede && <p className="max-w-[66ch] text-white/85">{lede}</p>}
