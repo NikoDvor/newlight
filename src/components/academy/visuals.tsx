@@ -837,6 +837,23 @@ function OpenCalculator() {
   );
 }
 
+/** Training → Client Showcase (Module 4 ch.1): the three packages are shown the way clients see them. */
+function OpenShowcase() {
+  const navigate = useNavigate();
+  const loc = useLocation();
+  const to = loc.pathname.startsWith("/admin") ? "/admin/showcase" : "/employee/showcase";
+  return (
+    <div className="my-4 grid gap-2 rounded-2xl border border-white/[0.14] bg-[hsla(220,40%,9%,.82)] p-4">
+      <p className="text-[14.5px] text-white/85">See all three packages the way the client sees them: pick the firm type and package, and every step lights up.</p>
+      <button onClick={() => navigate(to)}
+        className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-black uppercase tracking-[0.12em] text-white shadow-[0_0_36px_-10px_hsla(197,100%,60%,.85)] transition active:scale-[.99]"
+        style={{ background: "linear-gradient(120deg,hsl(217,90%,52%),hsl(197,100%,50%) 60%,hsl(187,90%,50%))" }}>
+        Open the Client Showcase →
+      </button>
+    </div>
+  );
+}
+
 export const VISUALS: Record<string, ComponentType> = {
   "cert-path": CertPath,
   "job-flow": JobFlow,
@@ -875,6 +892,7 @@ export const VISUALS: Record<string, ComponentType> = {
   "option-close": OptionClose,
   "start-tour": StartTour,
   "open-calculator": OpenCalculator,
+  "open-showcase": OpenShowcase,
   "guide-belt": GuideBelt,
 };
 
