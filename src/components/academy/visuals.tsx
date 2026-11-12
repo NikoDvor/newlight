@@ -7,6 +7,7 @@ import { ACADEMY } from "./ui";
 import { OfferCompare, OfferTimeline, Packages, PaymentSim, WhoPaysHow } from "./packageVisuals";
 import { FeatureBenefitTrial, SalesSystem } from "./salesVisuals";
 import { PipelineJourney } from "./pipelineJourney";
+import { GuideBeltVisual } from "@/pages/PipelineGuide";
 
 /**
  * Interactive visuals for training chapters, referenced in content as [[visual:key]].
@@ -103,6 +104,14 @@ function CertPath() {
   );
 }
 
+function GuideBelt() {
+  return (
+    <Frame caption="The live Pipeline Guide. Pick your role; scroll sideways. Training Center → Pipeline Guide has every stop in full.">
+      <GuideBeltVisual />
+    </Frame>
+  );
+}
+
 function JobFlow() {
   return (
     <Frame>
@@ -111,7 +120,7 @@ function JobFlow() {
         <div className="rounded-md px-2 py-1 text-center" style={{ color: ACADEMY.sdr, background: "hsla(262,85%,74%,.1)" }}>SDR · WIN THE CLIENT</div>
       </div>
       <FlowSteps steps={[
-        { title: "Pull leads", sub: "From the pool" },
+        { title: "Leads arrive", sub: "6pm, your cities" },
         { title: "Dial", sub: "Your own pace" },
         { title: "Book", sub: "Form 1" },
         { title: "Discovery", sub: "Their numbers", tone: "sdr" },
@@ -211,7 +220,8 @@ const APP_ITEMS = [
   { t: "My Leads", d: "Every lead you own. Buttons for Numbers, + Meeting, Booked elsewhere, Close Prep." },
   { t: "My Calendar", d: "Your meetings. Open one to set it away from our Zoom or add attendees." },
   { t: "Dialer", d: "Where you call. Tap a row for every decision maker. Mark Dialed when done." },
-  { t: "Lead Sourcing", d: "Pull leads from your territories." },
+  { t: "Lead Sourcing", d: "Pull extra leads when you run out. New ones arrive by themselves at 6pm Pacific, Sun–Thu." },
+  { t: "Client Showcase", d: "What you screen-share in meetings: the three steps, the pipeline we build, the packages." },
   { t: "My Stats", d: "Your numbers and close rates vs the team average." },
   { t: "My Recordings", d: "Every meeting you've had — video, audio and transcript. Upload meetings that weren't on our Zoom." },
   { t: "Training Center", d: "This. Ten modules, quizzes, your Why and certification." },
@@ -240,15 +250,14 @@ function AppMap() {
 
 function LeadFlow() {
   return (
-    <Frame caption="Leads you don't book flow back into the pool.">
+    <Frame caption="Leads you don't book flow back into the pool, and come back to someone else later.">
       <FlowSteps steps={[
-        { title: "Sunday load", sub: "Admin uploads fresh firms" },
-        { title: "Lead pool", sub: "Every firm, waiting" },
-        { title: "Your territories", sub: "Where you can pull" },
-        { title: "Pull leads", sub: "Lead Sourcing, up to 300" },
-        { title: "Dialer", sub: "Call decision makers" },
+        { title: "Lead pool", sub: "Firms from AdvizorPro" },
+        { title: "Your cities", sub: "Your state, one city at a time" },
+        { title: "6pm hand-out", sub: "Up to 200, Sun–Thu" },
+        { title: "Dialer", sub: "Lists named by city" },
         { title: "Mark Dialed", sub: "Done for today" },
-        { title: "Rest / recycle", sub: "Back to the pool later", tone: "muted" },
+        { title: "Rest / recycle", sub: "60 days to a year", tone: "muted" },
       ]} />
       <div className="relative mt-3 h-6">
         <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 10" aria-hidden>
@@ -262,19 +271,23 @@ function LeadFlow() {
 
 function Recycle() {
   const rows = [
-    { l: "Untouched 3+ days", v: 3, out: "Back to pool" },
+    { l: "Went silent", v: 60, out: "Rests 60 days" },
     { l: "6+ calls, no conversation", v: 60, out: "Rests 60 days" },
-    { l: "Not interested / Lost", v: 180, out: "Rests 180 days" },
+    { l: "Too expensive", v: 90, out: "Rests 90 days" },
+    { l: "Don't see the value", v: 120, out: "Rests 120 days" },
+    { l: "Not interested", v: 180, out: "Rests 180 days" },
+    { l: "Already has someone", v: 270, out: "Rests 270 days" },
+    { l: "In-house team, retiring, sold", v: 365, out: "Rests 1 year" },
   ];
   return (
-    <Frame caption="Bar length = how long the lead rests before anyone can pull it again.">
+    <Frame caption="Bar length = how long the lead rests before it goes to a different salesman. Imported leads nobody touched for 10 work days go back Friday 9pm.">
       <div className="space-y-3">
         {rows.map((r, i) => (
           <div key={r.l}>
             <div className="flex justify-between text-[11px] mb-1"><span className="text-white/70">{r.l}</span><span className="font-semibold text-white">{r.out}</span></div>
             <div className="h-2 rounded-full bg-white/[0.05] overflow-hidden">
               <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, hsl(211,96%,52%), hsl(197,100%,58%))" }}
-                initial={{ width: 0 }} whileInView={{ width: `${Math.max(3, (r.v / 180) * 100)}%` }} viewport={{ once: true }} transition={{ duration: 1, delay: i * 0.15 }} />
+                initial={{ width: 0 }} whileInView={{ width: `${Math.max(3, (r.v / 365) * 100)}%` }} viewport={{ once: true }} transition={{ duration: 1, delay: i * 0.15 }} />
             </div>
           </div>
         ))}
@@ -862,6 +875,7 @@ export const VISUALS: Record<string, ComponentType> = {
   "option-close": OptionClose,
   "start-tour": StartTour,
   "open-calculator": OpenCalculator,
+  "guide-belt": GuideBelt,
 };
 
 export function Visual({ name }: { name: string }) {

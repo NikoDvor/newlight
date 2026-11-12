@@ -112,7 +112,7 @@ export const PIPELINE: GStop[] = [
     d: "Run the Discovery script with the Calculator: their numbers, their goals, what one new client is worth to them. When the meeting ends, log how it went in two taps.",
     kid: "You meet, learn their numbers, and then tell the app how it went.", feat: ["Calculator", "Two-tap outcome", "Objection saved"],
     hang: [["rep", "Run the Calculator"], ["rep", "Log: showed up? how did it go?"], ["robot", "No outcome? Flagged overdue"]],
-    boxes: [b("You do", [["rep", "Open the lead in the Calculator and run the script"], ["rep", "Log attendance and the result: moved forward, another meeting first, rescheduled or lost"], ["rep", "Lost: pick the main reason"]]),
+    boxes: [b("You do", [["rep", "Open the lead in the Calculator and run the script"], ["rep", "Log attendance and the result: won (moved forward), another meeting first, rescheduled or lost"], ["rep", "Lost: pick the main reason"]]),
       b("Automatic", [["robot", "A meeting with no outcome shows as overdue to you and admin"]]),
       b("Saved", [["data", "Attendance, result, objection, meeting number"]])] },
   { id: "extra1", who: ["sdr"], z: "meet", small: "Extra", t: "Another meeting before Form 2", results: true,

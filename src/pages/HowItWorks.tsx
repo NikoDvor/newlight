@@ -9,6 +9,8 @@ import {
   ArrowRight, CheckCircle2, Zap, Info, Lightbulb
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { STEPS, PKGS } from "@/lib/clientPipeline";
+const STEP_COLOR: Record<string, string> = { s1: "hsl(238,85%,74%)", s2: "hsl(197,100%,60%)", won: "hsl(152,62%,50%)" };
 
 /* ─── Module definitions ─── */
 interface ModuleInfo {
@@ -326,6 +328,21 @@ export default function HowItWorks() {
         title="How It Works"
         description="Understand every part of your growth system in simple terms"
       />
+
+      {/* The three steps and the packages — same source as the Client Showcase (src/lib/clientPipeline.ts). */}
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="rounded-2xl border border-white/[0.14] bg-[hsla(220,40%,9%,.72)] p-4" style={{ borderTop: `4px solid ${STEP_COLOR[STEPS[n].c]}` }}>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70">Step {n}</div>
+            <div className="mt-1 text-lg font-bold text-white">{STEPS[n].t}</div>
+            <p className="mt-1 text-sm text-white/80">{STEPS[n].s}</p>
+            <p className="mt-2 text-xs text-white/65">
+              {PKGS.filter((p) => p.steps.includes(n)).map((p) => p.l).join(" · ")}
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-xs text-white/65">Growth = Step 2 · Command Center = Step 3 · Enterprise = all three steps. The tools below are the parts of the app that make it work.</p>
 
       {/* Category filter */}
       <div className="flex flex-wrap gap-2 mt-4 mb-8">

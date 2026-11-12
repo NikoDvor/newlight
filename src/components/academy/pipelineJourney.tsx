@@ -13,7 +13,7 @@ type Area = "cold" | "tiles" | "outcome" | "board" | "f1" | "f2" | "f3";
 type Step = {
   t: string; where: string; tap: string; d: string; stage: Stage; hi: Area[];
   tiles: [number, number, number, number, number, number]; // meetings today, outcomes overdue, form1s, form2s, pay&signs waiting, won this month
-  outcome?: { kind: string; att?: "Attended" | "No-show"; res?: "Won" | "Reschedule" | "Lost"; btn?: string };
+  outcome?: { kind: string; att?: "Attended" | "No-show"; res?: "Won" | "Another meeting" | "Reschedule" | "Lost"; btn?: string };
   flag?: string;
 };
 const LEAD = "Harbor Light Family Office";
@@ -39,15 +39,17 @@ const HAPPY: Step[] = [
 ];
 const DETOURS: Step[] = [
   { t: "No-show", where: "Log outcome", tap: "No-show", stage: "warm", hi: ["outcome", "board"], tiles: [1, 0, 1, 0, 0, 0], flag: "No-show · 72h",
-    outcome: { kind: "Discovery", att: "No-show" }, d: "A 72-hour timer starts on the card. Reschedule within 72 hours or the lead goes back to Cold." },
-  { t: "Reschedule", where: "Log outcome", tap: "Attended → Reschedule → new time + reason", stage: "warm", hi: ["outcome", "board"], tiles: [1, 0, 1, 0, 0, 0], flag: "Rescheduled",
+    outcome: { kind: "Discovery", att: "No-show" }, d: "Send your rebook link or pick a new time. A 72-hour timer starts: a warning at 67 hours, Cold at 72 unless it's rebooked." },
+  { t: "Another meeting first", where: "Log outcome", tap: "Attended → Another meeting → pick a time or send your link", stage: "warm", hi: ["outcome", "board"], tiles: [1, 0, 1, 0, 0, 0], flag: "Follow-up #1",
+    outcome: { kind: "Discovery", att: "Attended", res: "Another meeting" }, d: "They came but want one more talk first. It's counted as its own extra meeting, not a reschedule, and the stage doesn't change." },
+  { t: "Reschedule", where: "Log outcome", tap: "Attended → Reschedule → new time + reason, or send your rebook link", stage: "warm", hi: ["outcome", "board"], tiles: [1, 0, 1, 0, 0, 0], flag: "Rescheduled",
     outcome: { kind: "Discovery", att: "Attended", res: "Reschedule" }, d: "Pick the new time and why. A new Zoom link goes out. The stage doesn't change." },
   { t: "Lost", where: "Log outcome", tap: "Lost → main reason", stage: "cold", hi: ["outcome", "cold"], tiles: [1, 0, 1, 0, 0, 0],
     outcome: { kind: "Closing", att: "Attended", res: "Lost" }, d: "Pick the main reason (required). The lead goes back to Cold." },
   { t: "No Form 2", where: "My Pipeline", tap: "Fill Form 2 after a won discovery", stage: "warm", hi: ["board"], tiles: [1, 0, 1, 0, 0, 0], flag: "Expired — No Form 2",
     d: "Won the discovery but never filled Form 2? The card is marked Expired — No Form 2." },
   { t: "Pay & Sign stalled", where: "My Pipeline", tap: "Lost, or Still waiting", stage: "hot", hi: ["outcome", "tiles"], tiles: [1, 0, 1, 1, 1, 0],
-    outcome: { kind: "Pay & Sign stalled" }, d: "Not signed after 7 days? The app asks you: Lost or Still waiting." },
+    outcome: { kind: "Pay & Sign stalled" }, d: "Opened but not finished? You get a speed alert after 15 minutes. Not signed after 7 days? The app asks you: Lost or Still waiting." },
 ];
 
 export function PipelineJourney() {
@@ -108,7 +110,7 @@ export function PipelineJourney() {
                     ) : (
                       <>
                         <Chips label="1. Did the meeting happen?" opts={["Attended", "No-show"]} pick={s.outcome.att} />
-                        {s.outcome.att === "Attended" && <Chips label="2. Result" opts={["Won", "Reschedule", "Lost"]} pick={s.outcome.res} />}
+                        {s.outcome.att === "Attended" && <Chips label="2. Result" opts={["Won", "Another meeting", "Reschedule", "Lost"]} pick={s.outcome.res} />}
                         {s.outcome.btn && <p className="mt-1 rounded-md py-1.5 text-center text-[11px] font-bold text-white" style={{ background: "linear-gradient(120deg,hsl(217,90%,52%),hsl(197,100%,48%))" }}>{s.outcome.btn}</p>}
                       </>
                     )}

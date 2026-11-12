@@ -1,0 +1,16 @@
+-- Training alignment (Nov 12, 2026) — applied directly in the live DB; the live rows are the source of truth.
+-- See claude/alignment-audit-2026-11-12.md. Chapters rewritten/patched (nl_training_chapters.id):
+--   1.2  22ccfad9-a8c3-4c94-b845-705f866fae79  leads arrive 6pm; firm types RIA/Hybrid/Financial advisor/Insurance; Pipeline Guide
+--   1.3  5c18439e-26e0-4d68-8add-cbd3cce09a55  6pm hand-out, callback alerts, calling hours incl. Florida 8–8 + 3 calls/24h
+--   1.6  7bc46806-c7c0-43ad-90d4-782d0f6535c3  4 meeting outcomes; Florida hours
+--   2.1  b5df4c6e-880a-44c1-99fb-9eea506f9768  app map: Lead Sourcing = extra leads, Calculator, Client Showcase
+--   2.2  1a8214da-b8d8-4d51-8823-5e8a8a5f380d  pool → state/city queue → 200 at 6pm Sun–Thu
+--   2.4  ffe4e50d-812f-4f48-946f-9968e65b5aff  rest by reason 60–365 days, Friday 9pm release, different salesman
+--   2.7  74e4bd0d-6416-4386-bf49-d4bae4c3cac1  4 outcomes incl. Another meeting first + rebook link
+--   2.8  a60eeaaf-df61-4d6c-a7be-9bc8d1b91a50  4 outcomes, 67h warning, stalled Hot deals, Pipeline Guide link
+--   2.11 f5e2347c-8fd4-47bf-b312-37c948429156  NEW "What the app does by itself" (+ [[visual:guide-belt]])
+--   4.2  94b14e40-883b-492e-a21b-482bf4406699  answer when a prospect quotes the website's money-back line
+--   4.3  34cc5062-bd91-4da2-bf2e-bbbbce826bad  Growth commission: client reports new clients, NewLight invoices
+--   5.13 15378e6f-b53e-4402-8603-3bb71dfed156  guarantee = Growth only
+--   7.10 c59c6e4b-db3f-459c-a0ed-8761098b2180  gatekeeper line reworded (no "15 clients", no "already talked")
+select 1;

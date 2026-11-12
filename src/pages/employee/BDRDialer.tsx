@@ -853,7 +853,7 @@ export default function BDRDialer() {
                   color: on ? "hsl(262,80%,82%)" : name === NO_NICHE ? "hsl(0,0%,55%)" : "hsl(0,0%,72%)",
                   border: `1px solid ${on ? "hsla(262,80%,65%,.45)" : "hsla(211,96%,60%,.12)"}`,
                 }}>
-                {name === ALL_NICHES ? "All" : name} <span className="opacity-60 ml-1">{count}</span>
+                {name === ALL_NICHES ? "All" : name === "Advisor" ? "Financial advisor" : name} <span className="opacity-60 ml-1">{count}</span>
               </button>
             );
           })}

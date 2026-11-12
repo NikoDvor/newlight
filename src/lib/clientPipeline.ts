@@ -177,7 +177,7 @@ const S3 = (n: Niche, fromAds: boolean): Station[] => {
       kid: "You meet, you listen, and then you tell the app how it went.",
       feat: ["Outcome in two taps", "Objection saved", "Next meeting booked on the call"],
       hang: [["rep", "Runs the meeting"], ["rep", "Logs: showed up? how did it go?"], ["data", "Result + objection saved"], ["robot", "No outcome? Flagged overdue"]],
-      boxes: [box("Advisor does", [["rep", "Runs the meeting"], ["rep", "Logs attendance and the result: moved forward, another meeting first, rescheduled, or lost"], ["rep", "Picks the main objection, if there was one"], ["rep", "Moved forward: fills Form 2 and books Meeting 2 before hanging up"]]),
+      boxes: [box("Advisor does", [["rep", "Runs the meeting"], ["rep", "Logs attendance and the result: won (moved forward), another meeting first, rescheduled, or lost"], ["rep", "Picks the main objection, if there was one"], ["rep", "Won: fills Form 2 and books Meeting 2 before hanging up"]]),
         box("Automatic", [["robot", "A meeting with no outcome shows as overdue"], ["robot", "Firm owner sees every overdue outcome"]]),
         box("Saved", [["data", "Attendance, result, objection, notes and meeting number"]]),
         box("Shows up", [["rep", "Advisor's 'Needs an outcome' list"], ["admin", "Firm owner's results page"]]),

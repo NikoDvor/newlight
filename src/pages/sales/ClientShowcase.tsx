@@ -274,7 +274,7 @@ function StationCard({ s, i, allKid, allDet, dim }: { s: Station; i: number; all
         <div className="flex flex-wrap gap-1.5">{s.feat.map((f) => <span key={f} className="rounded-full border border-white/[0.16] bg-[hsla(220,36%,13%,.78)] px-2.5 py-1 text-[12px] font-semibold text-white/88">{f}</span>)}</div>
         {s.results && (
           <div className="flex flex-wrap gap-1.5 font-mono text-[11.5px] font-semibold">
-            {[["Moved forward", COL.won], ["Another meeting first", COL.warm], ["Rescheduled", COL.cold], ["Lost + reason", COL.bad]].map(([t, cc]) => <span key={t} className="rounded-md border px-2 py-0.5" style={{ color: cc, borderColor: cc }}>{t}</span>)}
+            {[["Won", COL.won], ["Another meeting first", COL.warm], ["Rescheduled", COL.cold], ["Lost + reason", COL.bad]].map(([t, cc]) => <span key={t} className="rounded-md border px-2 py-0.5" style={{ color: cc, borderColor: cc }}>{t}</span>)}
           </div>
         )}
         {kid && <Kid c={c}>{s.kid}</Kid>}
@@ -331,7 +331,7 @@ function Step3Extra({ niche, allKid }: { niche: Niche; allKid: boolean }) {
     <>
       <Section eyebrowText="After every meeting" title="The meeting loop" lede="Two meetings by default: Discovery, then Closing. Every meeting ends the same way, in two taps: did they show up, and how did it go. Need more meetings? Add them to the cadence.">
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-          {[["Moved forward", COL.won, ["After Meeting 1: Form 2 and Meeting 2 booked on the call", "After Meeting 2: Form 3 sent on the call"]],
+          {[["Won (moved forward)", COL.won, ["After Meeting 1: Form 2 and Meeting 2 booked on the call", "After Meeting 2: Form 3 sent on the call"]],
             ["Another meeting first", COL.warm, ["They came but want one more talk", "Counted as follow-up #1, #2… with the reason", "Not a reschedule"]],
             ["Rescheduled or no-show", COL.cold, ["The meeting didn't happen", "Rebook link and the 72-hour clock", "Counted as try 2, try 3"]],
             ["Lost", COL.bad, ["Main reason required", "\"Not now\" goes to a follow-up date instead"]]].map(([t, c, l]) => (

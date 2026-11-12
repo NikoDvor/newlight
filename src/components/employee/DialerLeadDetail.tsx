@@ -74,9 +74,9 @@ export interface DialerLeadDetails {
 
 export const FIRM_TYPE_LABEL: Record<string, string> = {
   ria: "RIA",
-  ibd: "Independent BD",
+  ibd: "Financial advisor · broker-dealer",
   hybrid: "Hybrid",
-  independent_advisor: "Independent Advisor",
+  independent_advisor: "Financial advisor · independent",
 };
 
 export const SIGNAL_LABEL: Record<string, string> = {

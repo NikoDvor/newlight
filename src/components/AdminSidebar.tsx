@@ -56,8 +56,8 @@ const adminGroups: NavGroup[] = [
       { title: "Calculator", description: "The discovery script and calculator — practice, or open any lead's numbers.", url: "/admin/calculator", icon: Calculator },
       { title: "Client Showcase", description: "Screen-share in meetings: the three steps, the client pipeline and the packages, by type of firm.", url: "/admin/showcase", icon: Presentation },
       { title: "Packages & Pricing", description: "Package prices, custom-price approvals, every charge and wire, the simulator and the rules.", url: "/admin/packages-pricing", icon: DollarSign },
-      { title: "Sales Control Center", description: "Build pricing, packages, and proposals for a client.", url: "/admin/sales-control-center", icon: LayoutDashboard },
-      { title: "Proposal Templates", description: "Manage reusable pricing and terms for proposals.", url: "/admin/proposal-templates", icon: FileSignature },
+      // Retired from the menu Nov 12, 2026: Sales Control Center and Proposal Templates used the old quote engine
+      // (workspaceQuoteEngine: $7,997 + $3,000/mo) and the old offer_packages. Pages still exist at their URLs.
     ],
   },
   {
