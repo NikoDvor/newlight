@@ -17,9 +17,11 @@ export default function NeuralBackground({ force }: { force?: "calm" }) {
   const loc = useLocation();
   const reduce = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   void reduce; // the background always moves (it never freezes for the OS "reduce motion" setting)
-  const still = (/\/calculator\//.test(loc.pathname) && new URLSearchParams(loc.search).get("view") === "calc");
+  // Client Showcase is screen-shared to prospects: no 3D scene and no motion behind it.
+  const showcase = /\/showcase$/.test(loc.pathname);
+  const still = showcase || (/\/calculator\//.test(loc.pathname) && new URLSearchParams(loc.search).get("view") === "calc");
   const [webglFailed, setWebglFailed] = useState(false);
-  const calm = force === "calm" || webglFailed;
+  const calm = force === "calm" || webglFailed || showcase;
 
   return (
     <div className="nl-bg pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden data-still={still ? "1" : "0"}
