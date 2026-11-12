@@ -52,7 +52,7 @@ export default function ClientShowcase() {
   const dim = (w: Who) => (role && w !== role ? "opacity-25" : "opacity-100");
 
   return (
-    <div className="mx-auto max-w-[1200px] rounded-3xl bg-[hsla(222,46%,5%,.30)] px-4 pb-24 pt-4 text-white sm:px-7 [text-shadow:0_1px_2px_rgba(0,0,0,.9),0_0_14px_rgba(0,0,0,.65)]">
+    <div className="mx-auto max-w-[1200px] pb-24 pt-2 text-white [text-shadow:0_1px_2px_rgba(0,0,0,.95),0_0_16px_rgba(0,0,0,.8)]">
       {/* header */}
       <header className="grid gap-3 pb-5 pt-2">
         <span className={eyebrow}>NewLight · the system we build for your firm</span>
@@ -196,7 +196,7 @@ function Chip({ on, color, onClick, children }: { on: boolean; color?: string; o
 
 function Section({ eyebrowText, title, lede, children }: { eyebrowText: string; title: string; lede?: string; children: ReactNode }) {
   return (
-    <section className="border-t border-white/[0.16] py-9 first:border-t-0">
+    <section className="py-9">
       <div className="mb-5 grid gap-1.5">
         <span className={eyebrow}>{eyebrowText}</span>
         <h2 className="text-[clamp(1.4rem,3vw,1.9rem)] font-bold">{title}</h2>
