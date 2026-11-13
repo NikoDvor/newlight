@@ -58,10 +58,10 @@ export const ONBOARDING: GStop[] = [
     hang: [["rep", "Pass with 80%"], ["admin", "Zoom with your team leader"]],
     boxes: [b("You do", [["rep", "Take the final test (unlimited retakes)"], ["rep", "Book the Zoom with your team leader"]])] },
   { id: "ob-bdr-ready", who: ["bdr"], z: "ready", small: "Ready", t: "Your state, your leads", end: true,
-    d: "Admin gives you a state. The app picks your cities in order, and from then on 200 new leads land in your Dialer at 6pm Pacific, Sunday to Thursday.",
-    kid: "You get a state, and every work night new firms to call show up.", feat: ["State assigned", "200 leads a night", "City by city"],
+    d: "Admin gives you a state. The app picks your cities in order, and from then on 150 new leads land in your Dialer at 6pm Pacific, Sunday to Thursday.",
+    kid: "You get a state, and every work night new firms to call show up.", feat: ["State assigned", "150 leads a night", "City by city"],
     hang: [["admin", "Assigns your state"], ["robot", "Leads arrive at 6pm"]],
-    boxes: [b("Admin does", [["admin", "Assigns your state on Territories"]]), b("Automatic", [["robot", "Lines up your cities and works them one at a time"], ["robot", "200 leads at 6pm Pacific, Sunday–Thursday"]]), b("You do", [["rep", "Open the Dialer and start calling"]])] },
+    boxes: [b("Admin does", [["admin", "Assigns your state on Territories"]]), b("Automatic", [["robot", "Lines up your cities and works them one at a time"], ["robot", "150 leads at 6pm Pacific, Sunday–Thursday"]]), b("You do", [["rep", "Open the Dialer and start calling"]])] },
   { id: "ob-sdr-ready", who: ["sdr"], z: "ready", small: "Ready", t: "Your calendar and Calculator", end: true,
     d: "Your booking links live in Your Forms. Practice the Discovery script and Calculator until you can run it without reading.",
     kid: "Your calendar is ready and you practice the meeting until it feels easy.", feat: ["Booking links", "Calculator practice", "Client Showcase"],
@@ -72,9 +72,9 @@ export const ONBOARDING: GStop[] = [
 /* ---------------- The pipeline ---------------- */
 export const PIPELINE: GStop[] = [
   { id: "leads", who: ["bdr"], z: "leads", small: "6pm", t: "New leads arrive",
-    d: "Every work night at 6pm Pacific, the app hands you up to 200 financial firms from your cities. They land in Dialer lists named by city, like \"Irvine, CA\".",
+    d: "Every work night at 6pm Pacific, the app hands you up to 150 financial firms from your cities. They land in Dialer lists named by city, like \"Irvine, CA\".",
     kid: "Every work night, new firms to call show up in your Dialer.", feat: ["200 a night", "City lists", "Pull more anytime"],
-    hang: [["robot", "200 leads at 6pm"], ["robot", "Best firms first"], ["rep", "Pull more if you run out"]],
+    hang: [["robot", "150 leads at 6pm"], ["robot", "Best firms first"], ["rep", "Pull more if you run out"]],
     boxes: [b("Automatic", [["robot", "Sunday–Thursday at 6pm Pacific"], ["robot", "Firms with a buying sign first, then firms you haven't had, then RIAs"], ["robot", "When a city runs out, it moves to your next city"]]),
       b("You do", [["rep", "Nothing. They're waiting when you open the Dialer"], ["rep", "Out early? Use Pull leads"]]),
       b("Saved", [["data", "Each lead: firm, decision makers, phone numbers, firm type, city"]])] },
@@ -167,7 +167,7 @@ export function stopsFor(list: GStop[], role: SalesRole): GStop[] {
 
 export const GCLOCK = (role: SalesRole): [GWho, string, string, ("bdr" | "sdr")[]][] => {
   const all: [GWho, string, string, ("bdr" | "sdr")[]][] = [
-    ["robot", "6pm Pacific, Sun–Thu", "Up to 200 new leads in your Dialer, from your cities.", ["bdr"]],
+    ["robot", "6pm Pacific, Sun–Thu", "Up to 150 new leads in your Dialer, from your cities.", ["bdr"]],
     ["robot", "When a callback is due", "Text, email and app alert with the lead's number.", ["bdr"]],
     ["robot", "Every night", "Leads that said no rest for a while, then go to a different salesman.", ["bdr"]],
     ["robot", "Friday 9pm", "Imported leads nobody touched for 10 work days go back to the pool.", ["bdr"]],
