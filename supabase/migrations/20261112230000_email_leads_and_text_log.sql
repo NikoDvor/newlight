@@ -364,3 +364,10 @@ alter table nl_sending_inboxes enable row level security;
 -- policies: admin all; rep manages own (internal staff). nl_email_leads.sent_from added;
 -- nl_email_set_status(_id, _status, _sent_from default null) records which inbox sent it.
 alter table nl_email_leads add column if not exists sent_from text;
+
+-- Nov 13 (applied live): warm-up schedule per inbox, follow-up tracking, Reoon checks
+-- nl_sending_inboxes: warm_start, already_warm, limit_override; view nl_sending_inboxes_v (ramp_limit, effective_limit)
+-- nl_inbox_ramp_limit(warm_start, already_warm): weekday 1-4 = 0, 5-6 = 5, 7 = 10, 8-13 = 15, 14-20 = 20, 21+ = 25; already warm = 25
+-- nl_rep_email_capacity(rep): sum of active inboxes' limits (30 when none) — nl_email_pull_for pulls least(email_per_day, capacity)
+-- nl_email_leads: followup_count, last_followup_at (nl_email_followup_done(_id, _undo)); verify_status/result/request_id/verified_at
+-- nl_email_verify_tick(): Reoon power check via pg_net, cron 'nl-email-verify-2min'; off until vault secret REOON_API_KEY exists

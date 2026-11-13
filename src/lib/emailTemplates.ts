@@ -36,8 +36,19 @@ export function buildEmail(opts: { firstName?: string | null; media?: MediaKind;
   }
   const month = nextMonthName(opts.now);
   return {
-    template: "standard",
+    template: "standard" as const,
     subject: `RE; About The New Clients In ${month}`,
     body: `${hi}\n\nI am just checking in on your availability about some new clientele. Can you take on 13 new accounts in ${month}?\n\nBest,\nNiko Dvortcsak\n\n${EMAIL_FOOTER}`,
   };
+}
+
+/** Follow-ups (playbook): sent as a reply in the same thread, from the same inbox, only if they haven't answered.
+ *  Step 1 on day 3, step 2 on day 8, step 3 on day 15 after the first email. */
+export const FOLLOWUP_DAYS = [3, 8, 15] as const;
+
+export function buildFollowUp(step: 1 | 2 | 3, opts: { firstName?: string | null; firm?: string | null; city?: string | null }): string {
+  const name = opts.firstName?.trim() || "there";
+  if (step === 1) return `Hi ${name}, did this land at a bad time? Happy to keep it to 10 minutes.`;
+  if (step === 2) return `Hi ${name}, one more thought: we only take one firm per area, and ${opts.city?.trim() || "your area"} is still open. Worth a quick look before year-end?`;
+  return `Hi ${name}, should I close the file on ${opts.firm?.trim() || "your firm"}? If timing's better in January, just say "January" and I'll follow up then.`;
 }

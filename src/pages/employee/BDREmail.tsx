@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Copy, ExternalLink, Inbox, Loader2, Mail, Mic, Play, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { buildEmail, type MediaKind } from "@/lib/emailTemplates";
+import { buildEmail, buildFollowUp, FOLLOWUP_DAYS, type MediaKind } from "@/lib/emailTemplates";
 
 /**
  * Email leads — /employee/email (under Dialer). 100 a night, Sun–Thu 6pm Pacific, from the salesman's cities
@@ -17,8 +17,20 @@ interface EmailLead {
   youtube_status: "pending" | "checking" | "found" | "none"; status: Status; sent_at: string | null; created_at: string;
   research_status: "pending" | "researching" | "done"; media_kind: MediaKind; media_url: string | null; media_title: string | null;
   media_notes: string | null; podcast_url: string | null; podcast_name: string | null; sent_from: string | null;
+  followup_count: number; last_followup_at: string | null;
+  verify_status: "pending" | "checking" | "good" | "risky" | "bad" | "skipped"; verify_result: string | null;
 }
-interface SendingInbox { id: string; email: string; daily_limit: number; active: boolean; position: number }
+interface SendingInbox {
+  id: string; email: string; active: boolean; position: number; warm_start: string; already_warm: boolean;
+  limit_override: number | null; ramp_limit: number; effective_limit: number;
+}
+const DAY = 86_400_000;
+/** Next follow-up step that's due now (1–3), or null. Only for sent emails with no reply. */
+function dueStep(r: EmailLead, now = Date.now()): 1 | 2 | 3 | null {
+  if (r.status !== "sent" || !r.sent_at || r.followup_count >= 3) return null;
+  const due = new Date(r.sent_at).getTime() + FOLLOWUP_DAYS[r.followup_count] * DAY;
+  return due <= now ? ((r.followup_count + 1) as 1 | 2 | 3) : null;
+}
 
 /** Pacific-time calendar day, so "today's sends per inbox" matches the salesman's day. */
 const laDay = (d: Date | string) => new Date(d).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
@@ -40,10 +52,11 @@ function mediaOf(r: EmailLead): MediaKind {
   return r.youtube_status === "found" && r.youtube_url ? "youtube" : null;
 }
 
-const TABS: { k: string; l: string; match: (s: Status) => boolean }[] = [
-  { k: "new", l: "To send", match: (s) => s === "new" },
-  { k: "sent", l: "Sent", match: (s) => s === "sent" },
-  { k: "done", l: "Results", match: (s) => !["new", "sent"].includes(s) },
+const TABS: { k: string; l: string; match: (r: EmailLead) => boolean }[] = [
+  { k: "new", l: "To send", match: (r) => r.status === "new" && r.verify_status !== "bad" },
+  { k: "due", l: "Follow-ups due", match: (r) => dueStep(r) !== null },
+  { k: "sent", l: "Sent", match: (r) => r.status === "sent" },
+  { k: "done", l: "Results", match: (r) => !["new", "sent"].includes(r.status) },
   { k: "all", l: "All", match: () => true },
 ];
 const OUTCOMES: { s: Status; l: string; c: string }[] = [
@@ -77,7 +90,7 @@ export default function BDREmail() {
   const [showInboxes, setShowInboxes] = useState(false);
 
   const loadInboxes = useCallback(async () => {
-    const { data } = await (supabase as any).from("nl_sending_inboxes").select("id, email, daily_limit, active, position").order("position").order("created_at");
+    const { data } = await (supabase as any).from("nl_sending_inboxes_v").select("id, email, active, position, warm_start, already_warm, limit_override, ramp_limit, effective_limit").order("position").order("created_at");
     setInboxes((data as SendingInbox[]) || []);
   }, []);
   const load = useCallback(async () => {
@@ -114,23 +127,41 @@ export default function BDREmail() {
   const todayLA = laDay(new Date());
   const usedToday = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const r of rows) if (r.sent_from && r.sent_at && laDay(r.sent_at) === todayLA) m[r.sent_from] = (m[r.sent_from] || 0) + 1;
+    for (const r of rows) {
+      if (!r.sent_from) continue;
+      if (r.sent_at && laDay(r.sent_at) === todayLA) m[r.sent_from] = (m[r.sent_from] || 0) + 1;
+      if (r.last_followup_at && laDay(r.last_followup_at) === todayLA) m[r.sent_from] = (m[r.sent_from] || 0) + 1;
+    }
     return m;
   }, [rows, todayLA]);
   const active = inboxes.filter((i) => i.active);
-  const nextInbox = active.find((i) => (usedToday[i.email.toLowerCase()] || 0) < i.daily_limit)?.email.toLowerCase() ?? null;
+  const nextInbox = active.find((i) => (usedToday[i.email.toLowerCase()] || 0) < i.effective_limit)?.email.toLowerCase() ?? null;
   const allFull = active.length > 0 && !nextInbox;
-  const capacity = active.reduce((n, i) => n + i.daily_limit, 0);
+  const capacity = active.reduce((n, i) => n + i.effective_limit, 0);
+
+  const followUpDone = async (r: EmailLead, undo = false) => {
+    setBusy(r.id);
+    const { error } = await (supabase as any).rpc("nl_email_followup_done", { _id: r.id, _undo: undo });
+    setBusy(null);
+    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
+    setRows((xs) => xs.map((x) => (x.id === r.id ? {
+      ...x, followup_count: undo ? Math.max(0, x.followup_count - 1) : Math.min(3, x.followup_count + 1),
+      last_followup_at: undo ? (x.followup_count <= 1 ? null : x.last_followup_at) : new Date().toISOString(),
+    } : x)));
+  };
 
   const today = new Date().toDateString();
   const stats = useMemo(() => ({
-    toSend: rows.filter((r) => r.status === "new").length,
+    toSend: rows.filter((r) => r.status === "new" && r.verify_status !== "bad").length,
     sentToday: rows.filter((r) => r.sent_at && new Date(r.sent_at).toDateString() === today).length,
     replied: rows.filter((r) => r.status === "replied" || r.status === "booked").length,
     booked: rows.filter((r) => r.status === "booked").length,
     youtube: rows.filter((r) => mediaOf(r) !== null).length,
   }), [rows, today]);
-  const shown = rows.filter((r) => TABS.find((t) => t.k === tab)!.match(r.status));
+  // Checked-good emails first, risky ones (catch-all / unknown) last, so the riskiest sends happen when an inbox is nearly done for the day.
+  const vRank = (r: EmailLead) => (r.verify_status === "good" ? 0 : r.verify_status === "risky" ? 2 : 1);
+  const shown = rows.filter((r) => TABS.find((t) => t.k === tab)!.match(r))
+    .sort((a, b) => (tab === "new" ? vRank(a) - vRank(b) : 0));
 
   return (
     <div className="mx-auto grid max-w-[1000px] gap-4 pb-20 text-white">
@@ -146,7 +177,7 @@ export default function BDREmail() {
             <Inbox className="h-4 w-4 text-[hsl(197,100%,62%)]" />
             {active.length === 0
               ? <span className="text-white/85">No sending inboxes yet. Add them so the app picks the right inbox for each email.</span>
-              : <span className="text-white/85"><b>{active.reduce((n, i) => n + (usedToday[i.email.toLowerCase()] || 0), 0)}</b> of <b>{capacity}</b> sent today across {active.length} inbox{active.length === 1 ? "" : "es"}{nextInbox ? <> · next: <b>{nextInbox}</b></> : <> · <b className="text-[hsl(38,95%,62%)]">all inboxes are at today's limit</b></>}</span>}
+              : <span className="text-white/85"><b>{active.reduce((n, i) => n + (usedToday[i.email.toLowerCase()] || 0), 0)}</b> of <b>{capacity}</b> sent today across {active.length} inbox{active.length === 1 ? "" : "es"}{nextInbox ? <> · next: <b>{nextInbox}</b></> : <> · <b className="text-[hsl(38,95%,62%)]">{capacity === 0 ? "inboxes still warming up" : "all inboxes are at today's limit"}</b></>}</span>}
           </div>
           <button type="button" onClick={() => setShowInboxes((v) => !v)} className="rounded-lg border border-white/[0.16] px-3 py-1 text-[13px] font-semibold text-[hsl(197,100%,75%)]">{showInboxes ? "Close" : "My sending inboxes"}</button>
         </div>
@@ -163,7 +194,7 @@ export default function BDREmail() {
         {TABS.map((t) => (
           <button key={t.k} type="button" onClick={() => setTab(t.k)} aria-pressed={tab === t.k}
             className={"min-h-[34px] rounded-full border px-3.5 text-[13px] font-semibold " + (tab === t.k ? "border-[hsl(197,100%,60%)] bg-[hsla(197,100%,60%,.14)] text-[hsl(197,100%,75%)]" : "border-white/[0.16] bg-[hsla(220,40%,9%,.78)] text-white/80")}>
-            {t.l} <span className="opacity-70">{rows.filter((r) => t.match(r.status)).length}</span>
+            {t.l} <span className="opacity-70">{rows.filter((r) => t.match(r)).length}</span>
           </button>
         ))}
       </div>
@@ -175,14 +206,17 @@ export default function BDREmail() {
           {rows.length === 0 ? "No email leads yet. They arrive at 6pm Pacific, Sunday to Thursday, once you have a state assigned." : "Nothing here."}
         </div>
       ) : (
-        shown.map((r) => <Card key={r.id} r={r} busy={busy === r.id} onStatus={setStatus} nextInbox={nextInbox} allFull={allFull} />)
+        shown.map((r) => tab === "due"
+          ? <FollowUpCard key={r.id} r={r} busy={busy === r.id} onDone={followUpDone} onStatus={setStatus}
+              inboxFull={!!r.sent_from && (() => { const i = active.find((x) => x.email.toLowerCase() === r.sent_from); return !!i && (usedToday[r.sent_from!] || 0) >= i.effective_limit; })()} />
+          : <Card key={r.id} r={r} busy={busy === r.id} onStatus={setStatus} nextInbox={nextInbox} allFull={allFull} warming={allFull && capacity === 0} />)
       )}
     </div>
   );
 }
 
-function Card({ r, busy, onStatus, nextInbox, allFull }: {
-  r: EmailLead; busy: boolean; onStatus: (r: EmailLead, s: Status, sentFrom?: string | null) => void; nextInbox: string | null; allFull: boolean;
+function Card({ r, busy, onStatus, nextInbox, allFull, warming }: {
+  r: EmailLead; busy: boolean; onStatus: (r: EmailLead, s: Status, sentFrom?: string | null) => void; nextInbox: string | null; allFull: boolean; warming: boolean;
 }) {
   const [openedIn, setOpenedIn] = useState<string | null>(null);
   const media = mediaOf(r);
@@ -206,6 +240,9 @@ function Card({ r, busy, onStatus, nextInbox, allFull }: {
           ) : (
             <span className="rounded-full border border-white/[0.14] px-2.5 py-1 text-[12px] text-white/70">No YouTube or podcast</span>
           )}
+          {r.verify_status === "good" && <span className="rounded-full border border-[hsla(152,62%,52%,.45)] px-2.5 py-1 text-[12px] font-semibold text-[hsl(152,70%,70%)]">Email checked</span>}
+          {r.verify_status === "risky" && <span title={r.verify_result || ""} className="rounded-full border border-[hsla(38,95%,60%,.5)] px-2.5 py-1 text-[12px] font-semibold text-[hsl(38,95%,70%)]">Risky email · send last</span>}
+          {r.verify_status === "bad" && <span title={r.verify_result || ""} className="rounded-full border border-[hsla(0,85%,62%,.5)] px-2.5 py-1 text-[12px] font-semibold text-[hsl(0,90%,75%)]">Bad email · don't send</span>}
           <span className="rounded-full border border-white/[0.14] px-2.5 py-1 text-[12px] font-semibold text-white/85">{STATUS_LABEL[r.status]}</span>
         </div>
       </div>
@@ -229,7 +266,7 @@ function Card({ r, busy, onStatus, nextInbox, allFull }: {
       <div className="flex flex-wrap items-center gap-2">
         {r.status === "new" ? (
           <>
-            <button type="button" disabled={allFull && !openedIn}
+            <button type="button" disabled={(allFull && !openedIn) || r.verify_status === "bad"}
               onClick={() => {
                 const inbox = openedIn || nextInbox;
                 window.open(gmailComposeUrl(inbox, r.owner_email, draft.subject, draft.body), "_blank", "noopener");
@@ -242,7 +279,7 @@ function Card({ r, busy, onStatus, nextInbox, allFull }: {
               className={"inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-4 text-[14px] font-semibold disabled:opacity-60 " + (openedIn !== null ? "border-[hsl(152,62%,52%)] bg-[hsla(152,62%,45%,.18)] text-[hsl(152,70%,72%)]" : "border-white/[0.18] text-white/85")}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Sent
             </button>
-            {allFull && !openedIn && <span className="text-[12.5px] text-[hsl(38,95%,62%)]">Every inbox has hit today's limit. Send the rest tomorrow.</span>}
+            {allFull && !openedIn && <span className="text-[12.5px] text-[hsl(38,95%,62%)]">{warming ? "Your inboxes are still warming up. No cold emails from them yet." : "Every inbox has hit today's limit. Send the rest tomorrow."}</span>}
           </>
         ) : (
           <>
@@ -253,6 +290,7 @@ function Card({ r, busy, onStatus, nextInbox, allFull }: {
                 {o.l}
               </button>
             ))}
+            {r.status === "sent" && <span className="text-[12px] text-white/65">Follow-ups {r.followup_count}/3</span>}
             <a href={gmailThreadUrl(r.sent_from, r.owner_email)} target="_blank" rel="noopener noreferrer"
               className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-white/[0.16] px-3 text-[13px] font-semibold text-[hsl(197,100%,75%)]">
               <ExternalLink className="h-3.5 w-3.5" />Open thread{r.sent_from ? ` · ${r.sent_from}` : ""}
@@ -281,52 +319,83 @@ function Field({ label, value, copy, multiline }: { label: string; value: string
   );
 }
 
+function FollowUpCard({ r, busy, onDone, onStatus, inboxFull }: {
+  r: EmailLead; busy: boolean; onDone: (r: EmailLead, undo?: boolean) => void; onStatus: (r: EmailLead, s: Status) => void; inboxFull: boolean;
+}) {
+  const step = dueStep(r) ?? 1;
+  const text = buildFollowUp(step, { firstName: r.owner_first, firm: r.firm_name, city: r.city });
+  return (
+    <article className={surface + " grid gap-3 p-4 sm:p-5"}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-[17px] font-bold leading-tight">{r.firm_name}</h2>
+          <p className="text-[13px] text-white/75">{r.owner_name || "Owner"} · {r.owner_email}{r.sent_from ? <> · sent from <b>{r.sent_from}</b></> : null}</p>
+        </div>
+        <span className="rounded-full border border-[hsla(38,95%,60%,.5)] bg-[hsla(38,95%,55%,.12)] px-2.5 py-1 text-[12px] font-semibold text-[hsl(38,95%,70%)]">Follow-up {step} of 3 · day {FOLLOWUP_DAYS[step - 1]}</span>
+      </div>
+      <Field label="Reply with" value={text} copy="Follow-up" multiline />
+      <p className="text-[12.5px] text-white/70">Tap <b>Open thread</b>, open their email, click <b>Reply</b>, paste, then <b>Schedule send</b> for tomorrow morning. Only if they haven't answered. If they did, mark the result instead.</p>
+      {inboxFull && <p className="text-[12.5px] text-[hsl(38,95%,62%)]">This inbox has hit today's limit. Send this follow-up tomorrow.</p>}
+      <div className="flex flex-wrap items-center gap-2">
+        <a href={gmailThreadUrl(r.sent_from, r.owner_email)} target="_blank" rel="noopener noreferrer"
+          className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-[linear-gradient(120deg,hsl(217,90%,52%),hsl(197,100%,48%))] px-4 text-[14px] font-semibold text-white">
+          <ExternalLink className="h-4 w-4" />Open thread
+        </a>
+        <button type="button" disabled={busy} onClick={() => onDone(r)}
+          className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-[hsl(152,62%,52%)] bg-[hsla(152,62%,45%,.18)] px-4 text-[14px] font-semibold text-[hsl(152,70%,72%)] disabled:opacity-60">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Follow-up sent
+        </button>
+        <button type="button" disabled={busy} onClick={() => onStatus(r, "replied")} className="min-h-[34px] rounded-lg border border-white/[0.16] px-3 text-[13px] font-semibold text-white/85">They replied</button>
+        <button type="button" disabled={busy} onClick={() => onStatus(r, "unsubscribed")} className="min-h-[34px] rounded-lg border border-white/[0.16] px-3 text-[13px] font-semibold text-white/85">Unsubscribe</button>
+      </div>
+    </article>
+  );
+}
+
 function InboxPanel({ inboxes, usedToday, onChange }: { inboxes: SendingInbox[]; usedToday: Record<string, number>; onChange: () => void }) {
   const [email, setEmail] = useState("");
-  const [limit, setLimit] = useState(10);
+  const [warm, setWarm] = useState(false);
   const [allLimit, setAllLimit] = useState("");
   const run = async (p: Promise<{ error: { message: string } | null }>) => {
     const { error } = await p;
     if (error) toast({ title: "Couldn't save", description: error.message, variant: "destructive" });
     onChange();
   };
-  const db = (supabase as any).from("nl_sending_inboxes");
+  const db = () => (supabase as any).from("nl_sending_inboxes");
   const add = async () => {
     const e = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { toast({ title: "Enter a full email address", variant: "destructive" }); return; }
     if (/@newlight(gen|-app)\.com$/.test(e)) { toast({ title: "Don't send cold email from newlightgen.com or newlight-app.com", description: "Use a separate sending domain.", variant: "destructive" }); return; }
-    await run(db.insert({ email: e, daily_limit: limit, position: inboxes.length }));
-    setEmail("");
+    await run(db().insert({ email: e, position: inboxes.length, already_warm: warm }));
+    setEmail(""); setWarm(false);
   };
   return (
     <div className="grid gap-2 border-t border-white/[0.1] pt-3">
-      <p className="text-[12.5px] text-white/70">Sign in to each of these inboxes in this browser once (Gmail → profile picture → Add another account). The app sends each email to the next inbox that's under its daily limit. Raise limits only as the ramp schedule says.</p>
+      <p className="text-[12.5px] text-white/70">Sign in to each inbox in this browser once (Gmail → profile picture → Add another account). Limits follow the warm-up schedule by themselves: nothing for 4 work days, then 5, 10, 15, 20, and 25 a day from the 21st work day. Tick <b>Already warm</b> only for an old personal account (25 a day).</p>
       {inboxes.map((i) => (
         <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-white/[0.12] bg-[hsla(222,44%,5%,.7)] px-3 py-2 text-[13.5px]">
           <span className={"min-w-0 flex-1 truncate " + (i.active ? "" : "text-white/45 line-through")}>{i.email}</span>
-          <span className="font-mono text-[12.5px] tabular-nums text-white/75">{usedToday[i.email.toLowerCase()] || 0}/{i.daily_limit} today</span>
-          <label className="flex items-center gap-1 text-[12px] text-white/70">Limit
-            <input type="number" min={1} max={50} defaultValue={i.daily_limit}
-              onBlur={(ev) => { const v = Math.max(1, Math.min(50, Number(ev.target.value) || i.daily_limit)); if (v !== i.daily_limit) run(db.update({ daily_limit: v }).eq("id", i.id)); }}
-              className="w-14 rounded border border-white/[0.18] bg-transparent px-1.5 py-0.5 text-white" />
-          </label>
-          <button type="button" onClick={() => run(db.update({ active: !i.active }).eq("id", i.id))} className="rounded border border-white/[0.18] px-2 py-0.5 text-[12px] text-white/80">{i.active ? "Pause" : "Resume"}</button>
-          <button type="button" onClick={() => run(db.delete().eq("id", i.id))} title="Remove" className="rounded p-1 text-white/60 hover:text-[hsl(0,85%,70%)]"><Trash2 className="h-3.5 w-3.5" /></button>
+          <span className="font-mono text-[12.5px] tabular-nums text-white/75">{usedToday[i.email.toLowerCase()] || 0}/{i.effective_limit} today</span>
+          <span className="text-[12px] text-white/60">{i.limit_override != null ? `set by hand (warm-up says ${i.ramp_limit})` : i.already_warm ? "already warm" : i.effective_limit === 0 ? `warming up since ${new Date(i.warm_start + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "warm-up schedule"}</span>
+          {i.limit_override != null
+            ? <button type="button" onClick={() => run(db().update({ limit_override: null }).eq("id", i.id))} className="rounded border border-white/[0.18] px-2 py-0.5 text-[12px] text-white/80">Back to schedule</button>
+            : null}
+          <button type="button" onClick={() => run(db().update({ active: !i.active }).eq("id", i.id))} className="rounded border border-white/[0.18] px-2 py-0.5 text-[12px] text-white/80">{i.active ? "Pause" : "Resume"}</button>
+          <button type="button" onClick={() => run(db().delete().eq("id", i.id))} title="Remove" className="rounded p-1 text-white/60 hover:text-[hsl(0,85%,70%)]"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
       ))}
       <div className="flex flex-wrap items-center gap-2">
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="niko@getnewlight.com" className="min-w-[220px] flex-1 rounded-lg border border-white/[0.18] bg-transparent px-3 py-1.5 text-[13.5px] text-white placeholder:text-white/40" />
-        <label className="flex items-center gap-1 text-[12px] text-white/70">Limit
-          <input type="number" min={1} max={50} value={limit} onChange={(e) => setLimit(Number(e.target.value) || 10)} className="w-14 rounded border border-white/[0.18] bg-transparent px-1.5 py-1 text-white" />
-        </label>
+        <label className="flex items-center gap-1.5 text-[12.5px] text-white/75"><input type="checkbox" checked={warm} onChange={(e) => setWarm(e.target.checked)} />Already warm</label>
         <button type="button" onClick={add} className="inline-flex items-center gap-1 rounded-lg bg-[hsla(197,100%,60%,.18)] px-3 py-1.5 text-[13px] font-semibold text-[hsl(197,100%,78%)]"><Plus className="h-3.5 w-3.5" />Add inbox</button>
       </div>
-      {inboxes.length > 1 && (
+      {inboxes.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-[12.5px] text-white/75">
-          Set every inbox's limit to
-          <input type="number" min={1} max={50} value={allLimit} onChange={(e) => setAllLimit(e.target.value)} className="w-14 rounded border border-white/[0.18] bg-transparent px-1.5 py-0.5 text-white" />
-          <button type="button" disabled={!allLimit} onClick={() => { const v = Math.max(1, Math.min(50, Number(allLimit))); run(db.update({ daily_limit: v }).in("id", inboxes.map((i) => i.id))); setAllLimit(""); }}
+          Slow down or pause: set every inbox to
+          <input type="number" min={0} max={50} value={allLimit} onChange={(e) => setAllLimit(e.target.value)} className="w-14 rounded border border-white/[0.18] bg-transparent px-1.5 py-0.5 text-white" />
+          <button type="button" disabled={allLimit === ""} onClick={() => { const v = Math.max(0, Math.min(50, Number(allLimit))); run(db().update({ limit_override: v }).in("id", inboxes.map((x) => x.id))); setAllLimit(""); }}
             className="rounded border border-white/[0.18] px-2 py-0.5 text-white/85 disabled:opacity-50">Apply</button>
+          <button type="button" onClick={() => run(db().update({ limit_override: null }).in("id", inboxes.map((x) => x.id)))} className="rounded border border-white/[0.18] px-2 py-0.5 text-white/85">All back to schedule</button>
         </div>
       )}
     </div>
