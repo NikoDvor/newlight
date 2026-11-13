@@ -4,17 +4,21 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Check, Clock, ChevronRight } from "lucide-react";
 import { useAcademy } from "@/hooks/useAcademy";
 import { useAcademyBase } from "@/hooks/useAcademyBase";
-import { chapterDone, moduleStats, FINAL_MODULE, WHY_MODULE, type Audience } from "@/lib/academy";
+import { chapterDone, completeChapter, moduleStats, FINAL_MODULE, WHY_MODULE, type Audience } from "@/lib/academy";
 import { AcademyStyles, AlivePanel, AudienceTag, GlowBar, Kicker } from "@/components/academy/ui";
 import WhyBuilder from "@/components/academy/WhyBuilder";
 import FinalExam from "@/components/academy/FinalExam";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/** Chapters that open another page instead of a reading chapter. Tapping one marks it done and goes there.
+ *  Module 4 ch.1 "The three packages" → Client Showcase (prices + rules + its quiz moved to ch.4). */
+const LINK_CHAPTERS: Record<string, string> = { "694e7db6-8e02-41c9-9397-bb1799053390": "showcase" };
+
 export default function AcademyModule() {
   const { n } = useParams<{ n: string }>();
   const num = Number(n);
-  const { data, loading, refresh } = useAcademy();
+  const { data, loading, refresh, userId } = useAcademy();
   const base = useAcademyBase();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | Audience>("all");
@@ -66,7 +70,12 @@ export default function AcademyModule() {
         {chapters.map((c, i) => {
           const done = chapterDone(data.progress, c.id);
           return (
-            <motion.button key={c.id} type="button" onClick={() => navigate(`${base}/m/${num}/c/${c.chapter_number}`)}
+            <motion.button key={c.id} type="button" onClick={async () => {
+                const link = LINK_CHAPTERS[c.id];
+                if (!link) { navigate(`${base}/m/${num}/c/${c.chapter_number}`); return; }
+                if (userId && !done) { try { await completeChapter({ userId, trackId: data.trackId, moduleId: m.id, chapterId: c.id }); } catch { /* still open it */ } }
+                navigate(`${base.startsWith("/admin") ? "/admin" : "/employee"}/${link}`);
+              }}
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
               className="group flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-[hsla(222,40%,8%,.82)] p-3.5 text-left transition-colors hover:border-[hsla(197,100%,55%,.45)]">
               <div className="w-1 self-stretch rounded-full" style={{ background: done ? "hsl(197,100%,58%)" : "hsla(0,0%,100%,.08)", boxShadow: done ? "0 0 8px hsl(197,100%,55%)" : undefined }} />
