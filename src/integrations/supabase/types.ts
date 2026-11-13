@@ -9794,6 +9794,162 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_email_leads: {
+        Row: {
+          city: string | null
+          contact_id: string | null
+          created_at: string
+          firm_name: string
+          followup_count: number
+          id: string
+          last_followup_at: string | null
+          lead_id: string | null
+          media_kind: string | null
+          media_notes: string | null
+          media_title: string | null
+          media_url: string | null
+          outcome_at: string | null
+          owner_email: string
+          owner_first: string | null
+          owner_name: string | null
+          podcast_name: string | null
+          podcast_url: string | null
+          pool_firm_id: string | null
+          rep_user_id: string
+          research_status: string
+          researched_at: string | null
+          sent_at: string | null
+          sent_from: string | null
+          state: string | null
+          status: string
+          verified_at: string | null
+          verify_request_id: number | null
+          verify_result: string | null
+          verify_status: string
+          website: string | null
+          youtube_checked_at: string | null
+          youtube_source: string | null
+          youtube_status: string
+          youtube_url: string | null
+          yt_request_id: number | null
+          yt_stage: string | null
+        }
+        Insert: {
+          city?: string | null
+          contact_id?: string | null
+          created_at?: string
+          firm_name: string
+          followup_count?: number
+          id?: string
+          last_followup_at?: string | null
+          lead_id?: string | null
+          media_kind?: string | null
+          media_notes?: string | null
+          media_title?: string | null
+          media_url?: string | null
+          outcome_at?: string | null
+          owner_email: string
+          owner_first?: string | null
+          owner_name?: string | null
+          podcast_name?: string | null
+          podcast_url?: string | null
+          pool_firm_id?: string | null
+          rep_user_id: string
+          research_status?: string
+          researched_at?: string | null
+          sent_at?: string | null
+          sent_from?: string | null
+          state?: string | null
+          status?: string
+          verified_at?: string | null
+          verify_request_id?: number | null
+          verify_result?: string | null
+          verify_status?: string
+          website?: string | null
+          youtube_checked_at?: string | null
+          youtube_source?: string | null
+          youtube_status?: string
+          youtube_url?: string | null
+          yt_request_id?: number | null
+          yt_stage?: string | null
+        }
+        Update: {
+          city?: string | null
+          contact_id?: string | null
+          created_at?: string
+          firm_name?: string
+          followup_count?: number
+          id?: string
+          last_followup_at?: string | null
+          lead_id?: string | null
+          media_kind?: string | null
+          media_notes?: string | null
+          media_title?: string | null
+          media_url?: string | null
+          outcome_at?: string | null
+          owner_email?: string
+          owner_first?: string | null
+          owner_name?: string | null
+          podcast_name?: string | null
+          podcast_url?: string | null
+          pool_firm_id?: string | null
+          rep_user_id?: string
+          research_status?: string
+          researched_at?: string | null
+          sent_at?: string | null
+          sent_from?: string | null
+          state?: string | null
+          status?: string
+          verified_at?: string | null
+          verify_request_id?: number | null
+          verify_result?: string | null
+          verify_status?: string
+          website?: string | null
+          youtube_checked_at?: string | null
+          youtube_source?: string | null
+          youtube_status?: string
+          youtube_url?: string | null
+          yt_request_id?: number | null
+          yt_stage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_email_leads_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_email_leads_pool_firm_id_fkey"
+            columns: ["pool_firm_id"]
+            isOneToOne: false
+            referencedRelation: "nl_lead_pool_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_email_optouts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       nl_firm_types: {
         Row: {
           crd: string
@@ -9856,6 +10012,7 @@ export type Database = {
       }
       nl_lead_auto_pull_log: {
         Row: {
+          channel: string
           cities: string[]
           id: string
           note: string | null
@@ -9865,6 +10022,7 @@ export type Database = {
           run_at: string
         }
         Insert: {
+          channel?: string
           cities?: string[]
           id?: string
           note?: string | null
@@ -9874,6 +10032,7 @@ export type Database = {
           run_at?: string
         }
         Update: {
+          channel?: string
           cities?: string[]
           id?: string
           note?: string | null
@@ -9886,18 +10045,24 @@ export type Database = {
       }
       nl_lead_auto_pull_settings: {
         Row: {
+          email_enabled: boolean
+          email_per_day: number
           enabled: boolean
           id: number
           leads_per_day: number
           updated_at: string
         }
         Insert: {
+          email_enabled?: boolean
+          email_per_day?: number
           enabled?: boolean
           id?: number
           leads_per_day?: number
           updated_at?: string
         }
         Update: {
+          email_enabled?: boolean
+          email_per_day?: number
           enabled?: boolean
           id?: number
           leads_per_day?: number
@@ -10331,6 +10496,38 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_lead_texts: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string | null
+          phone: string
+          rep_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          phone: string
+          rep_user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          phone?: string
+          rep_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_lead_texts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_legal_documents: {
         Row: {
           archived_at: string | null
@@ -10759,6 +10956,45 @@ export type Database = {
           },
         ]
       }
+      nl_sending_inboxes: {
+        Row: {
+          active: boolean
+          already_warm: boolean
+          created_at: string
+          daily_limit: number
+          email: string
+          id: string
+          limit_override: number | null
+          position: number
+          rep_user_id: string
+          warm_start: string
+        }
+        Insert: {
+          active?: boolean
+          already_warm?: boolean
+          created_at?: string
+          daily_limit?: number
+          email: string
+          id?: string
+          limit_override?: number | null
+          position?: number
+          rep_user_id?: string
+          warm_start?: string
+        }
+        Update: {
+          active?: boolean
+          already_warm?: boolean
+          created_at?: string
+          daily_limit?: number
+          email?: string
+          id?: string
+          limit_override?: number | null
+          position?: number
+          rep_user_id?: string
+          warm_start?: string
+        }
+        Relationships: []
+      }
       nl_sourced_leads: {
         Row: {
           business_name: string
@@ -11089,6 +11325,42 @@ export type Database = {
         Relationships: []
       }
       nl_training_backup_20261110: {
+        Row: {
+          audience: string | null
+          chapter_description: string | null
+          chapter_number: number | null
+          chapter_title: string | null
+          content: string | null
+          created_at: string | null
+          est_minutes: number | null
+          id: string | null
+          module_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          chapter_description?: string | null
+          chapter_number?: number | null
+          chapter_title?: string | null
+          content?: string | null
+          created_at?: string | null
+          est_minutes?: number | null
+          id?: string | null
+          module_id?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_backup_20261112_m4: {
         Row: {
           audience: string | null
           chapter_description: string | null
@@ -11741,6 +12013,54 @@ export type Database = {
         ]
       }
       nl_training_questions_backup_20261103: {
+        Row: {
+          chapter_id: string | null
+          correct_index: number | null
+          created_at: string | null
+          explanation: string | null
+          id: string | null
+          is_unlock_question: boolean | null
+          module_id: string | null
+          options: Json | null
+          question_text: string | null
+          question_type: string | null
+          quiz_level: number | null
+          unlock_category: string | null
+          unlock_level: string | null
+        }
+        Insert: {
+          chapter_id?: string | null
+          correct_index?: number | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string | null
+          is_unlock_question?: boolean | null
+          module_id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          question_type?: string | null
+          quiz_level?: number | null
+          unlock_category?: string | null
+          unlock_level?: string | null
+        }
+        Update: {
+          chapter_id?: string | null
+          correct_index?: number | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string | null
+          is_unlock_question?: boolean | null
+          module_id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          question_type?: string | null
+          quiz_level?: number | null
+          unlock_category?: string | null
+          unlock_level?: string | null
+        }
+        Relationships: []
+      }
+      nl_training_questions_backup_20261112_m4: {
         Row: {
           chapter_id: string | null
           correct_index: number | null
@@ -17389,7 +17709,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      nl_sending_inboxes_v: {
+        Row: {
+          active: boolean | null
+          already_warm: boolean | null
+          created_at: string | null
+          daily_limit: number | null
+          effective_limit: number | null
+          email: string | null
+          id: string | null
+          limit_override: number | null
+          position: number | null
+          ramp_limit: number | null
+          rep_user_id: string | null
+          warm_start: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          already_warm?: boolean | null
+          created_at?: string | null
+          daily_limit?: number | null
+          effective_limit?: never
+          email?: string | null
+          id?: string | null
+          limit_override?: number | null
+          position?: number | null
+          ramp_limit?: never
+          rep_user_id?: string | null
+          warm_start?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          already_warm?: boolean | null
+          created_at?: string | null
+          daily_limit?: number | null
+          effective_limit?: never
+          email?: string | null
+          id?: string | null
+          limit_override?: number | null
+          position?: number | null
+          ramp_limit?: never
+          rep_user_id?: string | null
+          warm_start?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_reassign_lead: {
@@ -17614,6 +17978,34 @@ export type Database = {
       }
       nl_dialer_lead_details: { Args: { _lead_ids: string[] }; Returns: Json }
       nl_digits: { Args: { _t: string }; Returns: string }
+      nl_email_followup_done: {
+        Args: { _id: string; _undo?: boolean }
+        Returns: undefined
+      }
+      nl_email_pull_daily: { Args: never; Returns: number }
+      nl_email_pull_for: {
+        Args: { _count?: number; _rep: string }
+        Returns: number
+      }
+      nl_email_pull_now: {
+        Args: { _count?: number; _rep: string }
+        Returns: number
+      }
+      nl_email_set_status: {
+        Args: { _id: string; _sent_from?: string; _status: string }
+        Returns: undefined
+      }
+      nl_email_verify_tick: { Args: never; Returns: number }
+      nl_email_youtube_tick: { Args: never; Returns: Json }
+      nl_first_name: { Args: { _full: string }; Returns: string }
+      nl_inbox_effective_limit: {
+        Args: { i: Database["public"]["Tables"]["nl_sending_inboxes"]["Row"] }
+        Returns: number
+      }
+      nl_inbox_ramp_limit: {
+        Args: { _already_warm?: boolean; _warm_start: string }
+        Returns: number
+      }
       nl_jbool: { Args: { v: Json }; Returns: boolean }
       nl_jdate: { Args: { v: Json }; Returns: string }
       nl_jnum: { Args: { v: Json }; Returns: number }
@@ -17678,6 +18070,10 @@ export type Database = {
         }
         Returns: number
       }
+      nl_pool_claim_email_for: {
+        Args: { _city: string; _count: number; _rep: string; _state: string }
+        Returns: number
+      }
       nl_pool_claim_for: {
         Args: {
           _city: string
@@ -17733,6 +18129,7 @@ export type Database = {
           total: number
         }[]
       }
+      nl_rep_email_capacity: { Args: { _rep: string }; Returns: number }
       nl_rest_days: { Args: { _reason: string }; Returns: number }
       nl_territory_move: {
         Args: { _dir: number; _id: string }
@@ -17762,6 +18159,7 @@ export type Database = {
         Args: { _from: string; _to: string }
         Returns: number
       }
+      nl_youtube_from_html: { Args: { _html: string }; Returns: string }
       normalize_business_name: { Args: { _n: string }; Returns: string }
       normalize_city_name: { Args: { _c: string }; Returns: string }
       normalize_phone_last10: { Args: { _p: string }; Returns: string }
