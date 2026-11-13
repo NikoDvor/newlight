@@ -348,3 +348,19 @@ alter table nl_email_leads
   add column if not exists podcast_url text,
   add column if not exists podcast_name text;
 create index if not exists nl_email_leads_research_idx on nl_email_leads(research_status, created_at);
+
+-- Nov 13 (applied live): sending inboxes + rotation for the "Open in Gmail" button
+create table if not exists nl_sending_inboxes (
+  id uuid primary key default gen_random_uuid(),
+  rep_user_id uuid not null default auth.uid(),
+  email text not null,
+  daily_limit int not null default 10 check (daily_limit between 1 and 50),
+  active boolean not null default true,
+  position int not null default 0,
+  created_at timestamptz not null default now(),
+  unique (rep_user_id, email)
+);
+alter table nl_sending_inboxes enable row level security;
+-- policies: admin all; rep manages own (internal staff). nl_email_leads.sent_from added;
+-- nl_email_set_status(_id, _status, _sent_from default null) records which inbox sent it.
+alter table nl_email_leads add column if not exists sent_from text;
