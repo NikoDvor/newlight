@@ -336,3 +336,15 @@ select cron.unschedule('nl-email-youtube-2min') where exists (select 1 from cron
 select cron.schedule('nl-email-youtube-2min', '*/2 * * * *', $c$select public.nl_email_youtube_tick();$c$);
 
 -- Training (applied live): Module 2 chapter 12 "Email leads and the Text button" added; M2.11 BDR table gained the email-pull row.
+
+-- Nov 12 (applied live): nightly media research (scheduled task "Nightly email lead research", 6:12pm + 11:12pm PT Sun–Thu)
+alter table nl_email_leads
+  add column if not exists research_status text not null default 'pending' check (research_status in ('pending','researching','done')),
+  add column if not exists researched_at timestamptz,
+  add column if not exists media_kind text check (media_kind in ('youtube','podcast')),
+  add column if not exists media_url text,
+  add column if not exists media_title text,
+  add column if not exists media_notes text,
+  add column if not exists podcast_url text,
+  add column if not exists podcast_name text;
+create index if not exists nl_email_leads_research_idx on nl_email_leads(research_status, created_at);
