@@ -67,8 +67,8 @@ export default function ClientShowcase() {
       {/* controls */}
       <div className="sticky top-0 z-20 -mx-2 mb-2 grid gap-2 border-b border-white/[0.16] bg-[hsla(222,46%,5%,.72)] px-2 py-2.5 backdrop-blur-md">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <Seg label="Firm" items={NICHES} value={niche} onChange={setNiche} />
-          <Seg label="Package" items={PKGS} value={pkg} onChange={setPkg} />
+          <Seg label="Firm" items={NICHES} value={niche} onChange={(v) => setNiche(v as Niche)} />
+          <Seg label="Package" items={PKGS} value={pkg} onChange={(v) => setPkg(v as PkgKey)} />
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className={eyebrow + " mr-1"}>Highlight</span>
