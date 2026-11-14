@@ -1,5 +1,5 @@
 // Shared service agreement HTML builder (moved verbatim from close-prep-submit).
-export const AGREEMENT_VERSION = "2026-11-07.1";
+export const AGREEMENT_VERSION = "2026-11-14.1";
 
 export function esc(s: string): string {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -304,6 +304,80 @@ function between(html: string, startMarker: string, endMarker: string, replaceme
   return html.slice(0, a) + replacement + html.slice(b);
 }
 
+
+// ─── Schedule A: what each package includes (the three steps) ───────────────
+// Step 1 = Get Found, Step 2 = Fill the Calendar, Step 3 = Win the Client.
+// Growth = Step 2.  Command Center = Step 3.  Enterprise = Steps 1 + 2 + 3 (plus an exclusive market and a dedicated strategist).
+const PKG_STEP_LABEL: Record<AgreementPlan["packageKey"], string> = {
+  growth: "Step 2 · Fill the Calendar",
+  command_center: "Step 3 · Win the Client",
+  enterprise: "Steps 1 + 2 + 3 · Get Found, Fill the Calendar, Win the Client",
+};
+
+const STEP1_HTML = `<h3>Step 1 · Get Found</h3>
+  <ul>
+    <li><strong>Market and competitor research.</strong> A kickoff call with Client, then a written market plan: Client's ideal client profile, a map of the competing firms that appear in Client's market, and the searches and questions Client's ideal clients use.</li>
+    <li><strong>Website and SEO.</strong> New or revised website pages built around the researched searches, local search optimization, setup or optimization of Client's Google Business Profile, and a clear booking button on every page.</li>
+    <li><strong>AI search visibility.</strong> Consistent firm information across the listings and sources that search engines and AI assistants draw on, answer-style content, and tracking of where the firm is mentioned. Agency does not control, and does not promise, any ranking or mention (Section 2).</li>
+    <li><strong>Content and social media.</strong> A posting plan and regular educational posts on LinkedIn and the other channels Client's ideal clients use, with the best-performing posts promoted. Every post requires Client's approval before it is published (Section 27).</li>
+  </ul>`;
+
+const STEP2_HTML = (growth: boolean, minAdBudget: number | null) => `<h3>Step 2 · Fill the Calendar</h3>
+  <ul>
+    <li><strong>Ideal client target.</strong> Agency and Client agree in writing who the campaigns are aimed at: life stage and goals, the asset range that fits Client's minimum, and the area Client serves.</li>
+    <li><strong>Paid campaigns.</strong> Agency builds, launches, monitors, and optimizes campaigns (paid ads, boosted posts, and seeded content) whose single goal is a booked meeting. Agency recommends the monthly ad budget in writing${minAdBudget ? ` (minimum ${fmtMoney(minAdBudget)} per month)` : ""}. <strong>Ad spend is paid by Client directly to the advertising platforms and is not part of Agency's Fees.</strong></li>
+    <li><strong>Landing page and booking form.</strong> One landing page and booking form with qualifying questions, connected to Client's calendar so prospects see Client's real open times.</li>
+    <li><strong>Confirmations and reminders.</strong> Automatic confirmations and reminders to both sides. Text messages are sent only to people who have agreed to receive them.</li>
+    <li><strong>Tracking.</strong> Meetings booked, cost per booked meeting, and show-up rates, tracked through the accounts Client connects.</li>${growth ? `
+    <li><strong>Meeting and client tracking.</strong> A simple tracker in the Command Center (or Client's own CRM, as the System of Record) so booked meetings and the clients they become can be counted. Client will record meeting outcomes and new clients accurately and promptly, because Section 3 and any Commission depend on that record.</li>` : ""}
+  </ul>${growth ? `
+  <p><strong>Where Growth stops.</strong> Growth services end when the meeting is booked and on Client's calendar. Running the meeting and winning the client are Client's responsibility. Growth does not include the Step 3 client pipeline, Step 1 website, search, or social media work, or any other service not listed in this Schedule A.</p>` : ""}`;
+
+const STEP3_HTML = (standalone: boolean) => `<h3>Step 3 · Win the Client</h3>
+  <ul>
+    <li><strong>Client's own Command Center.</strong> A private, branded workspace for Client's firm that Client's team can install on a desktop or phone home screen, with accounts for Client's team members.</li>
+    <li><strong>Booking page and Form 1.</strong> A booking page that shows Client's real open times and asks qualifying questions that Client can edit, including a minimum check with a polite not-a-fit path.</li>
+    <li><strong>Reminders and show-up.</strong> Automatic confirmations and reminders before each meeting, with a reschedule link in every message. Text messages are sent only to people who have agreed to receive them.</li>
+    <li><strong>Client pipeline.</strong> Every prospect tracked from booked meeting to won client: meeting outcomes logged, missed and rescheduled meetings followed up, and extra meetings counted.</li>
+    <li><strong>Form 2 and Form 3.</strong> Editable templates for Client's recommendation and pricing, and for the disclosures, agreements, and account or application forms that Client's prospects review and sign online. These are templates only. Client, with its own compliance personnel and counsel, decides what they say and is responsible for them (Sections 25.3 and 27).</li>
+    <li><strong>Follow-through.</strong> Tracking of signed prospects through account opening and funding (or, for insurance, underwriting and placement) until they are counted as won clients, with each client credited to the source that produced it.</li>
+    <li><strong>Reporting and adjustments.</strong> Reports on where prospects are lost and which objections come up, and Agency's recommended adjustments based on that data.</li>
+  </ul>${standalone ? `
+  <p><strong>What Command Center does not include.</strong> The Command Center package does not include Step 1 services (website, search, AI visibility, content, and social media) or Step 2 services (paid campaigns and landing pages), and Agency does not generate prospects or meetings for Client under it. Prospects enter the pipeline from Client's own booking page, website, referrals, events, and other sources.</p>` : ""}`;
+
+const ENTERPRISE_EXTRAS_HTML = `<h3>Enterprise Benefits</h3>
+  <ul>
+    <li><strong>Exclusive market.</strong> While this Agreement is in effect and Client is current on all payments, Agency will not knowingly provide services of the kind described in Steps 1, 2, or 3 to another firm that offers the same type of services as Client and has its principal office in Client's Exclusive Market. "Exclusive Market" means the metropolitan area in which Client's principal office is located, as confirmed in Client's onboarding. This exclusivity (a) does not apply to any firm that was already an Agency client on the Effective Date; (b) does not restrict Agency from serving firms outside the Exclusive Market, or businesses that are not of the same type as Client; (c) is suspended for any period in which a payment is past due and ends automatically when this Agreement ends; and (d) does not make Agency responsible for the activities of any other marketing agency, vendor, or competitor.</li>
+    <li><strong>Dedicated strategist.</strong> One named member of Agency's team serves as Client's primary contact for strategy and reviews Client's results and Agency's recommendations with Client. Agency may replace the strategist on notice to Client.</li>
+    <li><strong>Attribution.</strong> Each booked meeting is traced back to the campaign or source that produced it, where Client's accounts and tracking are connected.</li>
+  </ul>`;
+
+const list = (xs: string[]) => { const a = xs.filter(Boolean); const t = a.length > 2 ? a.slice(0, -1).join(", ") + ", and " + a[a.length - 1] : a.join(" and "); return t.charAt(0).toUpperCase() + t.slice(1); };
+const GENERAL_TERMS_HTML = (hasAds: boolean, hasCommandCenter: boolean, hasWebsite: boolean) => `<h3>How the Services Work</h3>
+  <ul>
+    <li><strong>Start.</strong> Agency begins setup after it receives the first payment due at signing and Client has completed the onboarding items Agency requests (account access, approvals, and the compliance and business contacts under Section 7.2). Any timeline Agency gives is an estimate, and Section 7.3 applies to delays caused by Client.</li>
+    <li><strong>Client's accounts stay in Client's name.</strong> ${list([hasAds ? "advertising accounts" : "", "analytics accounts", hasWebsite ? "the domain name and hosting" : "", hasWebsite ? "the Google Business Profile and social media accounts" : "", "Client's data"])} belong to Client. Agency works through the access Client grants and will stop using, and Client may remove, that access when this Agreement ends.</li>
+    <li><strong>Not included.</strong> ${hasAds ? "Advertising spend and platform fees; fees" : "Fees"} that third-party platforms, carriers, or vendors charge Client directly; legal, compliance, regulatory, tax, and investment advice or review (Section 25.3); video or photo production; and any service not described in this Schedule A. Additional services require a written amendment signed by both parties.</li>
+    <li><strong>Changes.</strong> Agency may update, improve, or replace its tools, software, vendors, and methods during the term as long as the Services described in this Schedule A continue to be provided.</li>${hasCommandCenter ? `
+    <li><strong>Command Center license.</strong> While this Agreement is in effect and Client is current on payments, Agency grants Client a non-exclusive, non-transferable, non-sublicensable right to use the Command Center for Client's internal business operations and its own prospects and clients. Client will not copy, resell, rent, or white-label the Command Center, reverse engineer it, or use it to build a competing product, and will keep its login credentials secure. Agency owns the Command Center and all of its software, templates, and know-how (Section 9). Client Data remains Client's (Section 8.1). Access ends when this Agreement ends, after the export described in Section 8.5, and becomes read-only if work is paused under Section 4.3.</li>` : ""}
+    <li><strong>No guarantee of results.</strong> Nothing in this Schedule A promises any number of leads, meetings, clients, rankings, or any other outcome (Section 2).</li>
+  </ul>`;
+
+export function scheduleAHtml(p: { packageKey: AgreementPlan["packageKey"]; minAdBudget: number | null }): string {
+  const k = p.packageKey;
+  const growth = k === "growth", cc = k === "command_center", ent = k === "enterprise";
+  const parts = [
+    `<h2>Schedule A — Services in Your Package</h2>`,
+    `<p>This Schedule A is part of the Agreement. It describes the services Agency will provide under the <strong>${k === "growth" ? "Growth" : k === "command_center" ? "Command Center" : "Enterprise"}</strong> package (${PKG_STEP_LABEL[k]}), referred to in the Agreement as the "Services." Agency is not required to provide any other service.</p>`,
+  ];
+  if (ent) parts.push(STEP1_HTML);
+  if (growth || ent) parts.push(STEP2_HTML(growth, p.minAdBudget));
+  if (cc || ent) parts.push(STEP3_HTML(cc));
+  if (ent) parts.push(ENTERPRISE_EXTRAS_HTML);
+  parts.push(GENERAL_TERMS_HTML(growth || ent, cc || ent || growth, ent));
+  return parts.join("\n  ");
+}
+
 export function applyPlanTerms(html: string, p: AgreementPlan): string {
   const m = (n: number | null | undefined) => fmtMoney(Number(n || 0));
   const growth = p.packageKey === "growth";
@@ -312,15 +386,36 @@ export function applyPlanTerms(html: string, p: AgreementPlan): string {
 
   // Commercial terms box
   const termsLines = [
-    `<strong>Package:</strong> ${esc(p.packageLabel)} — ${esc(p.steps)}`,
+    `<strong>Package:</strong> ${esc(p.packageLabel)} (${esc(PKG_STEP_LABEL[p.packageKey])})`,
+    `<strong>Services included:</strong> see Schedule A`,
     annual
       ? `<strong>Annual Fee:</strong> ${m(p.annualFirst)} for the first year (includes the Setup Fee; 20% annual discount), then ${m(p.annualRenewal)} per year, due by bank wire on the Effective Date and each anniversary`
       : `<strong>Setup Fee:</strong> ${m(p.setup)}${p.paymentPlan ? ` — payment plan: ${m(p.paymentPlanTotal)} in two payments of ${m(half)}, 30 days apart` : ""}`,
     !annual && p.ongoing === "retainer" ? `<strong>Monthly Fee:</strong> ${m(p.monthly)} per month, billed on the 1st` : "",
     !annual && p.ongoing === "commission" ? `<strong>Commission:</strong> ${p.commissionRate ?? 0}% of Attributable Revenue from each new client in that client's first 12 months, then ${p.commissionRateOngoing ?? 0}%` : "",
     growth ? `<strong>90-Day Guarantee:</strong> yes — see Section 3` : `<strong>Guarantee:</strong> none`,
+    p.packageKey === "enterprise" ? `<strong>Exclusive market and dedicated strategist:</strong> included — see Schedule A` : "",
   ].filter(Boolean).join("<br>");
   html = between(html, `<div class="terms">`, `</div>`, `<div class="terms">${termsLines}`);
+
+  // Schedule A (what the package includes) goes right after the commercial terms, before the definitions.
+  html = html.replace(`<h2>1. Definitions</h2>`, `${scheduleAHtml({ packageKey: p.packageKey, minAdBudget: p.minAdBudget })}
+
+  <h2>1. Definitions</h2>`);
+  // Definitions the base agreement uses but never defined.
+  html = html.replace(`<dt>"System of Record"</dt>`, `<dt>"Services"</dt>
+    <dd>means the services described in Schedule A for the package stated in the Commercial Terms, and nothing else.</dd>
+    <dt>"Effective Date"</dt>
+    <dd>means the date Client signs this Agreement.</dd>
+    <dt>"Command Center"</dt>
+    <dd>means Agency's web-based software platform, including its desktop and phone home-screen app, through which Client's workspace is provided.</dd>
+    <dt>"Outreach" (or "outreach")</dt>
+    <dd>means all advertising, posts, website and landing-page content, emails, text messages, calls, chat flows, and other communications that Agency prepares, sends, or runs for Client or in Client's name.</dd>
+    <dt>"System of Record"</dt>`);
+  if (growth) {
+    // Growth: revenue is counted from the first payment until Recoupment (the guarantee can continue past day 90), and a Commission counts each new client's first 12 months.
+    html = html.replace(", applying last-touch attribution, over the Guarantee Period.", ", applying last-touch attribution, counted from the date Agency receives the first Setup Fee payment. For Recoupment, it is counted through the Guarantee Period and any continuation under Section 3.2; for any Commission, it is counted as stated in Section 4.");
+  }
 
   // Section 3
   const sec3 = growth
@@ -343,12 +438,14 @@ export function applyPlanTerms(html: string, p: AgreementPlan): string {
     : p.ongoing === "commission"
       ? `<p><strong>4.1 Commission.</strong> Beginning on the first day of the month after the later of the end of the Guarantee Period and Recoupment, Agency will charge Client on the 1st of each month a Commission equal to ${p.commissionRate ?? 0}% of Attributable Revenue recognized in the prior month from each new client during that client's first twelve (12) months, and ${p.commissionRateOngoing ?? 0}% thereafter. The Commission is calculated only on Attributable Revenue that Agency's own Services generated, never on Client's overall revenue or assets under management.</p>`
       : `<p><strong>4.1 Monthly Fee.</strong> ${growth ? "Beginning on the later of the end of the Guarantee Period and Recoupment" : "Beginning on the Effective Date"}, Client will pay ${m(p.monthly)} per month, charged in advance on the 1st of each month. The first charge covers the partial month from the start date through the end of that month plus the following full month. The Monthly Fee is a fixed amount and does not vary with Client's revenue, assets under management, number of clients, or investment performance.</p>`;
-  const methods = `<p><strong>4.2 Payment Methods.</strong> ${growth && !annual ? "The Setup Fee is paid through Agency's payment processor (bank debit or card)." : "The Setup Fee" + (annual ? " and every Annual Fee are" : " is") + " paid by bank wire using the instructions shown in Client's Command Center; Agency will never change its bank details by email."} ${annual ? "" : "Client authorizes Agency to charge the payment method saved at signing (bank account or card) automatically for every Monthly Fee, Commission" + (p.paymentPlan ? ", and the second payment-plan installment" : "") + ", on its due date, until this Agreement ends."}</p>`;
+  const methods = `<p><strong>4.2 Payment Methods.</strong> ${growth && !annual ? "The Setup Fee is paid through Agency's payment processor (bank debit or card)." : (p.paymentPlan && !annual ? "The Setup Fee (under the payment plan, its first payment)" : "The Setup Fee") + (annual ? " and every Annual Fee are" : " is") + " paid by bank wire using the instructions shown on Client's Pay &amp; Sign page and in Client's Command Center, quoting the payment reference shown there; Agency will never change its bank details by email."} ${annual ? "" : "Client authorizes Agency to charge the payment method saved at signing (bank account or card) automatically for every " + (p.ongoing === "commission" ? "Commission" : "Monthly Fee") + (p.paymentPlan ? " and the second payment-plan installment" : "") + ", on its due date, until this Agreement ends."}${p.paymentPlan && !annual ? " If this Agreement ends, or the second payment-plan installment is not paid within three (3) days after its due date, the unpaid balance of the Setup Fee becomes due immediately." : ""}</p>`;
   const failed = `<p><strong>4.3 Failed or Late Payments.</strong> If a payment fails or a wire is not received when due, Agency will notify Client and retry automatic payments one (1) and three (3) days later. If payment is still not received three (3) days after the due date, Agency may pause all work and make Client's Command Center read-only until the balance is paid, at which point work resumes.</p>`;
   const scope = p.packageKey === "enterprise"
-    ? `<p><strong>4.4 Enterprise Benefits.</strong> While this Agreement is active and paid, Agency will not provide the Services to a directly competing firm of the same type within Client's metropolitan area, and will assign Client a dedicated strategist.</p>`
+    ? `<p><strong>4.4 Enterprise Benefits.</strong> The Exclusive Market and the dedicated strategist are described in Schedule A, which also states when they are suspended or end. They are included in the Fees above and are not a separate charge.</p>`
     : growth ? `<p><strong>4.4 Ad Spend.</strong> Paid-media spend${p.minAdBudget ? ` (minimum ${m(p.minAdBudget)} per month)` : ", at the level Agency recommends in writing,"} is paid by Client directly to the advertising platforms and is not included in Agency's fees.</p>` : "";
-  html = between(html, `<h2>4.`, `<h2>5.`, `<h2>4. Fees and Payment</h2>\n  ${fees}\n  ${methods}\n  ${failed}\n  ${scope}\n\n  `);
+  const taxes = `<p><strong>4.${scope ? 5 : 4} Taxes and Bank Charges.</strong> Fees are stated before any sales, use, or similar taxes, which Client pays if they apply. Client pays its own bank, wire, and currency charges, and each payment must reach Agency in the full amount due.</p>`;
+  html = between(html, `<h2>4.`, `<h2>5.`, `<h2>4. Fees and Payment</h2>\n  ${fees}\n  ${methods}\n  ${failed}\n  ${scope}\n  ${taxes}\n\n  `);
+  html = html.replace("subject only to any exclusivity expressly stated in Section 4.", "subject only to the Exclusive Market stated in Schedule A, where it applies.");
 
   // Termination: one generated block for every variant.
   html = between(html, `<p><strong>12.1 Term.</strong>`, `<h2>13.`, `${termSection({ annual, hasGuarantee: growth })}\n\n  `);

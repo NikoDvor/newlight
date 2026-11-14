@@ -53,7 +53,7 @@ select c.id, '49e85e03-72b0-4297-95ec-03d60f7db51c', 'chapter_quiz', 1, v.t, v.o
 ($q$What's the strongest answer to 'too expensive'?$q$, $q$["The 90-day guarantee", "An instant discount", "A longer pitch", "Silence forever"]$q$::jsonb, $q$We make it back first.$q$),
 ($q$How do you compare cost to doing nothing?$q$, $q$["Use the yearly gap from their own numbers", "Guess a big number", "Compare to other agencies", "Skip it"]$q$::jsonb, $q$Which is the more expensive option?$q$),
 ($q$If they'd want it but the structure worries them, you…$q$, $q$["Talk through the revenue-share vs. flat monthly options", "Lower the setup immediately", "End the call", "Promise more clients"]$q$::jsonb, $q$It's about structure.$q$),
-($q$'What's your price?' asked in the first minute. Best move?$q$, $q$["Redirect to their goal before giving a number", "Say $25,000 and stop", "Refuse to answer ever", "Hang up"]$q$::jsonb, $q$Value before cost.$q$),
+($q$'What's your price?' asked in the first minute. Best move?$q$, $q$["Redirect to their goal before giving a number", "Quote a number and stop", "Refuse to answer ever", "Hang up"]$q$::jsonb, $q$Value before cost.$q$),
 ($q$Where does the agreed setup number go?$q$, $q$["Form 2 (Close Prep)", "A sticky note", "Form 1", "Nowhere"]$q$::jsonb, $q$Type the real numbers in Form 2.$q$)) as v(t, o, e) where c.module_id='49e85e03-72b0-4297-95ec-03d60f7db51c' and c.chapter_number=7;
 insert into nl_training_questions (chapter_id, module_id, question_type, quiz_level, question_text, options, correct_index, explanation)
 select c.id, '49e85e03-72b0-4297-95ec-03d60f7db51c', 'chapter_quiz', 1, v.t, v.o, 0, v.e from nl_training_chapters c, (values

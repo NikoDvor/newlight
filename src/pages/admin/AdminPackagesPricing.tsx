@@ -195,8 +195,7 @@ function Simulator({ defs }: { defs: Record<PackageKey, PackageDefaults> }) {
 
 /* ---------- defaults ---------- */
 const FIELDS: { k: keyof PackageDefaults; label: string; only?: PackageKey[]; suffix?: string }[] = [
-  { k: "setup_fee", label: "Setup fee ($)", only: ["command_center", "enterprise"] },
-  { k: "setup_multiplier", label: "Setup = × average client", only: ["growth"] },
+  { k: "setup_multiplier", label: "Setup = × average client" },
   { k: "monthly_multiplier", label: "Monthly = × average client" },
   { k: "commission_rate", label: "Commission year 1 (%)", only: ["growth"] },
   { k: "commission_rate_ongoing", label: "Commission after (%)", only: ["growth"] },
@@ -241,7 +240,7 @@ function Defaults({ defs, onSaved }: { defs: Record<PackageKey, PackageDefaults>
                 </label>
               ))}
             </div>
-            <p className="mt-3 text-[11px] text-white/40">At a $10,000 average client: setup {money(ex.setup)}, monthly {money(ex.monthly)}. Built-in default: {k === "growth" ? "1× / ½× average client" : `${money(DEFAULT_PACKAGES[k].setup_fee)} + ${DEFAULT_PACKAGES[k].monthly_multiplier}× average client a month`}. No price floor.</p>
+            <p className="mt-3 text-[11px] text-white/40">At a $10,000 average client: setup {money(ex.setup)}, monthly {money(ex.monthly)}. Built-in default: setup {DEFAULT_PACKAGES[k].setup_multiplier}× average client, monthly {DEFAULT_PACKAGES[k].monthly_multiplier}× average client. No price floor.</p>
             <Button size="sm" className="mt-3 w-full" disabled={saving === k} onClick={() => save(k)}>
               {saving === k ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Save className="h-3.5 w-3.5 mr-1" />Save {d.label}</>}
             </Button>

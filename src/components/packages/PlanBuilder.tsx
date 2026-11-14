@@ -120,8 +120,8 @@ export default function PlanBuilder({ defs, value, onChange, showSignDate = fals
           <p className="mt-1 text-[11px] text-white/45">
             {lockAvgFromDiscovery ? `From their Discovery numbers: ${money(lockAvgFromDiscovery)}. ` : "Revenue ÷ number of clients. "}
             {isGrowth ? "Setup = 1 average client · retainer = ½ average client a month."
-              : value.pkg === "command_center" ? `Setup ${money(pkg.setup_fee)} · monthly = 1 average client.`
-              : `Setup ${money(pkg.setup_fee)} · monthly = 2 average clients.`} The monthly is then a fixed amount for the whole term.
+              : value.pkg === "command_center" ? "Setup = 1 average client · monthly = 1 average client."
+              : "Setup = 2 average clients · monthly = 2 average clients."} The monthly is then a fixed amount for the whole term.
           </p>
           {!value.avgClient && <p className="mt-1 text-[11px] text-[hsl(42,100%,65%)]">Enter their average client value to set the price.</p>}
         </div>

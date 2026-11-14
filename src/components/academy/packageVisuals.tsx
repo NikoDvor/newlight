@@ -95,7 +95,7 @@ export function Packages() {
           </ul>
           <div className="mt-4"><AvgSlider avg={avg} setAvg={setAvg} /></div>
           <div className="mt-4 grid grid-cols-2 gap-2 grid-preserve">
-            <Stat l="Setup" v={money(p.setup)} sub={k === "growth" ? "= 1 average client" : "one time, fixed"} />
+            <Stat l="Setup" v={money(p.setup)} sub={k === "enterprise" ? "= 2 average clients, one time" : "= 1 average client, one time"} />
             <Stat l={k === "growth" ? "Monthly (after 90 days)" : "Monthly"} v={money(p.monthly)} sub={k === "growth" ? "= ½ average client" : k === "command_center" ? "= 1 average client, from day one" : "= 2 average clients, from day one"} />
             <Stat l="90-day guarantee" v={info.guarantee} />
             <Stat l="Ongoing" v={k === "growth" ? "Retainer or commission" : "Retainer only"} sub={info.ongoing} />

@@ -6,8 +6,8 @@
  * Packages (decided Nov 1–2, 2026; monthly re-based on average client value Nov 7, 2026; no price floors):
  *   growth          Step 2.  Setup = 1 × average client value. 90-day guarantee.
  *                   Then ½ average client per month (retainer) OR commission 25% yr-1 / 10% after.
- *   command_center  Step 3.  $25,000 setup + 1 × average client value per month. No guarantee, no commission.
- *   enterprise      Steps 1+2+3 (+ exclusive metro market + dedicated strategist). $40,000 setup + 2 × average client value per month.
+ *   command_center  Step 3.  setup = 1 × average client value, monthly = 1 × average client value. No guarantee, no commission.
+ *   enterprise      Steps 1+2+3 (+ exclusive metro market + dedicated strategist). setup = 2 × average client value, monthly = 2 × average client value.
  *   No minimum ad budget (Nov 7, 2026): Growth clients pay the ad platforms directly at a level NewLight recommends in writing.
  *   "Average client value" = the firm's yearly revenue ÷ its number of clients (Discovery numbers). The monthly amount is
  *   worked out once at signing and is then a FIXED dollar amount (it never moves with the client's revenue or AUM).
@@ -48,20 +48,20 @@ export interface PackageDefaults {
 
 export const DEFAULT_PACKAGES: Record<PackageKey, PackageDefaults> = {
   growth: {
-    key: "growth", label: "Growth", steps: "Step 2 — paid traffic turned into booked appointments",
+    key: "growth", label: "Growth", steps: "Step 2 · Fill the Calendar — paid campaigns turned into booked meetings",
     setup_fee: null, monthly_fee: null, setup_multiplier: 1, monthly_multiplier: 0.5, min_avg_client: 0,
     commission_rate: 25, commission_rate_ongoing: 10, annual_discount_pct: 20, payment_plan_markup_pct: 10,
     discount_approval_pct: 15, guarantee_days: 90, min_ad_budget: null,
   },
   command_center: {
-    key: "command_center", label: "Command Center", steps: "Step 3 — the app + pipeline that turns meetings into clients",
-    setup_fee: 25000, monthly_fee: null, setup_multiplier: 0, monthly_multiplier: 1, min_avg_client: 0,
+    key: "command_center", label: "Command Center", steps: "Step 3 · Win the Client — their own Command Center app and pipeline",
+    setup_fee: null, monthly_fee: null, setup_multiplier: 1, monthly_multiplier: 1, min_avg_client: 0,
     commission_rate: 0, commission_rate_ongoing: 0, annual_discount_pct: 20, payment_plan_markup_pct: 10,
     discount_approval_pct: 15, guarantee_days: 0, min_ad_budget: null,
   },
   enterprise: {
-    key: "enterprise", label: "Enterprise", steps: "Steps 1 + 2 + 3 — everything, plus an exclusive market and a dedicated strategist",
-    setup_fee: 40000, monthly_fee: null, setup_multiplier: 0, monthly_multiplier: 2, min_avg_client: 0,
+    key: "enterprise", label: "Enterprise", steps: "Steps 1 + 2 + 3 · Get Found, Fill the Calendar, Win the Client — plus an exclusive market and a dedicated strategist",
+    setup_fee: null, monthly_fee: null, setup_multiplier: 2, monthly_multiplier: 2, min_avg_client: 0,
     commission_rate: 0, commission_rate_ongoing: 0, annual_discount_pct: 20, payment_plan_markup_pct: 10,
     discount_approval_pct: 15, guarantee_days: 0, min_ad_budget: null,
   },
@@ -256,8 +256,8 @@ export function mergeDefaults(rows: Partial<PackageDefaults>[] | null | undefine
     if (!r.key || !(r.key in out)) continue;
     const k = r.key as PackageKey;
     for (const [f, v] of Object.entries(r)) if (v !== null && v !== undefined && f in out[k]) (out[k] as any)[f] = typeof (out[k] as any)[f] === "number" ? Number(v) : v;
-    if (r.setup_fee === null && k === "growth") out[k].setup_fee = null;
-    // The monthly for every package is now a multiple of the average client; a fixed monthly can't be stored as an override.
+    // Setup and monthly for every package are multiples of the average client; a fixed dollar amount can't be stored as an override.
+    out[k].setup_fee = null;
     out[k].monthly_fee = null;
   }
   return out;
