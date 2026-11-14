@@ -625,6 +625,7 @@ Deno.serve(async (req) => {
     const stripe = await getStripe();
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
+    if (!originBase) originBase = (Deno.env.get("SITE_URL") || "https://newlight-app.com").replace(/\/$/, "");
     const back = `${originBase}/pay-sign/${share_token}`;
     const realClientId = deal.provisioned_client_id || deal.client_id;
     const ensureCustomer = async () => stripe ? await ensureStripeCustomer(stripe, supabase, {
