@@ -51,14 +51,14 @@ export default function MyPaperwork() {
 
       <ProfileForm hire={packet.hire} onSaved={load} />
 
-      {hasProfile && (
+      {(
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <span className="grid h-6 w-6 place-items-center rounded-md bg-white/10 text-xs font-black text-white">2</span>
-            <h2 className="text-[15px] font-bold text-white">Read and sign</h2>
+            <h2 className="text-[15px] font-bold text-white">Your onboarding documents</h2>
           </div>
-          <p className="text-sm text-white/80">These are picked for where you work. Sign each one; you can save a copy of everything you sign.</p>
-          {packet.docs.map((d) => <DocCard key={d.doc_id} doc={d} countersign={d.slug === "contractor-agreement" ? cs : null} onSigned={load} />)}
+          <p className="text-sm text-white/80">{hasProfile ? "These are picked for where you work. Sign each one; you can save a copy of everything you sign." : "Here is everything you'll sign. Read them now; add your details above to unlock signing."}</p>
+          {packet.docs.map((d) => <DocCard key={d.doc_id} doc={d} locked={!hasProfile} countersign={d.slug === "contractor-agreement" ? cs : null} onSigned={load} />)}
           {packet.waiting_countersign && (
             <p className="rounded-xl border border-white/12 bg-[hsl(222,40%,8%)] p-3 text-sm text-white/85">One more page appears here after NewLight countersigns your agreement.</p>
           )}
@@ -146,7 +146,7 @@ function StepTile({ n, label, done }: { n: number; label: string; done: boolean 
   );
 }
 
-function DocCard({ doc, countersign, onSigned }: { doc: PacketDoc; countersign: { name: string; at: string } | null; onSigned: () => void }) {
+function DocCard({ doc, countersign, onSigned, locked = false }: { doc: PacketDoc; countersign: { name: string; at: string } | null; onSigned: () => void; locked?: boolean }) {
   const [consent, setConsent] = useState(false);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -192,8 +192,9 @@ function DocCard({ doc, countersign, onSigned }: { doc: PacketDoc; countersign: 
         <FileSignature className="h-5 w-5 text-white/80" />
         <h3 className="text-[15px] font-bold text-white">{doc.title}</h3>
       </div>
+      {doc.summary && <p className="rounded-xl bg-white/[0.05] px-3 py-2 text-sm text-white/85"><b className="text-white">What this is:</b> {doc.summary}</p>}
       <AgreementText body={doc.body} className="max-h-[60vh] overflow-y-auto" />
-      <div className="space-y-3 rounded-2xl border border-white/12 bg-[hsl(222,40%,8%)] p-4 sm:p-5">
+      {locked ? <p className="rounded-xl border border-white/12 bg-[hsl(222,40%,8%)] p-3 text-sm text-white/80">Add your details (step 1) to sign this document.</p> : <div className="space-y-3 rounded-2xl border border-white/12 bg-[hsl(222,40%,8%)] p-4 sm:p-5">
         <label className="flex items-start gap-3 text-sm text-white/90">
           <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" />
           <span>I've read this document. I agree to sign it electronically, that my typed name is my legal signature, and that I can download a copy any time.</span>
@@ -205,7 +206,7 @@ function DocCard({ doc, countersign, onSigned }: { doc: PacketDoc; countersign: 
         <Button onClick={sign} disabled={busy || !consent || name.trim().length < 3} className="w-full sm:w-auto">
           {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSignature className="mr-2 h-4 w-4" />} Sign
         </Button>
-      </div>
+      </div>}
     </section>
   );
 }
@@ -217,10 +218,16 @@ function ProfileForm({ hire, onSaved }: { hire: Packet["hire"]; onSaved: () => v
   const [city, setCity] = useState(hire.work_city ?? "");
   const [entity, setEntity] = useState(hire.entity_type ?? "Individual / sole proprietor");
   const [biz, setBiz] = useState(hire.business_name ?? "");
+  const [legal, setLegal] = useState(hire.full_name ?? "");
+  const [stateCode, setStateCode] = useState(hire.mailing_address ? hire.state_code : "");
+  const [states, setStates] = useState<{ state_code: string; state_name: string; allowed: boolean }[]>([]);
+  useEffect(() => {
+    (supabase as any).from("nl_contractor_states").select("state_code, state_name, allowed").order("state_name").then(({ data }: any) => setStates(data ?? []));
+  }, []);
   const [busy, setBusy] = useState(false);
   const save = async () => {
     setBusy(true);
-    const { error } = await supabase.rpc("nl_contractor_set_profile" as any, { p_address: address, p_phone: phone, p_city: city, p_entity: entity, p_business: biz });
+    const { error } = await supabase.rpc("nl_contractor_set_profile" as any, { p_address: address, p_phone: phone, p_city: city, p_entity: entity, p_business: biz, p_state: stateCode, p_full_name: legal.trim() });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Saved. Your documents are ready below.");
@@ -238,8 +245,15 @@ function ProfileForm({ hire, onSaved }: { hire: Packet["hire"]; onSaved: () => v
       ) : (
         <div className="mt-3 space-y-3 text-sm">
           <p className="text-white/80">The law requires your contract to show your mailing address. Your city picks the right documents for where you work.</p>
+          <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Full legal name (as it appears on your contract)</span>
+            <Input className="mt-1" value={legal} onChange={(e) => setLegal(e.target.value)} autoComplete="name" /></label>
           <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Mailing address</span>
             <Input className="mt-1" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city, state, ZIP" autoComplete="street-address" /></label>
+          <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">State you work from</span>
+            <select className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground" value={stateCode} onChange={(e) => setStateCode(e.target.value)}>
+              <option value="">Choose your state</option>
+              {states.map((x) => <option key={x.state_code} value={x.state_code} disabled={!x.allowed}>{x.state_name}{x.allowed ? "" : " (not available)"}</option>)}
+            </select></label>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">City you work from</span>
               <Input className="mt-1" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Seattle" /></label>
@@ -254,8 +268,8 @@ function ProfileForm({ hire, onSaved }: { hire: Packet["hire"]; onSaved: () => v
             <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Business name (optional)</span>
               <Input className="mt-1" value={biz} onChange={(e) => setBiz(e.target.value)} placeholder="If you have one" /></label>
           </div>
-          <p className="text-xs text-white/70">Your state on file is {hire.state_code}. If you live somewhere else, tell NewLight before signing.</p>
-          <Button onClick={save} disabled={busy || address.trim().length < 8 || city.trim().length < 2}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save details</Button>
+          <p className="text-xs text-white/70">Your state picks which state-specific documents you sign.</p>
+          <Button onClick={save} disabled={busy || address.trim().length < 8 || city.trim().length < 2 || !stateCode || legal.trim().length < 3}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save details</Button>
         </div>
       )}
     </section>
