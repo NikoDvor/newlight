@@ -28,3 +28,10 @@ export function callingHoursBlock(state: string | null | undefined, now = new Da
   const h = hourIn("America/Los_Angeles", now);
   return h >= 8 && h < 18 ? null : "Outside calling hours (state unknown — call between 8am and 6pm Pacific).";
 }
+
+/** The lead's local clock time for a given moment, e.g. "5:30 PM EST". Null if the state is unknown. */
+export function leadLocalTime(state: string | null | undefined, when = new Date()): string | null {
+  const tz = state ? ZONE[state.trim().toUpperCase()] : undefined;
+  if (!tz) return null;
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz, timeZoneName: "short" }).format(when);
+}

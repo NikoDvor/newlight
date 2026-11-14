@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
-import { callingHoursBlock } from "@/lib/callingHours";
+import { callingHoursBlock, leadLocalTime } from "@/lib/callingHours";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
@@ -1345,6 +1345,18 @@ export default function BDRDialer() {
                     className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
                 </div>
               </div>
+              {callbackDate && callbackTime && (() => {
+                const when = new Date(`${callbackDate}T${callbackTime}`);
+                const st = callbackLead.state;
+                const local = leadLocalTime(st, when);
+                const warn = callingHoursBlock(st, when);
+                return (
+                  <p className="text-[11px] text-white/50">
+                    {local ? `That's ${local} for them.` : "No state on this lead — can't show their local time."}
+                    {warn && <span className="block text-[hsl(45,95%,60%)] mt-0.5">{warn} Pick a time inside calling hours.</span>}
+                  </p>
+                );
+              })()}
             </div>
           )}
           <DialogFooter>

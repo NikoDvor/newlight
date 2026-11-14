@@ -17,6 +17,7 @@ import { MeetingsNeedingOutcomeCard } from "@/components/employee/MeetingOutcome
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import TodayStrip from "@/components/pipeline/TodayStrip";
 import WhyStrip from "@/components/pipeline/WhyStrip";
+import { CallbacksSection } from "@/components/employee/CallbacksSection";
 
 /* ── Glass panel class shared across cards ── */
 const GLASS =
@@ -369,6 +370,9 @@ export function GenericPipelineDashboard({ section = "home" }: { section?: "home
         );
       })()}
       </Reveal>
+
+      {/* CALLBACKS — scheduled call-backs with date & time, bottom of the home page */}
+      <Reveal><CallbacksSection /></Reveal>
 
       </>}
 
