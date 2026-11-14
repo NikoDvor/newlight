@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ export function PullLeadsCard() {
     const m: Record<string, number> = {};
     ((data as any[]) || []).forEach((r: any) => { m[`${r.state}|${r.city || ""}`] = Number(r.available) || 0; });
     setAvail(m);
+    return m;
   };
 
   useEffect(() => {
@@ -33,8 +34,10 @@ export function PullLeadsCard() {
       const { data } = await (supabase as any).from("nl_lead_territories")
         .select("id,state,city").eq("rep_user_id", user.id).eq("active", true).order("state");
       setTerrs(data || []);
-      if (data?.[0]) setSel(data[0].id);
-      fetchAvail();
+      const m = await fetchAvail();
+      // Start on the city with the most leads left, not whichever came first.
+      const best = [...(data || [])].sort((a: any, b: any) => (m[`${b.state}|${b.city || ""}`] || 0) - (m[`${a.state}|${a.city || ""}`] || 0))[0];
+      if (best) setSel(best.id);
     })();
   }, []);
 
@@ -50,6 +53,12 @@ export function PullLeadsCard() {
     else { toast({ title: `Pulled ${data ?? 0} leads into My Leads` }); fetchAvail(); }
   };
 
+  // Cities with leads first (most available on top), empty ones at the bottom, A–Z within each group.
+  const sorted = useMemo(() => {
+    const n = (t: any) => avail[`${t.state}|${t.city || ""}`] || 0;
+    return [...(terrs || [])].sort((a, b) => (n(b) > 0 ? 1 : 0) - (n(a) > 0 ? 1 : 0) || n(b) - n(a) || String(a.city || "").localeCompare(String(b.city || "")));
+  }, [terrs, avail]);
+  const firstEmpty = sorted.findIndex(t => (avail[`${t.state}|${t.city || ""}`] || 0) === 0);
   const selT = terrs?.find(x => x.id === sel);
   const selAvail = selT ? avail[`${selT.state}|${selT.city || ""}`] : undefined;
 
@@ -63,11 +72,16 @@ export function PullLeadsCard() {
           <>
             <div className="flex flex-wrap gap-2 items-center">
               <Select value={sel} onValueChange={setSel}>
-                <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
-                <SelectContent>{terrs.map(t => {
+                <SelectTrigger className="w-full sm:w-80"><SelectValue /></SelectTrigger>
+                <SelectContent>{sorted.map((t, i) => {
                   const n = avail[`${t.state}|${t.city || ""}`];
-                  const base = t.city ? `${t.city} · ${t.state}` : `${t.state} (whole state)`;
-                  return <SelectItem key={t.id} value={t.id}>{n == null ? base : `${base} — ${n} available`}</SelectItem>;
+                  const base = t.city ? `${t.city}, ${t.state}` : `${t.state} (whole state)`;
+                  return (
+                    <div key={t.id}>
+                      {i === firstEmpty && i > 0 && <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground border-t border-border/60 mt-1">No leads left</div>}
+                      <SelectItem value={t.id} className={n === 0 ? "opacity-50" : ""}>{n == null ? base : `${base} — ${n}`}</SelectItem>
+                    </div>
+                  );
                 })}</SelectContent>
               </Select>
               <Select value={firm} onValueChange={setFirm}>
