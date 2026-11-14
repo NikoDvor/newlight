@@ -22,6 +22,7 @@ function section(content: string, which: "gatekeeper" | "owner"): string {
   return hit.trim().replace(/^##[^\n]*\n/, "").replace(/\n\s*---+\s*$/, "").trim();
 }
 
+/** The dialer leaves out the "Close for the meeting (Form 1)" section; it stays in the training chapter. */
 /** One Script button with a toggle: Gatekeeper / Owner / Full BDR script. Read live from the training chapter. */
 export default function CallScript() {
   const [open, setOpen] = useState(false);
@@ -38,7 +39,7 @@ export default function CallScript() {
       });
   }, [open, content]);
 
-  const slides = !content ? [] : tab === "full" ? toSlides(content) : [section(content, tab)].filter(Boolean);
+  const slides = !content ? [] : tab === "full" ? toSlides(content).filter((x) => !/^##\s*Close for the meeting/im.test(x)) : [section(content, tab)].filter(Boolean);
 
   return (
     <>
