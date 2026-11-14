@@ -88,7 +88,8 @@ export default function MyPaperwork() {
 }
 
 type LedgerEntry = { id: string; client: string; role: string; rate: number; base: number; amount: number; status: string; earned_on: string; due_on: string; note: string | null; payout_id: string | null };
-type LedgerPayout = { id: string; total: number; method: string; sent_on: string; reference: string };
+type LedgerPayout = { id: string; total: number; method: string; sent_on: string; reference: string; note?: string | null };
+const PAY_METHOD: Record<string, string> = { wire: "Wire", ach: "ACH", check: "Check", zelle: "Zelle", cash: "Cash", other: "Other" };
 function MyPay() {
   const [l, setL] = useState<{ entries: LedgerEntry[]; payouts: LedgerPayout[] } | null>(null);
   useEffect(() => { supabase.rpc("nl_commission_my_ledger" as any).then(({ data }) => setL((data as any) ?? null)); }, []);
@@ -124,7 +125,7 @@ function MyPay() {
           <div className="mt-1 space-y-1">
             {l.payouts.map((p) => (
               <div key={p.id} className="flex flex-wrap items-center gap-x-3 rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-white/85">
-                <span className="flex-1">{fmtDate(p.sent_on)} · {p.method === "ach" ? "ACH" : "Wire"} · ref {p.reference}</span>
+                <span className="flex-1">{fmtDate(p.sent_on)} · {PAY_METHOD[p.method] ?? p.method}{p.reference && p.reference !== "—" ? ` · ref ${p.reference}` : ""}{p.note ? ` · ${p.note}` : ""}</span>
                 <b className="text-white">{money(Number(p.total))}</b>
                 <button type="button" className="font-semibold text-[hsl(197,100%,72%)]" onClick={() => printStatement(p, l.entries.filter((e) => e.payout_id === p.id))}>Statement</button>
               </div>
@@ -266,7 +267,7 @@ function printStatement(p: LedgerPayout, lines: LedgerEntry[]) {
   const esc = (x: string) => x.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
   const rows = lines.map((e) => `<tr><td>${esc(e.client)}</td><td>${e.role === "setter" ? "Booked" : "Closed"}</td><td>${(e.rate * 100).toFixed(0)}% of ${money(Number(e.base))}</td><td>${fmtDate(e.earned_on)}</td><td style="text-align:right">${money(Number(e.amount))}</td></tr>`).join("");
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Commission statement</title><style>body{font:13px/1.5 system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;color:#111}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ddd;padding:6px;text-align:left}</style></head><body>
-<h2>Commission statement</h2><p>Vivid Virtual Creations LLC dba NewLight Marketing<br/>Sent ${fmtDate(p.sent_on)} by ${p.method === "ach" ? "ACH" : "Wire"} · confirmation ${esc(p.reference)}</p>
+<h2>Commission statement</h2><p>Vivid Virtual Creations LLC dba NewLight Marketing<br/>Sent ${fmtDate(p.sent_on)} by ${PAY_METHOD[p.method] ?? p.method}${p.reference && p.reference !== "—" ? ` · confirmation ${esc(p.reference)}` : ""}${p.note ? ` · ${esc(p.note)}` : ""}</p>
 <table><tr><th>Client</th><th>Credit</th><th>Rate</th><th>Client money cleared</th><th style="text-align:right">Amount</th></tr>${rows}<tr><td colspan=4>Fees or deductions</td><td style="text-align:right">None</td></tr><tr><td colspan=4><b>Total sent</b></td><td style="text-align:right"><b>${money(Number(p.total))}</b></td></tr></table>
 <p style="color:#555;margin-top:20px">No taxes were withheld. Keep this for your records.</p><script>window.onload=()=>setTimeout(()=>window.print(),300)</script></body></html>`);
   w.document.close();
