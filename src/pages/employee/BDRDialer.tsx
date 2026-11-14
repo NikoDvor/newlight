@@ -512,9 +512,11 @@ export default function BDRDialer() {
         const s = new Set(prev); s.delete(lead.id); return s;
       }), 4000);
     }
-    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: next, dialed_at: nextDialedAt } : l));
+    // Marking a lead dialed completes its callback once that callback is due (a future one is kept).
+    const clearCb = next && !!lead.callback_at && new Date(lead.callback_at).getTime() <= Date.now();
+    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: next, dialed_at: nextDialedAt, ...(clearCb ? { callback_at: null } : {}) } : l));
     const { error } = await (supabase as any).from("nl_bdr_leads")
-      .update({ called: next, dialed_at: nextDialedAt }).eq("id", lead.id).eq("user_id", userId);
+      .update({ called: next, dialed_at: nextDialedAt, ...(clearCb ? { callback_at: null } : {}) }).eq("id", lead.id).eq("user_id", userId);
     if (error) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: !next, dialed_at: prevDialedAt } : l));
       toast({ title: "Couldn't update", description: error.message, variant: "destructive" });
@@ -582,6 +584,10 @@ export default function BDRDialer() {
       if (callbackAt) {
         leadPatch.callback_at = callbackAt;
         leadPatch.callback_set_at = new Date().toISOString();
+      } else if (def.label !== "Schedule Callback" && lead.callback_at && new Date(lead.callback_at).getTime() <= Date.now()) {
+        // Logging a new outcome on a lead whose callback is due completes that callback.
+        leadPatch.callback_at = null;
+        setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, callback_at: null } : l));
       }
       if (Object.keys(leadPatch).length) {
         const { error: patchErr } = await (supabase as any).from("nl_bdr_leads")
