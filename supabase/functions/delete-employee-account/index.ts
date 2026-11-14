@@ -59,6 +59,13 @@ Deno.serve(async (req) => {
       return json({ error: "Only admins can delete admin or operator accounts" }, 403);
     }
 
+    // Don't strand their work: untouched pool leads go back to the pool; worked leads, deals and owned firms move to the person deleting.
+    let assets: unknown = null;
+    {
+      const { data: moved, error: moveErr } = await adminClient.rpc("nl_release_rep_assets", { p_rep: userId, p_to: caller.id });
+      if (moveErr) console.warn("release rep assets failed:", moveErr.message); else assets = moved;
+    }
+
     // Remove person records. Calendars, calendar_events, and bdr_calendar_events are
     // intentionally left untouched as historical meeting records.
     const cleanupTables = ["user_roles", "employee_profiles", "workspace_users"];
@@ -81,11 +88,11 @@ Deno.serve(async (req) => {
       user_id: caller.id,
       action: "employee_account_deleted",
       module: "team",
-      metadata: { deleted_user_id: userId },
+      metadata: { deleted_user_id: userId, assets },
     }).then(() => {}, () => {});
     await securityAudit(adminClient, caller.id, "user_deleted", { target_user_id: userId, caller_role: callerAdmin ? "admin" : "operator" });
 
-    return json({ success: true, ...(warning ? { warning } : {}) });
+    return json({ success: true, assets, ...(warning ? { warning } : {}) });
   } catch (err: any) {
     console.error("delete-employee-account error:", err);
     return json({ error: err?.message || "Unexpected error" }, 500);

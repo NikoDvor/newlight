@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { fetchRepNames } from "@/lib/repNames";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Link2, Users, Calendar as CalendarIcon, Copy, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -33,12 +34,7 @@ export default function AdminBDRCalendars() {
 
     const userIds = [...new Set(list.map((c) => c.user_id))];
     if (userIds.length) {
-      const { data: wu } = await supabase
-        .from("workspace_users")
-        .select("user_id, display_name")
-        .in("user_id", userIds);
-      const map: Record<string, string> = {};
-      (wu || []).forEach((u: any) => { if (u.display_name) map[u.user_id] = u.display_name; });
+      const map = await fetchRepNames(userIds as string[]);
       setNames(map);
     }
 

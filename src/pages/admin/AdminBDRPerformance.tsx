@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Download, ChevronDown, ChevronUp, BookOpen, Clock } from "lucide-react";
+import { fetchRepNames } from "@/lib/repNames";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -176,9 +177,7 @@ export default function AdminBDRPerformance() {
         ...(c || []).map((x: any) => x.bdr_user_id),
       ].filter(Boolean))];
       if (userIds.length) {
-        const { data: p } = await supabase.from("workspace_users").select("user_id, display_name").in("user_id", userIds);
-        const map: Record<string, string> = {};
-        (p || []).forEach((u: any) => { if (u.display_name) map[u.user_id] = u.display_name; });
+        const map = await fetchRepNames(userIds as string[]);
         setProfiles(prev => ({ ...prev, ...map }));
       }
       setLoading(false);

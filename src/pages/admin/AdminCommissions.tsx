@@ -23,14 +23,16 @@ type Entry = { id: string; hire_id: string; sale_id: string; client_payment_id: 
 type Payout = { id: string; hire_id: string; total: number; method: string; sent_on: string; bank_reference: string; note: string | null; reconciled_at: string | null };
 type StateRow = { state_code: string; state_name: string; tax_note: string | null };
 type Deal = { id: string; deal_name: string; initial_fee: number | null; payment_plan: boolean | null };
+type Unsold = { deal_id: string; deal_name: string; setup_fee: number | null; closer_hire_id: string | null; closer_name: string | null };
 
 const db = supabase as any;
 const METHOD: Record<string, string> = { wire: "Wire", ach: "ACH", card: "Card", stripe: "Stripe" };
 
 export default function AdminCommissions() {
   const { isAdmin } = useWorkspace();
-  const [d, setD] = useState<{ hires: Hire[]; sales: Sale[]; credits: Credit[]; pays: Pay[]; entries: Entry[]; payouts: Payout[]; states: StateRow[]; deals: Deal[] } | null>(null);
+  const [d, setD] = useState<{ hires: Hire[]; sales: Sale[]; credits: Credit[]; pays: Pay[]; entries: Entry[]; payouts: Payout[]; states: StateRow[]; deals: Deal[]; unsold: Unsold[] } | null>(null);
   const [addSale, setAddSale] = useState(false);
+  const [saleDeal, setSaleDeal] = useState<Unsold | null>(null);
   const [payFor, setPayFor] = useState<Sale | null>(null);
   const [payoutFor, setPayoutFor] = useState<Hire | null>(null);
 
@@ -44,10 +46,11 @@ export default function AdminCommissions() {
       db.from("nl_commission_payouts").select("*").order("sent_on", { ascending: false }),
       db.from("nl_contractor_states").select("state_code, state_name, tax_note"),
       db.from("crm_deals").select("id, deal_name, initial_fee, payment_plan").eq("client_id", NEWLIGHT_INTERNAL_CLIENT_ID).order("updated_at", { ascending: false }).limit(300),
+      db.rpc("nl_paid_deals_without_sale"),
     ]);
     const err = q.find((r: any) => r.error)?.error;
     if (err) toast.error(err.message);
-    setD({ hires: q[0].data ?? [], sales: q[1].data ?? [], credits: q[2].data ?? [], pays: q[3].data ?? [], entries: q[4].data ?? [], payouts: q[5].data ?? [], states: q[6].data ?? [], deals: q[7].data ?? [] });
+    setD({ hires: q[0].data ?? [], sales: q[1].data ?? [], credits: q[2].data ?? [], pays: q[3].data ?? [], entries: q[4].data ?? [], payouts: q[5].data ?? [], states: q[6].data ?? [], deals: q[7].data ?? [], unsold: q[8].data ?? [] });
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -83,6 +86,16 @@ export default function AdminCommissions() {
       </div>
 
       <ContractorAlerts only={["payout:"]} />
+
+      {d.unsold.length > 0 && (
+        <div className="rounded-xl border border-[hsla(35,92%,62%,.5)] bg-[hsl(30,45%,10%)] p-3 text-sm">
+          <p className="flex items-center gap-2 font-bold text-white"><AlertTriangle className="h-4 w-4 text-[hsl(35,92%,66%)]" /> {d.unsold.length} paid deal{d.unsold.length === 1 ? " has" : "s have"} no commission sale</p>
+          <p className="mt-1 text-xs text-white/80">The client has paid, but nobody is credited yet. Add the sale so the rep gets paid.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {d.unsold.map((u) => <Button key={u.deal_id} size="sm" variant="outline" onClick={() => setSaleDeal(u)}><Plus className="mr-1 h-3.5 w-3.5" /> {u.deal_name}</Button>)}
+          </div>
+        </div>
+      )}
 
       <div className="grid-preserve grid grid-cols-3 gap-2 sm:gap-3">
         <Stat label="Ready to send" value={money(totalReady)} color="hsl(152 60% 58%)" />
@@ -185,7 +198,7 @@ export default function AdminCommissions() {
         </TabsContent>
       </Tabs>
 
-      {addSale && <SaleDialog hires={d.hires.filter((h) => h.status !== "ended")} deals={d.deals.filter((x) => !d.sales.some((s) => s.deal_id === x.id))} onClose={() => setAddSale(false)} onSaved={() => { setAddSale(false); load(); }} />}
+      {(addSale || saleDeal) && <SaleDialog hires={d.hires.filter((h) => h.status !== "ended")} deals={d.deals.filter((x) => !d.sales.some((s) => s.deal_id === x.id))} initial={saleDeal} onClose={() => { setAddSale(false); setSaleDeal(null); }} onSaved={() => { setAddSale(false); setSaleDeal(null); load(); }} />}
       {payFor && <ClientPaidDialog sale={payFor} pays={d.pays.filter((p) => p.sale_id === payFor.id)} onClose={() => setPayFor(null)} onSaved={() => { setPayFor(null); load(); }} />}
       {payoutFor && <PayoutDialog hire={payoutFor} entries={d.entries.filter((e) => e.hire_id === payoutFor.id && e.status === "earned" && !e.payout_id && e.earned_on <= today)} saleName={saleName} onClose={() => setPayoutFor(null)} onSaved={() => { setPayoutFor(null); load(); }} />}
     </div>
@@ -209,14 +222,15 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 const selectCls = "h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground";
 
 /* ---------- New sale ---------- */
-function SaleDialog({ hires, deals, onClose, onSaved }: { hires: Hire[]; deals: Deal[]; onClose: () => void; onSaved: () => void }) {
-  const [dealId, setDealId] = useState("");
-  const [client, setClient] = useState("");
-  const [fee, setFee] = useState("");
-  const [inst, setInst] = useState(1);
+function SaleDialog({ hires, deals, initial, onClose, onSaved }: { hires: Hire[]; deals: Deal[]; initial?: Unsold | null; onClose: () => void; onSaved: () => void }) {
+  const first = initial ? deals.find((y) => y.id === initial.deal_id) : undefined;
+  const [dealId, setDealId] = useState(initial?.deal_id ?? "");
+  const [client, setClient] = useState(initial?.deal_name ?? "");
+  const [fee, setFee] = useState(initial?.setup_fee ? String(initial.setup_fee) : "");
+  const [inst, setInst] = useState(first?.payment_plan ? 2 : 1);
   const [signed, setSigned] = useState(todayISO());
   const [setter, setSetter] = useState("");
-  const [closer, setCloser] = useState("");
+  const [closer, setCloser] = useState(initial?.closer_hire_id && hires.some((h) => h.id === initial.closer_hire_id) ? initial.closer_hire_id : "");
   const [busy, setBusy] = useState(false);
   const pickDeal = (id: string) => {
     setDealId(id);

@@ -49,6 +49,8 @@ export default function AdminContractors() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [viewing, setViewing] = useState<Hire | null>(null);
+  const [unlinked, setUnlinked] = useState<{ user_id: string; full_name: string | null; email: string }[]>([]);
+  const [prefill, setPrefill] = useState<{ name: string; email: string } | null>(null);
 
   const load = useCallback(async () => {
     const [h, g, s, d] = await Promise.all([
@@ -60,6 +62,8 @@ export default function AdminContractors() {
     const err = h.error || g.error || s.error || d.error;
     if (err) toast.error(err.message);
     setHires(h.data ?? []); setSigs(g.data ?? []); setStates(s.data ?? []); setDocs(d.data ?? []);
+    const u = await db.rpc("nl_unlinked_salesmen");
+    setUnlinked(u.data ?? []);
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -81,11 +85,25 @@ export default function AdminContractors() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild><Link to={(pathname.startsWith("/admin") ? "/admin" : "") + "/commissions"}>Commissions &amp; payouts</Link></Button>
-          <Button onClick={() => setAdding(true)}><Plus className="mr-1.5 h-4 w-4" /> Add contractor</Button>
+          <Button onClick={() => { setPrefill(null); setAdding(true); }}><Plus className="mr-1.5 h-4 w-4" /> Add contractor</Button>
         </div>
       </div>
 
       <ContractorAlerts />
+
+      {unlinked.length > 0 && (
+        <div className="rounded-xl border border-[hsla(35,92%,62%,.5)] bg-[hsl(30,45%,10%)] p-3 text-sm">
+          <p className="flex items-center gap-2 font-bold text-white"><AlertTriangle className="h-4 w-4 text-[hsl(35,92%,66%)]" /> {unlinked.length} salesm{unlinked.length === 1 ? "an has" : "en have"} no contractor record</p>
+          <p className="mt-1 text-xs text-white/80">They can sell without signing anything, and they can't be paid commission (no record, no W-9). Add them here, or ignore it for staff who aren't contractors.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {unlinked.map((u) => (
+              <Button key={u.user_id} size="sm" variant="outline" onClick={() => { setPrefill({ name: u.full_name ?? "", email: u.email }); setAdding(true); }}>
+                <Plus className="mr-1 h-3.5 w-3.5" /> {u.full_name || u.email}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid-preserve grid grid-cols-3 gap-2 sm:gap-3">
         {(["invited", "signed", "active"] as HireStatus[]).map((k) => (
@@ -141,7 +159,7 @@ export default function AdminContractors() {
         </TabsContent>
       </Tabs>
 
-      {adding && <AddDialog states={states} userId={user?.id} existing={hires} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); load(); }} />}
+      {adding && <AddDialog states={states} userId={user?.id} existing={hires} prefill={prefill} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); load(); }} />}
 
       {viewing && <HireDialog hire={hires.find((x) => x.id === viewing.id) ?? viewing} sigs={sigs} docs={docs} states={states} userId={user?.id}
         onChanged={load} onClose={() => setViewing(null)} />}
@@ -149,9 +167,9 @@ export default function AdminContractors() {
   );
 }
 
-function AddDialog({ states, userId, existing, onClose, onSaved }: { states: StateRow[]; userId?: string; existing: Hire[]; onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+function AddDialog({ states, userId, existing, prefill, onClose, onSaved }: { states: StateRow[]; userId?: string; existing: Hire[]; prefill?: { name: string; email: string } | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(prefill?.name ?? "");
+  const [email, setEmail] = useState(prefill?.email ?? "");
   const [biz, setBiz] = useState("");
   const [state, setState] = useState("");
   const [rate, setRate] = useState(15);
@@ -302,7 +320,9 @@ function AgreementEditor({ docs, userId, onSaved }: { docs: Doc[]; userId?: stri
 
 function EndAgreement({ hire: h, onDone }: { hire: Hire; onDone: () => void }) {
   const [open, setOpen] = useState(false);
+  const { user: me } = useWorkspace();
   const [reason, setReason] = useState("");
+  const [keep, setKeep] = useState(true);
   const [busy, setBusy] = useState(false);
   const end = async () => {
     setBusy(true);
@@ -314,6 +334,12 @@ function EndAgreement({ hire: h, onDone }: { hire: Hire; onDone: () => void }) {
         if (r.error || r.data?.error) toast.error(`Agreement ended and territories closed, but their login couldn't be switched off (${r.data?.error || r.error?.message}). Suspend them on the Team page.`);
         else toast.success(`${h.full_name}: agreement ended, territories closed, login switched off.`);
       } else toast.success(`${h.full_name}: agreement ended. They never logged in, so there's no login to switch off.`);
+      if (uid) {
+        // Untouched cold leads go back to the pool; worked leads, deals and owned firms go to you (or stay put if you untick).
+        const a = await db.rpc("nl_contractor_offboard_assets", { p_hire_id: h.id, p_reassign_to: keep ? me?.id ?? null : null });
+        if (a.error) toast.error(`Leads weren't cleaned up: ${a.error.message}`);
+        else toast.success(`Leads: ${a.data.released_to_pool} back to the pool, ${a.data.leads_reassigned} reassigned to you, ${a.data.deals_reassigned} deals moved.`);
+      }
       await db.from("nl_contractor_hires").update({ offboarding: { ...(h.offboarding ?? {}), access: new Date().toISOString() } }).eq("id", h.id);
       onDone();
     } finally { setBusy(false); }
@@ -323,6 +349,7 @@ function EndAgreement({ hire: h, onDone }: { hire: Hire; onDone: () => void }) {
     <div className="space-y-2 rounded-lg border border-[hsla(0,80%,66%,.45)] p-3">
       <p className="text-white">This ends the agreement today, closes their territories and switches off their login. Commission on clients they signed keeps being paid as client money clears. Their records stay in the Legal Vault.</p>
       <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (for your records)" className="h-9" />
+      <label className="flex items-center gap-2 text-xs text-white/85"><input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} /> Untouched leads go back to the pool; worked leads and deals move to my account</label>
       <div className="flex gap-2">
         <Button size="sm" variant="destructive" onClick={end} disabled={busy}>{busy && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}End agreement</Button>
         <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
