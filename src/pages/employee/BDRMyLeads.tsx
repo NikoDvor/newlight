@@ -726,12 +726,8 @@ export default function BDRMyLeads() {
       phone: lead.owner_direct_phone || lead.front_desk_phone || lead.phone || undefined,
       website: lead.website || undefined, niche: lead.niche, city: lead.city,
     }, lead.id);
-    if (dealId) {
-      await supabase.from("crm_deals").update({
-        pipeline_stage: outcome.pipeline,
-        ...(outcome.status === "closed_won" ? { status: "won" as any } : outcome.status === "closed_lost" ? { status: "lost" as any } : {}),
-      } as any).eq("id", dealId);
-    }
+    // Outcomes never move the deal's stage (same rule as the dialer): only forms, booked meetings and lost meetings do.
+    void dealId;
 
     if (outcome.createTask) {
       const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(9, 0, 0, 0);

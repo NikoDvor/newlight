@@ -692,7 +692,10 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
   };
 
   const deleteExtra = async (cal: BdrCalendar) => {
-    if (!confirm(`Delete "${cal.name}"? Its booking link will stop working.`)) return;
+    const { count: upcoming } = await (supabase as any).from("bdr_calendar_events")
+      .select("id", { count: "exact", head: true }).eq("calendar_id", cal.id).gte("starts_at", new Date().toISOString());
+    const warn = upcoming ? ` It still has ${upcoming} upcoming appointment${upcoming === 1 ? "" : "s"}, which will be lost from the calendar.` : "";
+    if (!confirm(`Delete "${cal.name}"? Its booking link will stop working.${warn}`)) return;
     setBusyId(cal.id);
     const { error } = await (supabase as any).from("bdr_calendars").delete().eq("id", cal.id);
     setBusyId(null);
