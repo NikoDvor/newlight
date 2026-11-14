@@ -445,7 +445,7 @@ export function applyPlanTerms(html: string, p: AgreementPlan): string {
     : growth ? `<p><strong>4.4 Ad Spend.</strong> Paid-media spend${p.minAdBudget ? ` (minimum ${m(p.minAdBudget)} per month)` : ", at the level Agency recommends in writing,"} is paid by Client directly to the advertising platforms and is not included in Agency's fees.</p>` : "";
   const taxes = `<p><strong>4.${scope ? 5 : 4} Taxes and Bank Charges.</strong> Fees are stated before any sales, use, or similar taxes, which Client pays if they apply. Client pays its own bank, wire, and currency charges, and each payment must reach Agency in the full amount due.</p>`;
   html = between(html, `<h2>4.`, `<h2>5.`, `<h2>4. Fees and Payment</h2>\n  ${fees}\n  ${methods}\n  ${failed}\n  ${scope}\n  ${taxes}\n\n  `);
-  html = html.replace("subject only to any exclusivity expressly stated in Section 4.", "subject only to the Exclusive Market stated in Schedule A, where it applies.");
+  html = html.replace(", subject only to any exclusivity expressly stated in Section 4.", p.packageKey === "enterprise" ? ", subject only to the Exclusive Market stated in Schedule A." : ".");
 
   // Termination: one generated block for every variant.
   html = between(html, `<p><strong>12.1 Term.</strong>`, `<h2>13.`, `${termSection({ annual, hasGuarantee: growth })}\n\n  `);
