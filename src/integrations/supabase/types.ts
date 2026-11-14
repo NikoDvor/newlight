@@ -17725,6 +17725,21 @@ export type Database = {
         }
         Relationships: []
       }
+      zz_tmp_tok: {
+        Row: {
+          k: string
+          v: string | null
+        }
+        Insert: {
+          k: string
+          v?: string | null
+        }
+        Update: {
+          k?: string
+          v?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       nl_sending_inboxes_v: {
