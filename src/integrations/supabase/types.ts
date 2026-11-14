@@ -17725,21 +17725,6 @@ export type Database = {
         }
         Relationships: []
       }
-      zz_tmp_tok: {
-        Row: {
-          k: string
-          v: string | null
-        }
-        Insert: {
-          k: string
-          v?: string | null
-        }
-        Update: {
-          k?: string
-          v?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       nl_sending_inboxes_v: {
@@ -17964,6 +17949,10 @@ export type Database = {
       nl_contractor_my_hire_id: { Args: never; Returns: string }
       nl_contractor_my_packet: { Args: never; Returns: Json }
       nl_contractor_my_sell_status: { Args: never; Returns: string }
+      nl_contractor_offboard_assets: {
+        Args: { p_hire_id: string; p_reassign_to?: string }
+        Returns: Json
+      }
       nl_contractor_refresh_status: {
         Args: { p_hire_id: string }
         Returns: string
@@ -18011,6 +18000,7 @@ export type Database = {
       }
       nl_dialer_lead_details: { Args: { _lead_ids: string[] }; Returns: Json }
       nl_digits: { Args: { _t: string }; Returns: string }
+      nl_dnc_flags: { Args: { _phones: string[] }; Returns: string[] }
       nl_email_followup_done: {
         Args: { _id: string; _undo?: boolean }
         Returns: undefined
@@ -18092,6 +18082,18 @@ export type Database = {
         }[]
       }
       nl_niche_label: { Args: { _t: string }; Returns: string }
+      nl_paid_deals_without_sale: {
+        Args: never
+        Returns: {
+          assigned_user: string
+          closer_hire_id: string
+          closer_name: string
+          deal_id: string
+          deal_name: string
+          payment_plan: boolean
+          setup_fee: number
+        }[]
+      }
       nl_phone10: { Args: { t: string }; Returns: string }
       nl_pool_assign: {
         Args: {
@@ -18162,6 +18164,10 @@ export type Database = {
           total: number
         }[]
       }
+      nl_release_rep_assets: {
+        Args: { p_rep: string; p_to: string }
+        Returns: Json
+      }
       nl_rep_email_capacity: { Args: { _rep: string }; Returns: number }
       nl_rest_days: { Args: { _reason: string }; Returns: number }
       nl_territory_move: {
@@ -18182,6 +18188,14 @@ export type Database = {
           state: string
           status: string
           with_reps: number
+        }[]
+      }
+      nl_unlinked_salesmen: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
         }[]
       }
       nl_update_call: {
