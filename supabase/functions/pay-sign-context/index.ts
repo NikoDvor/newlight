@@ -631,12 +631,27 @@ Deno.serve(async (req) => {
       clientId: realClientId, email: envelope.recipient_email, name: client?.name || deal.deal_name,
     }) : null;
 
+    // Bank debit (ACH) may not be switched on for the Stripe account yet: if Stripe refuses it, fall back to card only
+    // instead of failing the whole checkout. Any other Stripe error comes back as a readable message, not a bare 500.
+    const makeSession = async (params: Record<string, unknown>) => {
+      try {
+        return await stripe.checkout.sessions.create({ ...params, payment_method_types: ["us_bank_account", "card"] });
+      } catch (e: any) {
+        const msg = String(e?.message || "");
+        if (/us_bank_account|payment method type|payment_method_types/i.test(msg)) {
+          console.warn("[pay-sign-context] bank debit unavailable, falling back to card:", msg);
+          return await stripe.checkout.sessions.create({ ...params, payment_method_types: ["card"] });
+        }
+        throw e;
+      }
+    };
+
+    try {
     if (action === "save_method") {
       if (!stripe) return json({ error: "Stripe not configured" }, 503);
       const customerId = await ensureCustomer();
-      const session = await stripe.checkout.sessions.create({
+      const session = await makeSession({
         mode: "setup",
-        payment_method_types: ["us_bank_account", "card"],
         ...(customerId ? { customer: customerId } : {}),
         success_url: `${back}?method=saved&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${back}?method=cancelled`,
@@ -657,9 +672,8 @@ Deno.serve(async (req) => {
     }
     if (!stripe) return json({ error: "Stripe not configured" }, 503);
     const customerId = await ensureCustomer();
-    const session = await stripe.checkout.sessions.create({
+    const session = await makeSession({
       mode: "payment",
-      payment_method_types: ["us_bank_account", "card"],
       line_items: [{ price_data: { currency: "usd", product_data: { name: `${client?.name || deal.deal_name || "NewLight"} — ${first.label}` }, unit_amount: Math.round(Number(first.amount) * 100) }, quantity: 1 }],
       ...(customerId ? { customer: customerId } : { customer_email: envelope.recipient_email || undefined }),
       payment_intent_data: { setup_future_usage: "off_session", metadata: { nl_schedule_id: first.id, deal_id: deal.id } },
@@ -669,6 +683,10 @@ Deno.serve(async (req) => {
     });
     await supabase.from("nl_billing_schedule").update({ stripe_checkout_session_id: session.id }).eq("id", first.id);
     return json({ url: session.url, amount: first.amount });
+    } catch (e: any) {
+      console.error("[pay-sign-context] plan_pay/save_method failed:", e?.message || e);
+      return json({ error: `Payment couldn't start: ${e?.message || "unknown error"}` }, 502);
+    }
   }
 
   // Package deals: browser return from Stripe (the webhook does the same; markRowPaid is idempotent).
