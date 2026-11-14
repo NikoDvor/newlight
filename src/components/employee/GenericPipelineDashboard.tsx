@@ -18,6 +18,7 @@ import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import TodayStrip from "@/components/pipeline/TodayStrip";
 import WhyStrip from "@/components/pipeline/WhyStrip";
 import { CallbacksSection } from "@/components/employee/CallbacksSection";
+import { RepScorecard } from "@/components/employee/RepScorecard";
 
 /* ── Glass panel class shared across cards ── */
 const GLASS =
@@ -295,6 +296,8 @@ export function GenericPipelineDashboard({ section = "home" }: { section?: "home
 
       {/* TODAY — the numbers to act on first */}
       <TodayStrip scope="mine" />
+
+      <RepScorecard />
 
       {/* Meetings needing an outcome + stalled Pay & Sign */}
       <MeetingsNeedingOutcomeCard />

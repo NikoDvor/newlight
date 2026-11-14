@@ -38,6 +38,8 @@ const adminGroups: NavGroup[] = [
       { title: "Pipeline", description: "Revenue opportunity, stage counts and won revenue.", url: "/admin", icon: LayoutDashboard },
       { title: "Board", description: "Every lead by stage — Cold, Warm, Hot, Won.", url: "/admin/pipeline/board", icon: GitBranch },
       { title: "Meetings", description: "Meetings needing an outcome, and what's coming up.", url: "/admin/pipeline/meetings", icon: Calendar },
+      { title: "Rep Scorecard", description: "Every salesman side by side — dials, meetings, show rate, closes — and coaching notes.", url: "/admin/rep-scorecard", icon: BarChart3 },
+      { title: "Revenue & Cash", description: "MRR, cash collected, overdue, open pipeline and rep payments.", url: "/admin/revenue-cash", icon: DollarSign },
       { title: "Sales Team Results", description: "Close rates, losses, meeting effort and discovery numbers — team and per salesman.", url: "/admin/pipeline/results", icon: BarChart3 },
       { title: "Recordings", description: "Every salesman's recorded meetings — watch, listen, read the transcript.", url: "/admin/recordings", icon: Film },
     ],
