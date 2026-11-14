@@ -86,9 +86,9 @@ create or replace function public.nl_bdr_lead_delete_guard()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare d record;
 begin
-  if old.crm_deal_id is null or private.is_admin_or_operator(auth.uid()) or auth.uid() is null then return old; end if;
+  if old.crm_deal_id is null or auth.uid() is null or private.is_admin_or_operator(auth.uid()) then return old; end if;
   select pay_sign_status, service_agreement_envelope_id, provisioned_client_id into d from crm_deals where id = old.crm_deal_id;
-  if d is not null and (d.provisioned_client_id is not null or d.service_agreement_envelope_id is not null
+  if found and (d.provisioned_client_id is not null or d.service_agreement_envelope_id is not null
       or lower(coalesce(d.pay_sign_status, '')) in ('signed','paid','complete','completed')) then
     raise exception 'This lead has a contract or client attached. Ask an admin to remove it.';
   end if;

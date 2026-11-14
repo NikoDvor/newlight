@@ -15,6 +15,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, getLeadPhones, extractPhoneNumber } from "@/lib/leadFlags";
+import { callingHoursBlock } from "@/lib/callingHours";
 import RenameListButton from "@/components/employee/RenameListButton";
 import ResearchQueueCard from "@/components/employee/ResearchQueueCard";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
@@ -542,6 +543,18 @@ export default function BDRMyLeads() {
     return null;
   };
 
+  // Which of these numbers are on the do-not-call list? Returns 10-digit strings.
+  const dncAmong = async (phones: (string | null | undefined)[]): Promise<Set<string>> => {
+    const nums = Array.from(new Set(phones.map((x) => String(x || "").trim()).filter((x) => x.replace(/\D/g, "").length >= 10)));
+    const found = new Set<string>();
+    for (let i = 0; i < nums.length; i += 500) {
+      const { data } = await (supabase as any).rpc("nl_dnc_flags", { _phones: nums.slice(i, i + 500) });
+      (data || []).forEach((d: any) => found.add(String(typeof d === "string" ? d : Object.values(d)[0])));
+    }
+    return found;
+  };
+  const last10 = (x: string | null | undefined) => String(x || "").replace(/\D/g, "").slice(-10);
+
   const checkClaim = async (phone?: string | null, website?: string | null) => {
     try {
       const { data } = await (supabase as any).rpc("check_lead_claimed", {
@@ -563,6 +576,11 @@ export default function BDRMyLeads() {
     const claim = await checkClaim(primaryPhone, form.website);
     if (claim?.claimed && !claim.claimed_by_self) {
       toast({ title: "Lead already claimed", description: `This phone/website is already owned by ${claim.claimed_by_name || "another rep"}.`, variant: "destructive" });
+      return;
+    }
+    const dnc = await dncAmong([form.owner_direct_phone, form.front_desk_phone]);
+    if (dnc.size) {
+      toast({ title: "Do-not-call number", description: "That number is on the do-not-call list, so the lead wasn't added.", variant: "destructive" });
       return;
     }
     const { data, error } = await (supabase as any).from("nl_bdr_leads").insert({
@@ -597,6 +615,8 @@ export default function BDRMyLeads() {
     let count = 0;
     let skipped = 0;
     let claimedByOther = 0;
+    let dncSkipped = 0;
+    const dncSet = await dncAmong(rows.flatMap((r: any) => [r.owner_direct_phone, r.front_desk_phone, r.phone]));
     for (const row of rows) {
       const key = (row.business_name || "").trim().toLowerCase();
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
@@ -606,6 +626,7 @@ export default function BDRMyLeads() {
       // then legacy phone, then website fallback). Owner wins because it's the
       // more distinctive identifier when both exist.
       const primaryPhone = row.owner_direct_phone || row.front_desk_phone || row.phone || null;
+      if ([row.owner_direct_phone, row.front_desk_phone, row.phone].some((x: any) => x && dncSet.has(last10(x)))) { dncSkipped++; continue; }
       const claim = await checkClaim(primaryPhone, row.website);
       if (claim?.claimed && !claim.claimed_by_self) {
         claimedByOther++;
@@ -667,6 +688,7 @@ export default function BDRMyLeads() {
     const parts: string[] = [];
     if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped`);
     if (claimedByOther > 0) parts.push(`${claimedByOther} already claimed by another rep`);
+    if (dncSkipped > 0) parts.push(`${dncSkipped} on the do-not-call list`);
     toast({
       title: `${count} leads imported${cleanList ? ` to "${cleanList}"` : ""}`,
       description: parts.length ? parts.join(" · ") : undefined,
@@ -688,10 +710,14 @@ export default function BDRMyLeads() {
     const newHistory = [...(lead.outcome_history || []), entry];
 
     // Outcome logging never changes pipeline_stage — only forms and lost meetings do.
-    await (supabase as any).from("nl_bdr_leads").update({
+    const { error: outcomeErr } = await (supabase as any).from("nl_bdr_leads").update({
       status: outcome.status, outcome_history: newHistory,
       notes: note ? (lead.notes ? `${lead.notes}\n${note}` : note) : lead.notes,
-    }).eq("id", lead.id);
+    }).eq("id", lead.id).eq("user_id", user.id);
+    if (outcomeErr) {
+      toast({ title: "Couldn't save the outcome", description: outcomeErr.message, variant: "destructive" });
+      return { promptObjection: false, lead, outcomeLabel: "" };
+    }
 
     // Leads imported from Lead Sourcing have no CRM deal yet — create it on
     // the first logged outcome so the firm-type label carries into the pipeline.
@@ -1176,7 +1202,11 @@ export default function BDRMyLeads() {
                             const isFrontDesk = p.kind === "front_desk" || p.kind === "legacy_front_desk";
                             return (
                               <span key={p.kind + p.number} className="inline-flex items-center gap-1">
-                                <a href={`tel:${p.number}`} onClick={e => e.stopPropagation()} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {p.number}</a>
+                                <a href={`tel:${p.number}`} onClick={e => {
+                                  e.stopPropagation();
+                                  const block = callingHoursBlock((lead as any).state);
+                                  if (block) { e.preventDefault(); toast({ title: "Can't call right now", description: block, variant: "destructive" }); }
+                                }} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {p.number}</a>
                                 {isOwner ? (
                                   <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner Direct</span>
                                 ) : isFrontDesk ? (
