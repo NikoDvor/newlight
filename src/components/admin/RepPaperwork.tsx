@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CheckCircle2, Circle, Copy, ExternalLink, FileSignature, Loader2 } from "lucide-react";
+import { Eye } from "lucide-react";
+import { CheckCircle2, Circle, FileSignature, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,12 +17,20 @@ type Packet = { hire: { id: string; full_name: string; email: string; state_code
 export default function RepPaperwork({ userId, name }: { userId: string; name: string }) {
   const [open, setOpen] = useState(false);
   const [p, setP] = useState<Packet | null | undefined>(undefined);
+  const [bank, setBank] = useState<{ account_holder: string; bank_name: string; account_type: string; account_last4: string; submitted_at: string } | null>(null);
+  const [full, setFull] = useState<{ routing: string; account: string } | null>(null);
+  const reveal = async () => {
+    const { data, error } = await db.rpc("nl_rep_bank_reveal", { p_user: userId });
+    if (error) return toast.error(error.message);
+    setFull(data);
+  };
   const load = async () => {
+    db.from("nl_rep_bank").select("account_holder, bank_name, account_type, account_last4, submitted_at").eq("user_id", userId).maybeSingle().then(({ data }: any) => setBank(data ?? null));
     const { data, error } = await db.rpc("nl_contractor_admin_packet", { p_user: userId });
     if (error) { toast.error(error.message); setP(null); return; }
     setP((data as Packet) ?? null);
   };
-  const show = () => { setOpen(true); setP(undefined); load(); };
+  const show = () => { setOpen(true); setP(undefined); setFull(null); load(); };
   const signed = p ? p.docs.filter((d) => d.signature).length : 0;
 
   return (
@@ -67,13 +76,18 @@ export default function RepPaperwork({ userId, name }: { userId: string; name: s
                   <span className="flex-1 font-semibold">W-9 &amp; payout bank details</span>
                   <span className={`text-xs ${p.hire.w9_received_at ? "text-emerald-300" : "text-amber-300"}`}>{p.hire.w9_received_at ? `Received ${new Date(p.hire.w9_received_at).toLocaleDateString()}` : p.hire.w9_requested_at ? "Requested" : "Not received"}</span>
                 </div>
-                {p.w9_url ? (
-                  <div className="mt-1.5 flex items-center gap-2 text-xs">
-                    <span className="min-w-0 flex-1 truncate text-white/70">{p.w9_url}</span>
-                    <button onClick={() => { navigator.clipboard.writeText(p.w9_url!); toast.success("Link copied"); }} className="text-[hsl(var(--nl-electric))]"><Copy className="h-3.5 w-3.5" /></button>
-                    <a href={p.w9_url} target="_blank" rel="noreferrer" className="text-[hsl(var(--nl-electric))]"><ExternalLink className="h-3.5 w-3.5" /></a>
-                  </div>
-                ) : <p className="mt-1.5 text-xs text-white/60">No link saved yet. Add it under Contractors → secure upload link.</p>}
+                <div className="mt-2 border-t border-white/10 pt-2 text-xs">
+                  {bank ? (
+                    <>
+                      <p className="text-white/80"><b className="text-white">Bank:</b> {bank.bank_name} · {bank.account_type} · {bank.account_holder} · ending {bank.account_last4} · added {new Date(bank.submitted_at).toLocaleDateString()}</p>
+                      {full ? (
+                        <p className="mt-1 select-all font-mono text-white">Routing {full.routing} · Account {full.account}</p>
+                      ) : (
+                        <button onClick={reveal} className="mt-1 inline-flex items-center gap-1 font-semibold text-[hsl(var(--nl-electric))]"><Eye className="h-3.5 w-3.5" />Show full numbers (logged)</button>
+                      )}
+                    </>
+                  ) : <p className="text-white/60"><b className="text-white/80">Bank:</b> not added yet. The rep adds it in My Paperwork &amp; Pay.</p>}
+                </div>
               </div>
 
               <p className="text-xs text-white/55">Countersign, mark the W-9 received and verify the tax ID on the <Link to="/admin/contractors" className="underline">Contractors page</Link>.</p>

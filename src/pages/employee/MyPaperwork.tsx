@@ -16,10 +16,6 @@ export default function MyPaperwork() {
     setPacket((data as Packet) ?? null);
   }, []);
   useEffect(() => { load(); }, [load]);
-  const [w9Url, setW9Url] = useState("");
-  useEffect(() => {
-    (supabase as any).from("nl_contractor_settings").select("value").eq("key", "w9_upload_url").maybeSingle().then(({ data }: any) => setW9Url(data?.value ?? ""));
-  }, []);
 
   if (packet === undefined) return <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-white/60" /></div>;
   if (!packet) {
@@ -75,11 +71,11 @@ export default function MyPaperwork() {
         ) : (
           <div className="mt-2 space-y-2 text-sm text-white/85">
             <p><b className="text-white">W-9:</b> you'll get an email from <b className="text-white">TaxBandits</b>, NewLight's IRS-authorized tax-form service, asking you to fill out your W-9 online. Do it there.</p>
-            <p><b className="text-white">Bank details:</b> upload the account you want commission sent to (bank name, routing and account number) {w9Url ? <a className="font-semibold text-[hsl(197,100%,72%)] underline" href={w9Url} target="_blank" rel="noreferrer">through this secure link</a> : "through the secure link NewLight sends you"}.</p>
             <p>Commission can't be sent until your W-9 is in.</p>
-            <p className="flex items-start gap-2 text-white/75"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />Your Social Security number and bank details never go into this app, and never by email or text.</p>
+            <p className="flex items-start gap-2 text-white/75"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />Never send your Social Security number by email, text or in this app. It only goes into the TaxBandits form.</p>
           </div>
         )}
+        <BankForm />
       </section>
 
       <MyPay />
@@ -285,4 +281,74 @@ function printStatement(p: LedgerPayout, lines: LedgerEntry[]) {
 <table><tr><th>Client</th><th>Credit</th><th>Rate</th><th>Client money cleared</th><th style="text-align:right">Amount</th></tr>${rows}<tr><td colspan=4>Fees or deductions</td><td style="text-align:right">None</td></tr><tr><td colspan=4><b>Total sent</b></td><td style="text-align:right"><b>${money(Number(p.total))}</b></td></tr></table>
 <p style="color:#555;margin-top:20px">No taxes were withheld. Keep this for your records.</p><script>window.onload=()=>setTimeout(()=>window.print(),300)</script></body></html>`);
   w.document.close();
+}
+
+type BankRow = { account_holder: string; bank_name: string; account_type: string; routing_last4: string; account_last4: string; updated_at: string };
+/** Where commission is sent. Full numbers are encrypted at rest; this screen only ever shows the last 4. */
+function BankForm() {
+  const [row, setRow] = useState<BankRow | null | undefined>(undefined);
+  const [edit, setEdit] = useState(false);
+  const [holder, setHolder] = useState("");
+  const [bank, setBank] = useState("");
+  const [type, setType] = useState("checking");
+  const [routing, setRouting] = useState("");
+  const [acct, setAcct] = useState("");
+  const [acct2, setAcct2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(async () => {
+    const { data } = await (supabase as any).from("nl_rep_bank").select("account_holder, bank_name, account_type, routing_last4, account_last4, updated_at").maybeSingle();
+    setRow((data as BankRow) ?? null);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  const digits = (x: string) => x.replace(/\D/g, "");
+  const valid = holder.trim().length >= 3 && bank.trim().length >= 2 && digits(routing).length === 9 && digits(acct).length >= 4 && digits(acct) === digits(acct2);
+  const save = async () => {
+    setBusy(true);
+    const { error } = await supabase.rpc("nl_rep_bank_save" as any, { p_holder: holder.trim(), p_bank: bank.trim(), p_type: type, p_routing: routing, p_account: acct });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setRouting(""); setAcct(""); setAcct2(""); setEdit(false);
+    toast.success("Bank details saved securely.");
+    load();
+  };
+  if (row === undefined) return null;
+  return (
+    <div className="mt-4 border-t border-white/10 pt-4 text-sm text-white/85">
+      <p className="font-bold text-white">Bank details for commission</p>
+      {row && !edit ? (
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,58%)]" />
+          <span>{row.bank_name} · {row.account_type} · account ending {row.account_last4}</span>
+          <Button size="sm" variant="ghost" onClick={() => { setEdit(true); setHolder(row.account_holder); setBank(row.bank_name); setType(row.account_type); }}>Change</Button>
+        </div>
+      ) : (
+        <div className="mt-2 space-y-3">
+          <p className="text-white/75">Encrypted when saved. NewLight can read it only to send your payment; you'll only ever see the last 4 digits here.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Name on the account</span>
+              <Input className="mt-1" value={holder} onChange={(e) => setHolder(e.target.value)} autoComplete="off" /></label>
+            <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Bank name</span>
+              <Input className="mt-1" value={bank} onChange={(e) => setBank(e.target.value)} autoComplete="off" /></label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Type</span>
+              <select className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground" value={type} onChange={(e) => setType(e.target.value)}>
+                <option value="checking">Checking</option><option value="savings">Savings</option>
+              </select></label>
+            <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Routing number (9 digits)</span>
+              <Input className="mt-1" inputMode="numeric" value={routing} onChange={(e) => setRouting(e.target.value)} autoComplete="off" /></label>
+            <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Account number</span>
+              <Input className="mt-1" inputMode="numeric" value={acct} onChange={(e) => setAcct(e.target.value)} autoComplete="off" /></label>
+          </div>
+          <label className="block sm:max-w-xs"><span className="text-xs font-bold uppercase tracking-wider text-white/75">Re-enter account number</span>
+            <Input className="mt-1" inputMode="numeric" value={acct2} onChange={(e) => setAcct2(e.target.value)} autoComplete="off" /></label>
+          {acct2 && digits(acct) !== digits(acct2) && <p className="text-xs text-[hsl(0,80%,72%)]">The account numbers don't match.</p>}
+          <div className="flex gap-2">
+            <Button onClick={save} disabled={busy || !valid}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save bank details</Button>
+            {row && <Button variant="ghost" onClick={() => setEdit(false)}>Cancel</Button>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
