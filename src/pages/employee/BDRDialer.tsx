@@ -895,18 +895,19 @@ export default function BDRDialer() {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex min-w-0 max-w-full items-center gap-1.5 flex-nowrap overflow-x-auto -mx-1 px-1 pb-0.5"
           style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}>
-          <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/40 mr-0.5">Firm type</span>
+          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-white/85 mr-0.5">Firm type</span>
           {[[ALL_NICHES, niches.reduce((x, [, c]) => x + c, 0)] as [string, number], ...niches].map(([name, count]) => {
             const on = activeNiche === name;
             return (
               <button key={name} onClick={() => setActiveNiche(name)}
                 className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors"
                 style={{
-                  background: on ? "hsla(262,80%,65%,.18)" : "hsla(215,35%,10%,.6)",
-                  color: on ? "hsl(262,80%,82%)" : name === NO_NICHE ? "hsl(0,0%,55%)" : "hsl(0,0%,72%)",
-                  border: `1px solid ${on ? "hsla(262,80%,65%,.45)" : "hsla(211,96%,60%,.12)"}`,
+                  background: on ? "hsla(262,80%,65%,.32)" : "hsla(215,35%,16%,.5)",
+                  color: on ? "hsl(0,0%,100%)" : name === NO_NICHE ? "hsl(0,0%,78%)" : "hsl(0,0%,94%)",
+                  border: `1px solid ${on ? "hsla(262,90%,78%,.85)" : "hsla(211,96%,75%,.4)"}`,
+                  fontWeight: on ? 700 : 600,
                 }}>
-                {name === ALL_NICHES ? "All" : name === "Advisor" ? "Financial advisor" : name} <span className="opacity-60 ml-1">{count}</span>
+                {name === ALL_NICHES ? "All" : name === "Advisor" ? "Financial advisor" : name} <span className="opacity-85 ml-1">{count}</span>
               </button>
             );
           })}
@@ -916,7 +917,7 @@ export default function BDRDialer() {
             onChange={(v) => { setActiveState(v); setActiveCity(ALL_CITIES); }} />
           <FilterSelect label="City" value={activeCity} allValue={ALL_CITIES} allLabel="All cities" options={cities} onChange={setActiveCity} />
           {filtersOn && (
-            <button onClick={clearFilters} className="text-[11px] text-white/50 hover:text-white px-1.5">Clear</button>
+            <button onClick={clearFilters} className="text-[11px] font-semibold text-white/80 hover:text-white px-1.5">Clear</button>
           )}
         </div>
       </div>
@@ -1579,15 +1580,15 @@ function FilterSelect({ label, value, allValue, allLabel, options, onChange }: {
       <select value={value} onChange={(e) => onChange(e.target.value)}
         className="appearance-none rounded-lg pl-2.5 pr-7 py-1 text-[11px] font-medium outline-none max-w-[170px] truncate"
         style={{
-          background: on ? "hsla(197,100%,55%,.14)" : "hsla(215,35%,10%,.6)",
-          color: on ? "hsl(197,100%,75%)" : "hsl(0,0%,72%)",
-          border: `1px solid ${on ? "hsla(197,100%,55%,.45)" : "hsla(211,96%,60%,.12)"}`,
+          background: on ? "hsla(197,100%,55%,.28)" : "hsla(215,35%,16%,.5)",
+          color: on ? "hsl(0,0%,100%)" : "hsl(0,0%,94%)",
+          border: `1px solid ${on ? "hsla(197,100%,70%,.85)" : "hsla(211,96%,75%,.4)"}`,
           colorScheme: "dark",
         }}>
         <option value={allValue}>{allLabel} ({total})</option>
         {options.map(([name, count]) => <option key={name} value={name}>{name} ({count})</option>)}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-2 h-3 w-3 opacity-60" />
+      <ChevronDown className="pointer-events-none absolute right-2 h-3 w-3 opacity-85" />
     </label>
   );
 }
