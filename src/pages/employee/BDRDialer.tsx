@@ -13,6 +13,7 @@ import { callingHoursBlock, leadLocalTime } from "@/lib/callingHours";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
+import CallScript from "@/components/employee/CallScript";
 import RenameListButton from "@/components/employee/RenameListButton";
 import { OUTCOMES } from "@/lib/bdrOutcomes";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
@@ -716,9 +717,12 @@ export default function BDRDialer() {
           <h1 className="text-2xl font-bold text-white">BDR Dialer</h1>
           <p className="text-xs text-white/50 mt-1">{visibleLeads.length} lead{visibleLeads.length !== 1 ? "s" : ""} {activeList !== ALL_LIST && `in "${activeList}"`}{activeNiche !== ALL_NICHES && ` · ${activeNiche}`}{activeCity !== ALL_CITIES && ` · ${activeCity}`}{activeState !== ALL_STATES && ` · ${activeState}`}</p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => navigate("/employee/training")} className="text-white/60">
-          <BookOpen className="h-4 w-4 mr-1" /> Training
-        </Button>
+        <div className="flex items-center gap-2">
+          <CallScript />
+          <Button variant="ghost" size="sm" onClick={() => navigate("/employee/training")} className="text-white/60">
+            <BookOpen className="h-4 w-4 mr-1" /> Training
+          </Button>
+        </div>
       </div>
 
       {/* Owner search */}

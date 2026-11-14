@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import RepOnboarding from "@/components/admin/RepOnboarding";
 import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, AlertTriangle, CalendarPlus, Pencil, Phone } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
@@ -813,6 +814,7 @@ function WorkspaceGroupCard({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
+                        {u.role === "marketing_staff" && <RepOnboarding userId={u.user_id} name={u.full_name || ""} />}
                         <button
                           onClick={() => onStats({ ...u, client_id: u.client_id ?? (group.id === "__platform__" ? null : group.id), _groupName: group.name } as any)}
                           className="text-white/40 hover:text-[hsl(var(--nl-electric))] transition-colors"
