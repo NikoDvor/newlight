@@ -11396,6 +11396,24 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_training_backup_20261114: {
+        Row: {
+          id: string | null
+          kind: string | null
+          row: Json | null
+        }
+        Insert: {
+          id?: string | null
+          kind?: string | null
+          row?: Json | null
+        }
+        Update: {
+          id?: string | null
+          kind?: string | null
+          row?: Json | null
+        }
+        Relationships: []
+      }
       nl_training_certifications: {
         Row: {
           certificate_number: string | null
