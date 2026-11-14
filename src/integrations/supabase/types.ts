@@ -9263,10 +9263,11 @@ export type Database = {
           bank_reference: string
           created_at: string
           created_by: string | null
-          hire_id: string
+          hire_id: string | null
           id: string
           method: string
           note: string | null
+          payee_name: string | null
           reconciled_at: string | null
           reconciled_by: string | null
           sent_on: string
@@ -9276,10 +9277,11 @@ export type Database = {
           bank_reference: string
           created_at?: string
           created_by?: string | null
-          hire_id: string
+          hire_id?: string | null
           id?: string
           method: string
           note?: string | null
+          payee_name?: string | null
           reconciled_at?: string | null
           reconciled_by?: string | null
           sent_on: string
@@ -9289,10 +9291,11 @@ export type Database = {
           bank_reference?: string
           created_at?: string
           created_by?: string | null
-          hire_id?: string
+          hire_id?: string | null
           id?: string
           method?: string
           note?: string | null
+          payee_name?: string | null
           reconciled_at?: string | null
           reconciled_by?: string | null
           sent_on?: string
@@ -10955,6 +10958,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nl_rep_onboarding_items: {
+        Row: {
+          done: boolean
+          done_at: string
+          done_by: string | null
+          item_key: string
+          user_id: string
+        }
+        Insert: {
+          done?: boolean
+          done_at?: string
+          done_by?: string | null
+          item_key: string
+          user_id: string
+        }
+        Update: {
+          done?: boolean
+          done_at?: string
+          done_by?: string | null
+          item_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nl_rep_onboarding_status: {
+        Row: {
+          completed_at: string
+          completed_by: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          completed_by?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          completed_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       nl_sending_inboxes: {
         Row: {
@@ -18169,6 +18214,24 @@ export type Database = {
         Returns: Json
       }
       nl_rep_email_capacity: { Args: { _rep: string }; Returns: number }
+      nl_rep_onboarding: { Args: { p_user: string }; Returns: Json }
+      nl_rep_onboarding_complete: {
+        Args: { p_user: string }
+        Returns: undefined
+      }
+      nl_rep_onboarding_set: {
+        Args: { p_done: boolean; p_key: string; p_user: string }
+        Returns: undefined
+      }
+      nl_rep_onboarding_summary: {
+        Args: never
+        Returns: {
+          completed_at: string
+          done: number
+          total: number
+          user_id: string
+        }[]
+      }
       nl_rest_days: { Args: { _reason: string }; Returns: number }
       nl_territory_move: {
         Args: { _dir: number; _id: string }
