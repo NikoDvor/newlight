@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
+import { callingHoursBlock } from "@/lib/callingHours";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
@@ -184,6 +185,10 @@ export default function BDRDialer() {
   >(null);
   const [detailsByLead, setDetailsByLead] = useState<Record<string, DialerLeadDetails>>({});
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
+  // Do-not-call numbers among the rep's own (non-pool) leads, as 10-digit strings.
+  const [dncDigits, setDncDigits] = useState<Set<string>>(new Set());
+  // Last time a dial was logged per lead, so clicking the number and then flipping "Mark Dialed" counts as ONE call.
+  const recentDials = useRef<Map<string, number>>(new Map());
   // Leads just marked Dialed stay on screen for a few seconds (with Undo) so the
   // next row doesn't slide under the rep's finger and get marked by accident.
   const [stickyDialed, setStickyDialed] = useState<Set<string>>(new Set());
@@ -263,11 +268,6 @@ export default function BDRDialer() {
 
 
   // Show Dialed filter: OFF = not yet dialed, ON = dialed but not won. Won leads never show here.
-  const isCallbackType = useCallback((id: string) => {
-    const o = latestOutcomeByLead[id];
-    return o === "Schedule Callback" || o === "Said They Would Reach Out";
-  }, [latestOutcomeByLead]);
-
   const modeLeads = useMemo(() => leads.filter(l => {
     if (l.pipeline_stage === "won") return false;
     return showDialed ? !!l.called : (!l.called || stickyDialed.has(l.id));
@@ -443,8 +443,35 @@ export default function BDRDialer() {
   }, [dialLog, outcomes, firstMeetings]); // eslint-disable-line react-hooks/exhaustive-deps
   const [effRange, setEffRange] = useState<"week" | "month" | "all">("month");
 
+  // Flag do-not-call numbers among the rep's own (non-pool) leads.
+  useEffect(() => {
+    const nums = Array.from(new Set(leads.filter(l => !l.pool_firm_id).flatMap(l => getLeadPhones(l).map(p => String(p.number)))));
+    if (!nums.length) return;
+    let cancelled = false;
+    (async () => {
+      const found = new Set<string>();
+      for (let i = 0; i < nums.length; i += 500) {
+        const { data } = await (supabase as any).rpc("nl_dnc_flags", { _phones: nums.slice(i, i + 500) });
+        (data || []).forEach((d: any) => found.add(String(typeof d === "string" ? d : Object.values(d)[0])));
+      }
+      if (!cancelled) setDncDigits(found);
+    })();
+    return () => { cancelled = true; };
+  }, [leads.length]);
+
+  // Calling-hours gate for every tap-to-call link in the table (the lead sheet has its own copy of this check).
+  const hoursGuard = (e: React.MouseEvent, state: string | null | undefined) => {
+    const block = callingHoursBlock(state);
+    if (!block) return true;
+    e.preventDefault();
+    e.stopPropagation();
+    toast({ title: "Can't call right now", description: block, variant: "destructive" });
+    return false;
+  };
+
   const recordDial = useCallback(async (leadId: string) => {
     if (!userId) return;
+    recentDials.current.set(leadId, Date.now());
     const nowIso = new Date().toISOString();
     setDialLog(prev => [{ dialed_at: nowIso }, ...prev]);
     const { error } = await (supabase as any).from("nl_bdr_dial_log").insert({
@@ -494,7 +521,9 @@ export default function BDRDialer() {
       return;
     }
     if (next) {
-      recordDial(lead.id);
+      // A tap-to-call click already logged this dial: don't count the same call twice.
+      const last = recentDials.current.get(lead.id) || 0;
+      if (Date.now() - last > 15 * 60_000) recordDial(lead.id);
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
@@ -554,8 +583,14 @@ export default function BDRDialer() {
         leadPatch.callback_at = callbackAt;
         leadPatch.callback_set_at = new Date().toISOString();
       }
-      if (Object.keys(leadPatch).length) await (supabase as any).from("nl_bdr_leads")
-        .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
+      if (Object.keys(leadPatch).length) {
+        const { error: patchErr } = await (supabase as any).from("nl_bdr_leads")
+          .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
+        if (patchErr) {
+          setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, callback_at: lead.callback_at ?? null } : l));
+          toast({ title: "Outcome saved, but the callback time didn't", description: patchErr.message, variant: "destructive" });
+        }
+      }
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
@@ -601,6 +636,14 @@ export default function BDRDialer() {
 
   const handleDeleteLead = async (lead: Lead) => {
     if (!userId) return;
+    if (lead.crm_deal_id) {
+      const { data: deal } = await (supabase as any).from("crm_deals")
+        .select("pay_sign_status, service_agreement_envelope_id, provisioned_client_id").eq("id", lead.crm_deal_id).maybeSingle();
+      if (deal && (deal.provisioned_client_id || deal.service_agreement_envelope_id || ["signed", "paid", "complete", "completed"].includes(String(deal.pay_sign_status || "").toLowerCase()))) {
+        toast({ title: "Can't delete this lead", description: "It has a contract or client attached. Ask an admin to remove it.", variant: "destructive" });
+        return;
+      }
+    }
     if (!(await askConfirm("Delete lead", `Delete "${lead.business_name}" permanently? This cannot be undone.`))) return;
     setLeads(prev => prev.filter(l => l.id !== lead.id));
     const { error } = await (supabase as any).from("nl_bdr_leads").delete().eq("id", lead.id).eq("user_id", userId);
@@ -983,7 +1026,7 @@ export default function BDRDialer() {
                               {dial && (
                                 <a
                                   href={`tel:${dial.phone}`}
-                                  onClick={(e) => { e.stopPropagation(); logPoolCall(lead, c.id, dial.phone, dial.kind); }}
+                                  onClick={(e) => { e.stopPropagation(); if (!hoursGuard(e, (det?.firm as any)?.state || lead.state)) return; logPoolCall(lead, c.id, dial.phone, dial.kind); }}
                                   className="ml-1 font-mono hover:underline"
                                   style={{ color: "hsl(211,96%,68%)" }}
                                   title={`Call ${c.full_name || "contact"} (${dial.kind})`}
@@ -1042,7 +1085,7 @@ export default function BDRDialer() {
                                   ) : (
                                     <a
                                       href={`tel:${det.firm?.main_phone || lead.front_desk_phone}`}
-                                      onClick={(e) => { e.stopPropagation(); logPoolCall(lead, null, (det.firm?.main_phone || lead.front_desk_phone)!, "front_desk"); }}
+                                      onClick={(e) => { e.stopPropagation(); if (!hoursGuard(e, (det.firm as any)?.state || lead.state)) return; logPoolCall(lead, null, (det.firm?.main_phone || lead.front_desk_phone)!, "front_desk"); }}
                                       className="font-mono inline-flex items-center gap-1 text-xs hover:underline"
                                       style={{ color: "hsl(211,96%,68%)" }}
                                     >
@@ -1064,14 +1107,21 @@ export default function BDRDialer() {
                             const isFrontDesk = p.kind === "front_desk" || p.kind === "legacy_front_desk";
                             return (
                               <span key={p.kind + p.number} className="inline-flex items-center gap-1 flex-wrap">
-                                <a href={`tel:${p.number}`}
-                                  onClick={() => {
+                                {dncDigits.has(String(p.number).replace(/\D/g, "").slice(-10)) ? (
+                                  <span className="font-mono inline-flex items-center gap-1 text-xs text-white/70">
+                                    <Phone className="h-3 w-3" /> {p.number}
+                                    <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)" }}>DNC</span>
+                                  </span>
+                                ) : <a href={`tel:${p.number}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!hoursGuard(e, lead.state)) return;
                                     // Count the call for stats only; lead stays in its list until "Mark Dialed" is flipped.
                                     recordDial(lead.id);
                                   }}
                                   className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
                                   <Phone className="h-3 w-3" /> {p.number}
-                                </a>
+                                </a>}
                                 {isOwner ? (
                                   <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner Direct</span>
                                 ) : isFrontDesk ? (
