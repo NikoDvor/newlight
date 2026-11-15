@@ -9063,6 +9063,30 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_coaching_notes: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          note: string
+          rep_user_id: string
+        }
+        Insert: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          note: string
+          rep_user_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+          rep_user_id?: string
+        }
+        Relationships: []
+      }
       nl_commission_client_payments: {
         Row: {
           amount: number
@@ -10958,6 +10982,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nl_rep_bank: {
+        Row: {
+          account_holder: string
+          account_last4: string
+          account_type: string
+          bank_name: string
+          hire_id: string
+          routing_last4: string
+          secret_id: string
+          submitted_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_holder: string
+          account_last4: string
+          account_type: string
+          bank_name: string
+          hire_id: string
+          routing_last4: string
+          secret_id: string
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_holder?: string
+          account_last4?: string
+          account_type?: string
+          bank_name?: string
+          hire_id?: string
+          routing_last4?: string
+          secret_id?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_rep_bank_hire_id_fkey"
+            columns: ["hire_id"]
+            isOneToOne: true
+            referencedRelation: "nl_contractor_hires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_rep_bank_access_log: {
+        Row: {
+          action: string
+          admin_id: string
+          at: string
+          hire_id: string
+          id: string
+        }
+        Insert: {
+          action?: string
+          admin_id: string
+          at?: string
+          hire_id: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          at?: string
+          hire_id?: string
+          id?: string
+        }
+        Relationships: []
       }
       nl_rep_onboarding_items: {
         Row: {
@@ -17969,6 +18064,7 @@ export type Database = {
         Args: { _owner: boolean; _title: string }
         Returns: number
       }
+      nl_contractor_admin_packet: { Args: { p_user: string }; Returns: Json }
       nl_contractor_alerts: { Args: never; Returns: Json }
       nl_contractor_alerts_notify: { Args: never; Returns: number }
       nl_contractor_assert_can_sell: {
@@ -18020,7 +18116,9 @@ export type Database = {
           p_business: string
           p_city: string
           p_entity: string
+          p_full_name?: string
           p_phone: string
+          p_state?: string
         }
         Returns: undefined
       }
@@ -18127,6 +18225,16 @@ export type Database = {
         }[]
       }
       nl_niche_label: { Args: { _t: string }; Returns: string }
+      nl_noshows_to_rebook: {
+        Args: { p_user?: string }
+        Returns: {
+          event_id: string
+          lead_id: string
+          link_sent: boolean
+          starts_at: string
+          title: string
+        }[]
+      }
       nl_paid_deals_without_sale: {
         Args: never
         Returns: {
@@ -18213,6 +18321,17 @@ export type Database = {
         Args: { p_rep: string; p_to: string }
         Returns: Json
       }
+      nl_rep_bank_reveal: { Args: { p_user: string }; Returns: Json }
+      nl_rep_bank_save: {
+        Args: {
+          p_account: string
+          p_bank: string
+          p_holder: string
+          p_routing: string
+          p_type: string
+        }
+        Returns: undefined
+      }
       nl_rep_email_capacity: { Args: { _rep: string }; Returns: number }
       nl_rep_onboarding: { Args: { p_user: string }; Returns: Json }
       nl_rep_onboarding_complete: {
@@ -18232,7 +18351,24 @@ export type Database = {
           user_id: string
         }[]
       }
+      nl_rep_scorecard: {
+        Args: { p_days?: number; p_user?: string }
+        Returns: Json
+      }
+      nl_rep_scorecard_all: {
+        Args: { p_days?: number }
+        Returns: {
+          booked: number
+          closed: number
+          dials: number
+          held: number
+          last_note: string
+          no_shows: number
+          user_id: string
+        }[]
+      }
       nl_rest_days: { Args: { _reason: string }; Returns: number }
+      nl_revenue_overview: { Args: never; Returns: Json }
       nl_territory_move: {
         Args: { _dir: number; _id: string }
         Returns: undefined
