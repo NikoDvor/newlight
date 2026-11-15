@@ -188,6 +188,7 @@ const AcademyHub = lazy(() => import("./pages/employee/academy/AcademyHub"));
 const AcademyModule = lazy(() => import("./pages/employee/academy/AcademyModule"));
 const AcademyChapter = lazy(() => import("./pages/employee/academy/AcademyChapter"));
 const AcademyVault = lazy(() => import("./pages/employee/academy/AcademyVault"));
+const AcademyGlossary = lazy(() => import("./pages/employee/academy/AcademyGlossary"));
 const AdminTeamTraining = lazy(() => import("./pages/admin/AdminTeamTraining"));
 const EmployeeRecordings = lazy(() => import("./pages/recordings/RecordingsPages").then(m => ({ default: m.EmployeeRecordings })));
 const AdminRecordings = lazy(() => import("./pages/recordings/RecordingsPages").then(m => ({ default: m.AdminRecordings })));
@@ -306,6 +307,7 @@ const App = () => {
                 <Route path="training-center/m/:n" element={<AcademyModule />} />
                 <Route path="training-center/m/:n/c/:c" element={<AcademyChapter />} />
                 <Route path="training-center/vault" element={<AcademyVault />} />
+                <Route path="training-center/glossary" element={<AcademyGlossary />} />
                 <Route path="training-center/pipeline-guide" element={<PipelineGuide />} />
                 <Route path="sops" element={<PlaceholderPage title="Standard Operating Procedures" description="Standard operating procedures for your team." />} />
                 
@@ -418,6 +420,7 @@ const App = () => {
                 <Route path="training/m/:n" element={<AcademyModule />} />
                 <Route path="training/m/:n/c/:c" element={<AcademyChapter />} />
                 <Route path="training/vault" element={<AcademyVault />} />
+                <Route path="training/glossary" element={<AcademyGlossary />} />
                 <Route path="training/pipeline-guide" element={<PipelineGuide />} />
                 <Route path="training/*" element={<Navigate to="/employee/training" replace />} />
                 <Route path="certification/bdr" element={<Navigate to="/employee/training/m/10" replace />} />

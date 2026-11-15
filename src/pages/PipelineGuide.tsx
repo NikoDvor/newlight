@@ -80,8 +80,8 @@ export default function PipelineGuide() {
 
       {/* role summary */}
       <div className="grid gap-3 pt-5 md:grid-cols-2">
-        <RoleCard on={has("bdr")} title="BDR" pay="15% of the setup fee" lines={["Get leads every work night", "Call firms in the Dialer", "Book the first meeting (Form 1)", "Hand it to the SDR"]} c={COL.cold} />
-        <RoleCard on={has("sdr")} title="SDR" pay="20% of the setup fee" lines={["Run Discovery with the Calculator", "Fill Form 2 and book the close", "Close and send Pay & Sign", "Log every meeting's outcome"]} c={COL.hot} />
+        <RoleCard on={has("bdr")} title="BDR" pay="Agreed per client" lines={["Get leads every work night", "Call firms in the Dialer", "Book the first meeting (Form 1)", "Hand it to the SDR"]} c={COL.cold} />
+        <RoleCard on={has("sdr")} title="SDR" pay="Agreed per client" lines={["Run Discovery with the Calculator", "Fill Form 2 and book the close", "Close and send Pay & Sign", "Log every meeting's outcome"]} c={COL.hot} />
       </div>
 
       <Section eyebrowText="Before your first call" title="Getting started" lede="Your first days, step by step.">

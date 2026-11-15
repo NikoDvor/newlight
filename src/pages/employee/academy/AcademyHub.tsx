@@ -100,6 +100,9 @@ export default function AcademyHub() {
         <Link to={`${base}/pipeline-guide`} className={`flex items-center gap-3 p-3 ${ACADEMY.panelSoft} hover:bg-white/[0.06]`}>
           <Map className="h-4 w-4 text-[hsl(197,100%,60%)]" /><span className="text-[13px] font-medium text-white">Pipeline Guide</span>
         </Link>
+        <Link to={`${base}/glossary`} className={`flex items-center gap-3 p-3 ${ACADEMY.panelSoft} hover:bg-white/[0.06]`}>
+          <BookOpen className="h-4 w-4 text-[hsl(197,100%,60%)]" /><span className="text-[13px] font-medium text-white">Glossary</span>
+        </Link>
         <Link to={`${base}/vault`} className={`flex items-center gap-3 p-3 ${ACADEMY.panelSoft} hover:bg-white/[0.06]`}>
           <Mic className="h-4 w-4 text-[hsl(197,100%,60%)]" /><span className="text-[13px] font-medium text-white">Recording Vault</span>
         </Link>
