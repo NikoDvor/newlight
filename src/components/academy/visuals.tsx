@@ -192,25 +192,16 @@ function KpiFunnel() {
   );
 }
 
-/** Static picture of the split — no calculator (pay is entered and processed by the admin). */
+/** Static picture of how pay works — amounts are agreed per client and recorded by the admin (no preset rates). */
 function CommissionSplit() {
-  const rows = [
-    { l: "BDR · booked it", p: 15, c: ACADEMY.electric },
-    { l: "SDR · closed it", p: 20, c: ACADEMY.sdr },
+  const steps = [
+    { l: "Agreed in writing", s: "Per client, in Exhibit A" },
+    { l: "Client pays", s: "Payment clears in NewLight's bank" },
+    { l: "You're paid", s: "Within 3 business days, wire or ACH" },
   ];
   return (
-    <Frame caption="Percent of the setup fee only.">
-      <div className="space-y-3">
-        {rows.map((r, i) => (
-          <div key={r.l}>
-            <div className="flex justify-between text-[12px] mb-1"><span className="text-white/70">{r.l}</span><span className="font-bold text-white tabular-nums">{r.p}%</span></div>
-            <div className="h-2.5 rounded-full bg-white/[0.05] overflow-hidden">
-              <motion.div className="h-full rounded-full" style={{ background: r.c, boxShadow: `0 0 10px ${r.c}` }}
-                initial={{ width: 0 }} whileInView={{ width: `${(r.p / 20) * 100}%` }} viewport={{ once: true }} transition={{ duration: 0.9, delay: i * 0.15 }} />
-            </div>
-          </div>
-        ))}
-      </div>
+    <Frame caption="Every payment is recorded in My Paperwork → My pay.">
+      <FlowSteps steps={steps.map((x) => ({ title: x.l, sub: x.s }))} />
     </Frame>
   );
 }
@@ -220,7 +211,7 @@ const APP_ITEMS = [
   { t: "My Leads", d: "Every lead you own. Buttons for Numbers, + Meeting, Booked elsewhere, Close Prep." },
   { t: "My Calendar", d: "Your meetings. Open one to set it away from our Zoom or add attendees." },
   { t: "Dialer", d: "Where you call. Tap a row for every decision maker. Mark Dialed when done." },
-  { t: "Lead Sourcing", d: "Pull extra leads when you run out. New ones arrive by themselves at 6pm Pacific, Sun–Thu." },
+  { t: "Lead Sourcing", d: "Pull extra leads when you run out. New ones arrive by themselves at about 6pm Pacific, Sun–Thu." },
   { t: "Client Showcase", d: "What you screen-share in meetings: the three steps, the pipeline we build, the packages." },
   { t: "My Stats", d: "Your numbers and close rates vs the team average." },
   { t: "My Recordings", d: "Every meeting you've had — video, audio and transcript. Upload meetings that weren't on our Zoom." },
@@ -254,7 +245,7 @@ function LeadFlow() {
       <FlowSteps steps={[
         { title: "Lead pool", sub: "Firms from AdvizorPro" },
         { title: "Your cities", sub: "Your state, one city at a time" },
-        { title: "6pm hand-out", sub: "Up to 200, Sun–Thu" },
+        { title: "6pm hand-out", sub: "Up to 150, Sun–Thu" },
         { title: "Dialer", sub: "Lists named by city" },
         { title: "Mark Dialed", sub: "Done for today" },
         { title: "Rest / recycle", sub: "60 days to a year", tone: "muted" },

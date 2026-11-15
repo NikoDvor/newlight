@@ -234,7 +234,6 @@ export function PaymentSim() {
   ].sort((x, y) => x.date.localeCompare(y.date) || (("milestone" in x ? 0 : 1) - ("milestone" in y ? 0 : 1)));
   const shown = items.slice(0, 9);
   const setupPaid = way === "plan" ? plan.paymentPlanTotal : way === "annual" ? null : p.setup;
-  const commissionBase = p.setup; // salesmen are paid on the regular setup amount — never the +10%, never annual extras
 
   return (
     <Frame caption="Default prices. The same engine builds the real schedule in Form 2 and on the client's Pay & Sign page.">
@@ -279,8 +278,8 @@ export function PaymentSim() {
       <div className="mt-4 grid grid-cols-2 gap-2 grid-preserve">
         <Stat l="First 12 months" v={plan.firstYearTotal == null ? "Setup + commission" : money(plan.firstYearTotal)}
           sub={way === "annual" ? `Renews at ${money(plan.annualRenewal)} a year` : way === "plan" ? `Setup ${money(p.setup)} + 10% = ${money(setupPaid)}` : undefined} />
-        <Stat l="Your commission (SDR 20%)" v={money(commissionBase * 0.2)}
-          sub={way === "plan" ? "Paid half after each payment" : `On the ${money(commissionBase)} setup only`} />
+        <Stat l="Your commission" v="Set per client"
+          sub={way === "plan" ? "Recorded after each payment clears" : "Recorded when the payment clears"} />
       </div>
     </Frame>
   );
