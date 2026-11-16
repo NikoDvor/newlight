@@ -1275,6 +1275,11 @@ export default function BDRDialer() {
                       </button>
                     </td>
                     <td className="px-3 py-3 border-b border-white/5">
+                      {current && (
+                        <div className="mb-1 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold truncate" style={{ background: "hsla(211,96%,56%,.18)", color: "hsl(211,96%,78%)" }} title={`Last outcome: ${current}`}>
+                          {current}
+                        </div>
+                      )}
                       <select
                         value={current}
                         onClick={(e) => e.stopPropagation()}
@@ -1284,6 +1289,9 @@ export default function BDRDialer() {
                         style={{ background: current ? "hsla(211,96%,56%,.08)" : "hsla(0,0%,100%,.02)" }}
                       >
                         <option value="" className="bg-[hsl(220,35%,12%)]">— Select outcome —</option>
+                        {current && !OUTCOMES.some(o => o.label === current) && (
+                          <option value={current} className="bg-[hsl(220,35%,12%)]">{current}</option>
+                        )}
                         <optgroup label="No Contact">
                           {OUTCOMES.filter(o => o.category === "no_contact").map(o => (
                             <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
