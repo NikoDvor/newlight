@@ -159,6 +159,8 @@ export default function BDRDialer() {
   const [clientId, setClientId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<string>(ALL_LIST);
   const [showDialed, setShowDialed] = useState(false);
+  // Firm-size sort: off = default order, asc = smallest firms (0 / unknown AUM) first, desc = biggest first.
+  const [aumSort, setAumSort] = useState<"off" | "asc" | "desc">("off");
   // Firm type + state + city filters. They all combine, on top of the list tab, and are remembered per browser.
   const [activeNiche, setActiveNiche] = useState<string>(() => readPref("nl_dialer_niche", ALL_NICHES));
   const [activeState, setActiveState] = useState<string>(() => readPref("nl_dialer_state", ALL_STATES));
@@ -318,6 +320,11 @@ export default function BDRDialer() {
 
   const visibleLeads = useMemo(() => {
     const base = filtersOn ? listLeads.filter(l => okNiche(l) && okState(l) && okCity(l)) : listLeads;
+    if (aumSort !== "off") {
+      const aumOf = (l: any) => { const v = l.pool_firm_id ? detailsByLead[l.id]?.firm?.aum : null; return v != null && isFinite(v) ? Number(v) : 0; };
+      const dir = aumSort === "asc" ? 1 : -1;
+      return [...base].sort((a, b) => (aumOf(a) - aumOf(b)) * dir);
+    }
     if (!showDialed) return base;
     // Most recently dialed first; legacy rows with no dialed_at go last (stable).
     return [...base].sort((a, b) => {
@@ -326,9 +333,9 @@ export default function BDRDialer() {
       if (ta === tb) return 0;
       return tb > ta ? 1 : -1;
     });
-  }, [listLeads, filtersOn, okNiche, okState, okCity, showDialed]);
+  }, [listLeads, filtersOn, okNiche, okState, okCity, showDialed, aumSort, detailsByLead]);
 
-  useEffect(() => { if (!highlightId) setRenderCount(PAGE); }, [activeList, activeNiche, activeState, activeCity, showDialed]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!highlightId) setRenderCount(PAGE); }, [activeList, activeNiche, activeState, activeCity, showDialed, aumSort]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -919,6 +926,10 @@ export default function BDRDialer() {
           {filtersOn && (
             <button onClick={clearFilters} className="text-[11px] font-semibold text-white/80 hover:text-white px-1.5">Clear</button>
           )}
+          <button onClick={() => setAumSort(v => v === "off" ? "asc" : v === "asc" ? "desc" : "off")}
+              className={`text-[11px] font-semibold rounded-full border px-2.5 py-1 whitespace-nowrap ${aumSort !== "off" ? "border-[hsl(197,100%,60%)] text-[hsl(197,100%,75%)] bg-[hsla(197,100%,55%,.1)]" : "border-white/15 text-white/70"}`}>
+              {aumSort === "asc" ? "Smallest firms first ↑" : aumSort === "desc" ? "Biggest firms first ↓" : "Sort by firm size"}
+            </button>
         </div>
       </div>
 
@@ -939,7 +950,11 @@ export default function BDRDialer() {
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Decision Makers</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Front Desk</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[100px]">Location</th>
-                <th className="px-3 py-3 font-semibold border-b border-white/10 w-20">AUM</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-20">
+                  <button type="button" onClick={() => setAumSort(s => s === "off" ? "asc" : s === "asc" ? "desc" : "off")}
+                    className={`inline-flex items-center gap-0.5 uppercase tracking-wider ${aumSort !== "off" ? "text-[hsl(197,100%,70%)]" : ""}`}
+                    title="Sort by firm size (AUM)">AUM{aumSort === "asc" ? " ↑" : aumSort === "desc" ? " ↓" : " ↕"}</button>
+                </th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-16">Empl.</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-24">Calls</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Website</th>
