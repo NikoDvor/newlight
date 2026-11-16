@@ -934,7 +934,7 @@ export default function BDRDialer() {
             <colgroup>{DIALER_COLS.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
             <thead className="sticky top-0 z-30" style={{ background: "hsl(215,35%,12%)" }}>
               <tr className="text-left text-[10px] uppercase tracking-wider text-white/55">
-                <th className="px-3 py-3 font-semibold border-b border-white/10 w-10 min-w-[40px] max-w-[40px]" style={{ background: "hsl(215,35%,12%)" }}>#</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-10 min-w-[40px] max-w-[40px] sticky left-0 z-40" style={{ background: "hsl(215,35%,12%)", boxShadow: "1px 0 0 rgba(255,255,255,.08)" }}>#</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[200px]" style={{ background: "hsl(215,35%,12%)" }}>Business Name</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Decision Makers</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Front Desk</th>
@@ -966,7 +966,7 @@ export default function BDRDialer() {
                     className={`md:hover:bg-white/[0.03] align-top ${isPool ? "cursor-pointer" : ""} ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
                     style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : pinned ? { background: "hsla(38,92%,55%,.08)" } : undefined}>
 
-                    <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px]" style={{ background: pinned ? "hsla(38,92%,55%,.10)" : "hsl(215,35%,8%)", boxShadow: pinned ? "inset 3px 0 0 hsl(38,92%,55%)" : undefined }} title={pinned ? `Pinned: ${current}` : undefined}>
+                    <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px] sticky left-0 z-20" style={{ background: pinned ? "linear-gradient(hsla(38,92%,55%,.10),hsla(38,92%,55%,.10)), hsl(215,35%,8%)" : "hsl(215,35%,8%)", boxShadow: pinned ? "inset 3px 0 0 hsl(38,92%,55%), 1px 0 0 rgba(255,255,255,.08)" : "1px 0 0 rgba(255,255,255,.08)" }} title={pinned ? `Pinned: ${current}` : undefined}>
                       <div className="flex flex-col items-center gap-1">
                         <span className="text-white/40 text-[11px]">{i + 1}</span>
                         <button
