@@ -9,37 +9,50 @@ import { SCHEDULE_HELP, type PhoneType } from "@/lib/outreach";
  */
 export const GUIDE = { big: 0, phone: 1, pull: 2, card: 3, text: 4, schedule: 5, landline: 6, liConnect: 7, liMessage: 8, import: 9, limits: 10, outcome: 11, book: 12, home: 13, textFlow: 14, liFlow: 15, who: 16 } as const;
 
-interface Line { t: string; m: boolean; h?: boolean }
-interface Step { title: string; app: string; lines: Line[]; remember?: string; adv?: string[]; flow?: boolean }
+interface Line { t: string; m: boolean; h?: boolean; p?: boolean }
+interface Step { title: string; app: string; lines: Line[]; remember?: string; adv?: string[]; flow?: boolean; restart?: boolean }
 
 const M = (t: string): Line => ({ t, m: true });
 const A = (t: string): Line => ({ t, m: false });
 const H = (t: string): Line => ({ t, m: true, h: true });
+const P = (t: string): Line => ({ t, m: true, p: true });
 
 function steps(phone: PhoneType): Step[] {
   const sched = SCHEDULE_HELP[phone];
   return [
     {
-      title: "The big picture",
-      app: "This page helps you send texts and LinkedIn messages to advisors. YOU send every message from your own phone and your own LinkedIn. The app gets the message ready, counts what you send, and keeps track of replies.",
+      title: "How this page works",
+      flow: true,
+      restart: true,
+      app: "This page helps you text and LinkedIn-message advisors. You send every message yourself from your own phone and LinkedIn. The app gets everything ready, keeps count, and tracks what works. Nothing here is a robot.",
       lines: [
-        M("You tap Pull leads and say how many you want."),
-        A("The app picks the people for you."),
-        A("The app writes the message with their name already in it."),
-        M("You tap Text (or Copy + open profile on LinkedIn)."),
-        M("You press send in Messages or LinkedIn."),
-        M("You tap Sent in the app (or Request sent / Message sent)."),
-        A("The app counts it and moves the card to the next list."),
-        M("When someone writes back, you tap what happened."),
-        A("The app updates your numbers, the team numbers and the message's win rate."),
-        M("If they want a meeting, you tap Book."),
-        A("The app puts them in your pipeline."),
+        H("What you do (🖐️ Manual)"),
+        M("Pull a list of people."),
+        M("Tap Text (or Copy + open profile on LinkedIn)."),
+        M("Press send in Messages or LinkedIn."),
+        M("Tap Sent in the app so it knows."),
+        M("When someone writes back, tap what happened."),
+        M("If they want a meeting, tap Book."),
+        H("What the app does for you (🤖 Automated)"),
+        A("Picks the right people and skips anyone who said stop."),
+        A("Writes the message with their name filled in."),
+        A("Opens Messages or LinkedIn and copies the message."),
+        A("Keeps you inside the time window (8am to 8pm where they live) and your daily limit."),
+        A("Counts everything and moves each card to the next list."),
+        A("Shows which message gets the most replies and meetings."),
+        A("Reminds you on Monday and Wednesday to schedule your texts."),
+        H("What the app can't do"),
+        P("It can't send a message for you."),
+        P("It can't see when someone replies, so you log it."),
+        P("It can't see when someone accepts you on LinkedIn, so you tap Accepted."),
+        P("It can't schedule LinkedIn. You schedule texts on your own phone."),
       ],
-      remember: "The app never sends anything for you, and it can't see replies. If you don't tap the buttons, the app has no idea what you did.",
+      remember: "If you don't tap the buttons, the app has no idea what you did. Your numbers will be wrong.",
       adv: [
         "Nothing here is a bot. There is no shared number and no SMS service. Every send is a human tap in the phone's own Messages app or in LinkedIn.",
         "The app writes to three tables: nl_text_leads (one row per person per rep), nl_text_sends (one row per send, with the template used) and nl_text_templates.",
         "Everything the app does is done by database functions that check you are a signed-in rep before they run.",
+        "Use Next to go step by step, or the dots at the bottom to jump. Text: every step in order and LinkedIn: every step in order show the whole journey in one list.",
       ],
     },
     {
@@ -394,7 +407,8 @@ export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { 
   const row = (l: Line, k: number) => <li key={k} className="flex items-start">{badge(l.m)}<span>{l.t}</span></li>;
   let n = 0;
   const flowRow = (l: Line, k: number) => l.h
-    ? <li key={k} className="mt-2 border-b border-white/15 pb-1 text-[12.5px] font-bold uppercase tracking-wide text-white/85 first:mt-0">{l.t}</li>
+    ? (s.restart && (n = 0), <li key={k} className="mt-2 border-b border-white/15 pb-1 text-[12.5px] font-bold uppercase tracking-wide text-white/85 first:mt-0">{l.t}</li>)
+    : l.p ? <li key={k} className="flex items-start gap-2"><span className="w-6 shrink-0 text-right text-white/60">•</span><span>{l.t}</span></li>
     : <li key={k} className="flex items-start gap-2"><span className="w-6 shrink-0 text-right font-mono text-[12px] text-white/60">{++n}.</span>{badge(l.m)}<span>{l.t}</span></li>;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
