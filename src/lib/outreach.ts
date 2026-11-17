@@ -12,7 +12,7 @@ export const canSchedule = (p: PhoneType) => p === "iphone_ios18" || p === "andr
 
 export const DEFAULT_CAPS = { text: 40, li_connect: 20, li_message: 40 };
 export const capForPhone = (p: PhoneType) => (p.startsWith("android") ? 25 : 40);
-export const MIN_GAP_MIN = 2;
+export const MIN_GAP_MIN = 6;
 export const PLAN_DAYS = 3;
 
 /** Reply outcomes: the Dialer's list plus the three text-only ones. */
@@ -45,6 +45,21 @@ export function nextInWindow(after: Date, st?: string | null): Date {
   const d = new Date(after.getTime());
   for (let i = 0; i < 200 && !inWindow(d, st); i++) d.setMinutes(d.getMinutes() + 15, 0, 0);
   return d;
+}
+/** Best send times: weekdays, 9:00–11:30 and 1:00–3:30 in the lead's own timezone. Suggestions fill these windows in order. */
+export function nextPreferred(after: Date, st?: string | null): Date {
+  const tz = tzForState(st);
+  const f = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", hour: "numeric", minute: "numeric", hour12: false });
+  const d = new Date(after.getTime()); d.setSeconds(0, 0);
+  d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5);
+  for (let i = 0; i < 12 * 24 * 10; i++) {
+    const parts = Object.fromEntries(f.formatToParts(d).map((p) => [p.type, p.value]));
+    const mins = (Number(parts.hour) % 24) * 60 + Number(parts.minute);
+    const wk = !["Sat", "Sun"].includes(parts.weekday);
+    if (wk && ((mins >= 540 && mins < 690) || (mins >= 780 && mins < 930))) return d;
+    d.setMinutes(d.getMinutes() + 5);
+  }
+  return nextInWindow(after, st);
 }
 export const laDay = (d: Date | string) => new Date(d).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
 

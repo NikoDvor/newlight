@@ -7,7 +7,7 @@ import { DEFAULT_CAPS, canSchedule, capForPhone, laDay, type PhoneType } from "@
 
 /**
  * Rep dashboard card: today's marks for texts + LinkedIn, and the Monday / Wednesday "schedule your texts" reminder.
- * Monday covers Mon–Wed, Wednesday covers Thu–Fri. In-app only (no push yet).
+ * Mon–Wed texts are due scheduled by Monday 7:30am (shown Sun–Tue); Thu–Fri texts by Thursday 7:30am (shown Wed–Fri). In-app only (no push yet).
  */
 const PT = "America/Los_Angeles";
 const dow = (d: Date) => new Intl.DateTimeFormat("en-US", { timeZone: PT, weekday: "short" }).format(d);
@@ -42,16 +42,23 @@ export function OutreachDashboardCard() {
     { label: "LinkedIn messages", used: sentToday("li_message"), cap: DEFAULT_CAPS.li_message },
   ];
 
-  // Planning reminder: Monday → Mon–Wed (3 days), Wednesday → Thu–Fri (2 days).
-  const day = dow(now);
-  const planDays = day === "Mon" ? [0, 1, 2] : day === "Wed" ? [1, 2] : null;
-  let plan: { label: string; planned: number; target: number } | null = null;
-  if (planDays && canSchedule(data.phone)) {
-    const days = planDays.map((n) => laDay(new Date(now.getTime() + n * 86400000)));
-    const planned = data.sends.filter((x) => x.channel === "text" && days.includes(laDay(x.sent_at))).length;
-    plan = { label: day === "Mon" ? "Schedule Mon–Wed texts" : "Schedule Thu–Fri texts", planned, target: planDays.length * textCap };
+  // Planning deadlines (Pacific): Mon–Wed texts scheduled by Monday 7:30am; Thu–Fri texts scheduled by Thursday 7:30am.
+  const la = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: PT, weekday: "short", hour: "numeric", minute: "numeric", hour12: false }).formatToParts(now).map((p) => [p.type, p.value]));
+  const dayIdx = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(la.weekday);
+  const mins = (Number(la.hour) % 24) * 60 + Number(la.minute);
+  const dayOf = (offset: number) => laDay(new Date(now.getTime() + offset * 86400000));
+  let plan: { label: string; planned: number; target: number; deadline: string; overdue: boolean } | null = null;
+  if (canSchedule(data.phone)) {
+    // Plan A shows Sun → Tue; Plan B shows Wed → Thu (and Fri if still not done).
+    const mk = (label: string, offsets: number[], deadline: string, overdue: boolean) => {
+      const days = offsets.map((o) => dayOf(o));
+      plan = { label, planned: data.sends.filter((x) => x.channel === "text" && days.includes(laDay(x.sent_at))).length, target: offsets.length * textCap, deadline, overdue };
+    };
+    const monOff = 1 - dayIdx, thuOff = 4 - dayIdx;
+    if (dayIdx === 0 || dayIdx === 1 || dayIdx === 2) mk("Schedule Mon–Wed texts", [monOff, monOff + 1, monOff + 2], "Monday 7:30am", dayIdx === 2 || (dayIdx === 1 && mins >= 450));
+    else if (dayIdx === 3 || dayIdx === 4 || dayIdx === 5) mk("Schedule Thu–Fri texts", [thuOff, thuOff + 1], "Thursday 7:30am", dayIdx === 5 || (dayIdx === 4 && mins >= 450));
   }
-  const planDone = plan ? plan.planned >= plan.target : true;
+  const planDone = plan ? (plan as any).planned >= (plan as any).target : true;
 
   return (
     <section className="rounded-2xl border border-white/[0.14] bg-[hsla(220,40%,9%,.78)] p-4 text-white">
@@ -64,7 +71,7 @@ export function OutreachDashboardCard() {
       {plan && !planDone && (
         <div className="mb-3 flex items-start gap-2 rounded-xl border border-[hsl(38,95%,58%)]/50 bg-[hsla(38,95%,58%,.1)] px-3 py-2 text-[13.5px]">
           <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(38,95%,62%)]" />
-          <span><b>{plan.label}.</b> {plan.planned} of {plan.target} planned. Open Outreach and schedule the rest with Send Later.</span>
+          <span><b>{plan.label} by {plan.deadline}.</b> {plan.planned} of {plan.target} planned.{plan.overdue ? " Overdue." : ""} Open Outreach and schedule the rest with Send Later.</span>
         </div>
       )}
       {plan && planDone && <div className="mb-3 flex items-center gap-2 text-[13px] text-[hsl(152,62%,60%)]"><Check className="h-4 w-4" />{plan.label}: done ({plan.planned} planned).</div>}

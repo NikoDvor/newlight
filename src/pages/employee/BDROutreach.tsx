@@ -8,7 +8,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "@/hooks/use-toast";
 import {
   PHONE_TYPES, SCHEDULE_HELP, OUTREACH_OUTCOMES, DEFAULT_CAPS, MIN_GAP_MIN, PLAN_DAYS, capForPhone, canSchedule,
-  fillTemplate, firstNameOf, shortFirm, inWindow, nextInWindow, tzForState, laDay, prettyPhone, smsHref, csvToLeads, CSV_EXAMPLE, type PhoneType, type ImportRow,
+  fillTemplate, firstNameOf, shortFirm, inWindow, nextPreferred, tzForState, laDay, prettyPhone, smsHref, csvToLeads, CSV_EXAMPLE, type PhoneType, type ImportRow,
 } from "@/lib/outreach";
 
 /**
@@ -291,7 +291,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
   const filled = useMemo(() => (tpl ? fillTemplate(tpl.body, vars) : ""), [tpl, vars.first, vars.rep, vars.firm, vars.city]); // eslint-disable-line react-hooks/exhaustive-deps
   const [edit, setEdit] = useState<string | null>(null);
   const body = edit ?? filled;
-  const suggested = useMemo(() => toLocalInput(nextInWindow(new Date(Math.max(Date.now() + 5 * 60000, lastText) + MIN_GAP_MIN * 60000), l.state)), [lastText, l.state]);
+  const suggested = useMemo(() => toLocalInput(nextPreferred(new Date(Math.max(Date.now() + 5 * 60000, lastText) + MIN_GAP_MIN * 60000), l.state)), [lastText, l.state]);
   const [when, setWhen] = useState(suggested);
   const [url, setUrlText] = useState("");
   const todo = tab === "todo" || (!isText && tab === "msg");
