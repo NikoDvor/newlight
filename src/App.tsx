@@ -213,6 +213,7 @@ const LegalVault = lazy(() => import("./pages/admin/LegalVault"));
 const SellGate = lazy(() => import("./components/employee/SellGate"));
 const BDRBookingPublic = lazy(() => import("./pages/BDRBookingPublic"));
 const AdminBDRPerformance = lazy(() => import("./pages/admin/AdminBDRPerformance"));
+const AdminOutreachStats = lazy(() => import("./pages/admin/AdminOutreachStats"));
 const AdminRepScorecard = lazy(() => import("./pages/admin/AdminRepScorecard"));
 const AdminRevenueCash = lazy(() => import("./pages/admin/AdminRevenueCash"));
 const AdminTerritories = lazy(() => import("./pages/admin/AdminTerritories"));
@@ -376,6 +377,7 @@ const App = () => {
                 <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
+                <Route path="outreach-stats" element={<AdminOutreachStats />} />
                 <Route path="rep-scorecard" element={<AdminRepScorecard />} />
                 <Route path="revenue-cash" element={<AdminRevenueCash />} />
                 <Route path="bdr-meeting-analytics" element={<Navigate to="/admin/pipeline/results" replace />} />

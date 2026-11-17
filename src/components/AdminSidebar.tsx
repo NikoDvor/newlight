@@ -50,6 +50,7 @@ const adminGroups: NavGroup[] = [
       { title: "Territories", description: "Assign rep territories and push leads from the pool.", url: "/admin/territories", icon: Globe },
       { title: "Lead Import", description: "Upload firm and people exports into the lead pool.", url: "/admin/lead-import", icon: Upload },
       { title: "Dialer Activity", description: "Call volume, connects, and call outcomes across the team.", url: "/admin/bdr-performance", icon: TrendingUp },
+      { title: "Text & LinkedIn", description: "Texts and LinkedIn messages sent, response rates by rep and template, and the message templates.", url: "/admin/outreach-stats", icon: MessageSquare },
     ],
   },
   {

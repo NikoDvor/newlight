@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarClock, Check, Copy, ExternalLink, HelpCircle, Linkedin, Loader2, MessageSquare, PhoneOff, Undo2 } from "lucide-react";
+import { CalendarClock, Check, Copy, ExternalLink, HelpCircle, Linkedin, Loader2, MessageSquare, PhoneOff, Undo2, Upload } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { OutreachGuide, GUIDE } from "@/components/employee/OutreachGuide";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "@/hooks/use-toast";
 import {
   PHONE_TYPES, SCHEDULE_HELP, OUTREACH_OUTCOMES, DEFAULT_CAPS, MIN_GAP_MIN, PLAN_DAYS, capForPhone, canSchedule,
-  fillTemplate, firstNameOf, shortFirm, inWindow, nextInWindow, tzForState, laDay, prettyPhone, smsHref, type PhoneType,
+  fillTemplate, firstNameOf, shortFirm, inWindow, nextInWindow, tzForState, laDay, prettyPhone, smsHref, csvToLeads, CSV_EXAMPLE, type PhoneType, type ImportRow,
 } from "@/lib/outreach";
 
 /**
@@ -18,7 +20,7 @@ import {
 interface OLead {
   id: string; pool_firm_id: string; lead_id: string | null; firm_name: string; contact_name: string | null; first_name: string | null;
   phone: string | null; linkedin_url: string | null; city: string | null; state: string | null; aum: number | null; seq: number;
-  text_status: "new" | "sent"; text_sent_at: string | null; li_status: "new" | "requested" | "sent"; li_sent_at: string | null;
+  text_status: "new" | "sent"; text_sent_at: string | null; li_status: "new" | "requested" | "accepted" | "sent"; li_sent_at: string | null;
   result: string | null; outcome: string | null; outcome_channel: string | null;
 }
 interface Tpl { id: string; channel: "text" | "li_connect" | "li_message"; name: string; body: string; position: number }
@@ -56,7 +58,8 @@ export default function BDROutreach() {
   const [pullN, setPullN] = useState(40);
   const [pullState, setPullState] = useState("");
   const [pulling, setPulling] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
+  const [guideAt, setGuideAt] = useState<number | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [shown, setShown] = useState(25);
 
   const load = useCallback(async () => {
@@ -155,6 +158,13 @@ export default function BDROutreach() {
     toast({ title: "Marked landline", description: "It doesn't count toward your texts or stats." });
     load();
   };
+  const accept = async (l: OLead, undo = false) => {
+    setBusy(l.id);
+    const { error } = await (supabase as any).rpc("nl_text_li_accept", { _id: l.id, _undo: undo });
+    setBusy(null);
+    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
+    load();
+  };
   const setUrl = async (l: OLead, url: string) => {
     const { error } = await (supabase as any).rpc("nl_text_set_linkedin", { _id: l.id, _url: url });
     if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
@@ -175,6 +185,7 @@ export default function BDROutreach() {
   ] : [
     { k: "todo", l: "To connect", match: (l) => l.li_status === "new" && !l.result && !!l.linkedin_url },
     { k: "req", l: "Requested", match: (l) => l.li_status === "requested" && !l.result },
+    { k: "msg", l: "To message", match: (l) => l.li_status === "accepted" && !l.result },
     { k: "wait", l: "Awaiting reply", match: (l) => l.li_status === "sent" && !l.result },
     { k: "replied", l: "Replied", match: (l) => touched(l) && (l.result === "replied" || l.result === "booked") },
     { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply", "landline"].includes(l.result || "") },
@@ -182,7 +193,6 @@ export default function BDROutreach() {
   ];
   const cur = TABS.find((t) => t.k === tab) || TABS[0];
   const rows = leads.filter((l) => cur.match(l));
-  const help = SCHEDULE_HELP[phoneType];
   const todoCount = TABS[0] ? leads.filter((l) => TABS[0].match(l)).length : 0;
 
   const stat = (label: string, used: number, cap: number) => (
@@ -206,32 +216,13 @@ export default function BDROutreach() {
             className="rounded-lg border border-white/[0.16] bg-[hsl(220,35%,12%)] px-2.5 py-1.5 text-[13px] text-white">
             {PHONE_TYPES.map((p) => <option key={p.k} value={p.k}>{p.label}</option>)}
           </select>
-          <button type="button" onClick={() => setShowHelp((v) => !v)} className={btn + " " + quiet}><HelpCircle className="h-4 w-4" />How it works</button>
+          <InfoBtn onClick={() => setGuideAt(GUIDE.phone)} />
+          <button type="button" onClick={() => setGuideAt(GUIDE.big)} className={btn + " " + accent}><HelpCircle className="h-4 w-4" />More information: step by step</button>
         </div>
       </header>
 
-      {showHelp && (
-        <section className={surface + " grid gap-3 px-5 py-4 text-[14px] text-white/90"}>
-          <div>
-            <div className="mb-1 font-semibold">How it works</div>
-            <ol className="ml-5 list-decimal space-y-1 text-white/85">
-              <li>Pull leads. A lead you pull is yours for texting only, so no other rep texts them. It stays in the Dialer and can still be called.</li>
-              <li>Pick a template. Name, firm and your name fill in. Edit it if you want.</li>
-              <li>Tap <b>Text</b> (opens Messages) or <b>Copy + open profile</b> (LinkedIn), then send it yourself.</li>
-              <li>Tap <b>Sent</b> in the app. It counts toward your daily limit.</li>
-              <li>When they reply, log the outcome. If they want a meeting, tap <b>Book</b> and it goes into the pipeline.</li>
-            </ol>
-            <p className="mt-2 text-white/70">Limits per day: {textCap} texts, {DEFAULT_CAPS.li_connect} LinkedIn requests, {DEFAULT_CAPS.li_message} LinkedIn messages. Send between 8am and 8pm in the lead's timezone. One text per firm per day. A lead who says Stop is locked out.</p>
-          </div>
-          <div className="rounded-xl border border-white/[0.12] bg-white/[0.03] p-3">
-            <div className="mb-1 flex items-center gap-1.5 font-semibold"><CalendarClock className="h-4 w-4" />{help.title}</div>
-            <ol className="ml-5 list-decimal space-y-1 text-white/85">{help.steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
-            <p className="mt-2 text-[13px] text-white/70">{help.note}</p>
-            <p className="mt-1 text-[13px] text-white/70">Plan {PLAN_DAYS} days at a time. LinkedIn can't be scheduled, so send it the same day.</p>
-          </div>
-        </section>
-      )}
 
+      <div className="-mb-2 flex justify-end"><InfoBtn onClick={() => setGuideAt(GUIDE.limits)} label="What are these numbers?" /></div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {stat("Texts sent today", counts.text, textCap)}
         {stat("LinkedIn requests today", counts.li_connect, DEFAULT_CAPS.li_connect)}
@@ -249,6 +240,8 @@ export default function BDROutreach() {
           <input value={pullState} onChange={(e) => setPullState(e.target.value.toUpperCase().slice(0, 2))} placeholder="State"
             className="w-16 rounded-lg border border-white/[0.16] bg-transparent px-2 py-1.5 text-[13px]" aria-label="State (optional)" />
           <button type="button" onClick={pull} disabled={pulling} className={btn + " " + accent}>{pulling && <Loader2 className="h-4 w-4 animate-spin" />}Pull leads</button>
+          <InfoBtn onClick={() => setGuideAt(GUIDE.pull)} />
+          {!isText && <button type="button" onClick={() => setImportOpen(true)} className={btn + " " + quiet}><Upload className="h-4 w-4" />Import LinkedIn leads</button>}
         </div>
       </div>
 
@@ -270,23 +263,25 @@ export default function BDROutreach() {
           <div className="grid gap-3">
             {rows.slice(0, shown).map((l) => (
               <LeadCard key={l.id + cur.k} l={l} tab={cur.k} channel={channel} rep={rep} tpls={tpls} phoneType={phoneType} busy={busy === l.id}
-                lastText={counts.lastText} onSend={send} onUnsend={unsend} onOutcome={outcome} onBook={book} onUrl={setUrl} onLandline={landline} sentAt={sentAt(l)} />
+                lastText={counts.lastText} onSend={send} onUnsend={unsend} onOutcome={outcome} onBook={book} onUrl={setUrl} onLandline={landline} onAccept={accept} info={setGuideAt} sentAt={sentAt(l)} />
             ))}
             {rows.length > shown && <button type="button" className={btn + " " + quiet} onClick={() => setShown((n) => n + 25)}>Show more ({rows.length - shown} left)</button>}
           </div>
         )}
+      <OutreachGuide open={guideAt !== null} onOpenChange={(o) => { if (!o) setGuideAt(null); }} startAt={guideAt ?? 0} phoneType={phoneType} />
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} onDone={load} />
     </div>
   );
 }
 
-function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSend, onUnsend, onOutcome, onBook, onUrl, onLandline, sentAt }: {
+function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSend, onUnsend, onOutcome, onBook, onUrl, onLandline, onAccept, info, sentAt }: {
   l: OLead; tab: string; channel: Channel; rep: string; tpls: Tpl[]; phoneType: PhoneType; busy: boolean; lastText: number;
   onSend: (l: OLead, ch: "text" | "li_connect" | "li_message", tpl: Tpl | undefined, body: string, when?: Date) => void;
-  onUnsend: (l: OLead, ch: string) => void; onOutcome: (l: OLead, o: string) => void; onBook: (l: OLead) => void; onUrl: (l: OLead, u: string) => void; onLandline: (l: OLead) => void;
+  onUnsend: (l: OLead, ch: string) => void; onOutcome: (l: OLead, o: string) => void; onBook: (l: OLead) => void; onUrl: (l: OLead, u: string) => void; onLandline: (l: OLead) => void; onAccept: (l: OLead, undo?: boolean) => void; info: (step: number) => void;
   sentAt: string | null;
 }) {
   const isText = channel === "text";
-  const ch: "text" | "li_connect" | "li_message" = isText ? "text" : l.li_status === "requested" ? "li_message" : "li_connect";
+  const ch: "text" | "li_connect" | "li_message" = isText ? "text" : l.li_status === "accepted" ? "li_message" : "li_connect";
   const options = tpls.filter((t) => t.channel === ch);
   const [tplId, setTplId] = useState<string>(() => options.length ? options[hash(l.id) % options.length].id : "");
   const tpl = options.find((t) => t.id === tplId) || options[0];
@@ -297,7 +292,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
   const suggested = useMemo(() => toLocalInput(nextInWindow(new Date(Math.max(Date.now() + 5 * 60000, lastText) + MIN_GAP_MIN * 60000), l.state)), [lastText, l.state]);
   const [when, setWhen] = useState(suggested);
   const [url, setUrlText] = useState("");
-  const todo = tab === "todo" || (!isText && tab === "req");
+  const todo = tab === "todo" || (!isText && tab === "msg");
   const outsideNow = !inWindow(new Date(), l.state);
   const sentTime = sentAt ? new Date(sentAt) : null;
   const scheduled = sentTime && sentTime.getTime() > Date.now();
@@ -344,10 +339,12 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
                 <button type="button" className={btn + " " + quiet} onClick={() => copy(body)}><Copy className="h-4 w-4" />Copy</button>
                 <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onSend(l, "text", tpl, body)}><Check className="h-4 w-4" />Sent</button>
                 <button type="button" disabled={busy} className={btn + " " + quiet} title="Can't text this number. Doesn't count toward anything." onClick={() => onLandline(l)}><PhoneOff className="h-4 w-4" />Landline</button>
+                <InfoBtn onClick={() => info(GUIDE.text)} />
                 {canSchedule(phoneType) && (
                   <span className="flex flex-wrap items-center gap-1.5">
                     <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className="rounded-lg border border-white/[0.16] bg-transparent px-2 py-1 text-[12.5px]" aria-label="Schedule time" />
                     <button type="button" disabled={busy || !when} className={btn + " " + quiet} onClick={() => onSend(l, "text", tpl, body, new Date(when))}><CalendarClock className="h-4 w-4" />Scheduled</button>
+                    <InfoBtn onClick={() => info(GUIDE.schedule)} label="How do I schedule?" />
                   </span>
                 )}
               </>
@@ -356,6 +353,8 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
                 <button type="button" className={btn + " " + accent} onClick={() => { try { navigator.clipboard.writeText(body); } catch { /* ignore */ } if (l.linkedin_url) window.open(l.linkedin_url, "_blank", "noopener"); toast({ title: "Message copied", description: "Paste it on their profile." }); }}>
                   <ExternalLink className="h-4 w-4" />Copy + open profile</button>
                 <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onSend(l, ch, tpl, body)}><Check className="h-4 w-4" />{ch === "li_connect" ? "Request sent" : "Message sent"}</button>
+                {ch === "li_message" && <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onAccept(l, true)}>Not accepted yet</button>}
+                <InfoBtn onClick={() => info(ch === "li_connect" ? GUIDE.liConnect : GUIDE.liMessage)} />
               </>
             )}
           </div>
@@ -368,11 +367,81 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
             <option value="">{l.outcome ? `Outcome: ${l.outcome} — change` : "— Log outcome —"}</option>
             {OUTREACH_OUTCOMES.map((g) => <optgroup key={g.group} label={g.group}>{g.items.map((o) => <option key={o} value={o}>{o}</option>)}</optgroup>)}
           </select>
+          <InfoBtn onClick={() => info(GUIDE.outcome)} />
+          {!isText && tab === "req" && <button type="button" disabled={busy} className={btn + " " + accent} title="They accepted my request" onClick={() => onAccept(l)}><Check className="h-4 w-4" />Accepted</button>}
           {(l.result === "replied" || l.result === "booked") && <button type="button" disabled={busy} className={btn + " " + accent} onClick={() => onBook(l)}>{l.lead_id ? "Open in pipeline" : "Book"}</button>}
           {isText && tab !== "done" && <button type="button" disabled={busy} className={btn + " " + quiet} title="Can't text this number. Removes the send so it doesn't count." onClick={() => onLandline(l)}><PhoneOff className="h-4 w-4" />Landline</button>}
           {tab !== "done" && <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onUnsend(l, isText ? "text" : l.li_status === "sent" ? "li_message" : "li_connect")}><Undo2 className="h-4 w-4" />Undo send</button>}
         </div>
       )}
     </article>
+  );
+}
+
+function InfoBtn({ onClick, label = "More info" }: { onClick: () => void; label?: string }) {
+  return (
+    <button type="button" onClick={onClick} className="inline-flex min-h-[28px] items-center gap-1 rounded-full border border-white/[0.16] px-2.5 text-[12px] font-semibold text-white/75 hover:bg-white/[0.06]">
+      <HelpCircle className="h-3.5 w-3.5" />{label}
+    </button>
+  );
+}
+
+function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void }) {
+  const [rows, setRows] = useState<ImportRow[]>([]);
+  const [fileName, setFileName] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (open) { setRows([]); setFileName(""); setErr(""); } }, [open]);
+  const onFile = async (f: File | undefined) => {
+    if (!f) return;
+    setFileName(f.name); setErr("");
+    const { rows: r, missingLinkedIn } = csvToLeads(await f.text());
+    if (missingLinkedIn) { setRows([]); setErr("I couldn't find a linkedin_url column. Add one and try again."); return; }
+    if (!r.length) { setRows([]); setErr("No rows with a LinkedIn link were found."); return; }
+    setRows(r);
+  };
+  const download = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([CSV_EXAMPLE], { type: "text/csv" })); a.download = "linkedin-leads-example.csv"; a.click();
+  };
+  const run = async () => {
+    setBusy(true);
+    let added = 0, dup = 0, bad = 0;
+    for (let i = 0; i < rows.length; i += 500) {
+      const { data, error } = await (supabase as any).rpc("nl_text_import", { _rows: rows.slice(i, i + 500) });
+      if (error) { setBusy(false); toast({ title: "Import failed", description: error.message, variant: "destructive" }); return; }
+      added += data.added; dup += data.duplicates; bad += data.invalid;
+    }
+    setBusy(false);
+    toast({ title: `Added ${added} lead${added === 1 ? "" : "s"}`, description: `${dup} already in the system, ${bad} had a bad link.` });
+    onDone(); onOpenChange(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[560px]">
+        <DialogHeader>
+          <DialogTitle>Import LinkedIn leads</DialogTitle>
+          <DialogDescription>Upload a CSV. Every row needs a LinkedIn link (linkedin_url). Other columns are optional: first_name, last_name, firm, phone, city, state. Up to 500 rows at a time.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={download} className={btn + " " + quiet}>Download example</button>
+          <label className={btn + " " + accent + " cursor-pointer"}>
+            <Upload className="h-4 w-4" />Choose file
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+          </label>
+          {fileName && <span className="text-[13px] opacity-80">{fileName}</span>}
+        </div>
+        {err && <p className="text-[13.5px] text-[hsl(0,85%,70%)]">{err}</p>}
+        {rows.length > 0 && (
+          <div className="grid gap-2 text-[13px]">
+            <div><b>{rows.length}</b> rows ready. First few:</div>
+            <ul className="grid gap-1 rounded-lg border border-white/[0.14] p-2">
+              {rows.slice(0, 5).map((r, i) => <li key={i} className="truncate">{[r.name || [r.first_name, r.last_name].filter(Boolean).join(" "), r.firm, r.linkedin_url].filter(Boolean).join(" · ")}</li>)}
+            </ul>
+            <button type="button" disabled={busy} onClick={run} className={btn + " " + accent}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Import {rows.length} rows</button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

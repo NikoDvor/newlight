@@ -107,3 +107,45 @@ export const SCHEDULE_HELP: Record<PhoneType, { title: string; steps: string[]; 
     note: "If your messaging app has scheduled send, you can use it. Otherwise send the same day. Daily limit is 25.",
   },
 };
+
+// ---- CSV import (LinkedIn leads) ----
+export function parseCsv(text: string): string[][] {
+  const rows: string[][] = []; let row: string[] = []; let cur = ""; let q = false;
+  const src = text.replace(/^﻿/, "");
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (q) {
+      if (c === '"') { if (src[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(cur); cur = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && src[i + 1] === "\n") i++; row.push(cur); cur = ""; if (row.some((x) => x.trim())) rows.push(row); row = []; }
+    else cur += c;
+  }
+  row.push(cur); if (row.some((x) => x.trim())) rows.push(row);
+  return rows;
+}
+const ALIASES: Record<string, string[]> = {
+  first_name: ["first_name", "first name", "firstname", "first"],
+  last_name: ["last_name", "last name", "lastname", "last"],
+  name: ["name", "full name", "full_name", "contact", "contact name", "poc", "person"],
+  firm: ["firm", "company", "business", "business name", "firm name", "organization", "company name"],
+  linkedin_url: ["linkedin_url", "linkedin", "linkedin url", "linkedin profile", "profile url", "person linkedin url", "profile"],
+  phone: ["phone", "mobile", "mobile phone", "cell", "phone number"],
+  city: ["city"], state: ["state"],
+};
+export interface ImportRow { first_name?: string; last_name?: string; name?: string; firm?: string; linkedin_url?: string; phone?: string; city?: string; state?: string }
+export function csvToLeads(text: string): { rows: ImportRow[]; missingLinkedIn: boolean } {
+  const grid = parseCsv(text);
+  if (grid.length < 2) return { rows: [], missingLinkedIn: false };
+  const head = grid[0].map((h) => h.trim().toLowerCase());
+  const idx: Record<string, number> = {};
+  for (const [k, names] of Object.entries(ALIASES)) idx[k] = head.findIndex((h) => names.includes(h));
+  if (idx.linkedin_url < 0) return { rows: [], missingLinkedIn: true };
+  const rows = grid.slice(1).map((r) => {
+    const o: ImportRow = {};
+    for (const k of Object.keys(ALIASES)) { const j = idx[k]; if (j >= 0 && r[j]?.trim()) (o as any)[k] = r[j].trim(); }
+    return o;
+  }).filter((r) => r.linkedin_url);
+  return { rows, missingLinkedIn: false };
+}
+export const CSV_EXAMPLE = "first_name,last_name,firm,linkedin_url,phone,city,state\nJane,Smith,Smith Wealth,https://www.linkedin.com/in/jane-smith-example,,Irvine,CA\n";
