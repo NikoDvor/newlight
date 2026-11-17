@@ -8,7 +8,7 @@ import { SCHEDULE_HELP, type PhoneType } from "@/lib/outreach";
  * Click-by-click walkthrough for the Text & LinkedIn module. Written for someone who has never seen it.
  * Every line is tagged: ✋ (the rep does it) or 🤖 (the app does it). "Advanced" shows the technical detail.
  */
-export const GUIDE = { big: 0, phone: 1, pull: 2, card: 3, text: 4, schedule: 5, landline: 6, liConnect: 7, liMessage: 8, import: 9, limits: 10, outcome: 11, book: 12, home: 13, textFlow: 14, liFlow: 15, second: 16, who: 17 } as const;
+export const GUIDE = { big: 0, phone: 1, pull: 2, card: 3, text: 4, schedule: 5, landline: 6, liConnect: 7, liMessage: 8, import: 9, limits: 10, outcome: 11, book: 12, home: 13, textFlow: 14, liFlow: 15, second: 16 } as const;
 
 interface Line { t: string; m: boolean; h?: boolean; p?: boolean }
 interface Step { title: string; app: string; lines: Line[]; remember?: string; adv?: string[]; flow?: boolean; restart?: boolean; list?: boolean; links?: { label: string; to: string }[] }
@@ -27,21 +27,20 @@ function steps(phone: PhoneType): Step[] {
       restart: true,
       app: "This page helps you text and LinkedIn-message advisors. You send every message yourself from your own phone and LinkedIn. The app gets everything ready, keeps count, and tracks what works. Nothing here is a robot.",
       lines: [
-        H("What you do ✋"),
+        H("From start to finish"),
         M("Pull a list of people."),
+        A("App picks the right people and skips anyone who said stop."),
+        A("App writes the message with their name filled in."),
         M("Tap Text (or Copy + open profile on LinkedIn)."),
+        A("App opens Messages or LinkedIn and copies the message."),
         M("Press send in Messages or LinkedIn."),
         M("Tap Sent in the app so it knows."),
+        A("App checks the time window (8am to 8pm where they live) and your daily limit, counts it, and moves the card to the next list."),
         M("When someone writes back, tap what happened."),
+        A("App updates your numbers and shows which message gets the most replies and meetings."),
         M("If they want a meeting, tap Book."),
-        H("What the app does for you 🤖"),
-        A("Picks the right people and skips anyone who said stop."),
-        A("Writes the message with their name filled in."),
-        A("Opens Messages or LinkedIn and copies the message."),
-        A("Keeps you inside the time window (8am to 8pm where they live) and your daily limit."),
-        A("Counts everything and moves each card to the next list."),
-        A("Shows which message gets the most replies and meetings."),
-        A("Reminds you on Monday and Wednesday to schedule your texts."),
+        A("App puts them in your pipeline."),
+        A("Every Monday and Wednesday, App reminds you to schedule your texts."),
         H("What the app can't do"),
         P("It can't send a message for you."),
         P("It can't see when someone replies, so you log it."),
@@ -389,45 +388,8 @@ function steps(phone: PhoneType): Step[] {
       ],
       adv: ["Training links: Module 6 (The Sales System), chapter 2 is the BDR Script. Module 7 is Objection Handling. The text and LinkedIn replies are not tracked by template, only the outcome you log."],
     },
-    {
-      title: "Who does what",
-      app: "Here is everything in one place. ✋ means you do it. 🤖 means the app does it.",
-      lines: [
-        M("Pick your phone type."),
-        M("Choose how many leads and tap Pull leads."),
-        M("Read and edit the message."),
-        M("Tap Text or Copy + open profile."),
-        M("Press send in Messages or LinkedIn."),
-        M("Schedule the text on your phone (iPhone or Google Messages)."),
-        M("Tap Sent, Request sent or Message sent."),
-        M("Tap Accepted when someone accepts on LinkedIn."),
-        M("Tap Landline when a number can't get texts."),
-        M("Log what happened when someone replies."),
-        M("Tap Book when they want a meeting."),
-        A("Picks the people and skips Stop numbers, repeats and closed firms."),
-        A("Fills in the name, firm, city and your name."),
-        A("Opens Messages or the profile and copies the message."),
-        A("Keeps the time window (8am to 8pm where they live) and the daily limits."),
-        A("Counts every send and moves the cards between lists."),
-        A("Suggests send times and shows the Monday and Wednesday reminders."),
-        A("Puts Stop numbers on Do Not Call."),
-        A("Removes Won and Lost firms from everyone's lists."),
-        A("Builds the numbers: by rep, by message, response rate and win rate."),
-        A("When an admin edits or deletes a message, wipes that message's old numbers so the new one starts fresh."),
-      ],
-      remember: "Things the app can NOT do: send a message for you, see replies, see a LinkedIn accept, or schedule LinkedIn.",
-      adv: [
-        "Admins edit the 8 templates per channel on the Text & LinkedIn admin page. Editing the wording or deleting resets that template's stats (nl_text_template_save / nl_text_template_delete). Sends stay counted, only the template link is cleared.",
-        "Data: nl_text_leads, nl_text_sends, nl_text_templates, nl_text_settings, nl_dnc_numbers. Source pool: nl_lead_pool_firms / nl_lead_pool_contacts.",
-        "No bots, no automatic sending, no reply detection. A future upgrade could add reply notifications, but that needs a messaging service and is not built.",
-      ],
-    },
   ];
 }
-
-const badge = (m: boolean) => m
-  ? <span className="mr-2 inline-flex shrink-0 items-center gap-1 rounded-full border border-[hsl(38,95%,58%)]/60 bg-[hsla(38,95%,58%,.14)] px-2 py-0.5 text-[11px] font-bold text-[hsl(38,95%,72%)]">🖐️ Manual</span>
-  : <span className="mr-2 inline-flex shrink-0 items-center gap-1 rounded-full border border-[hsl(211,96%,62%)]/60 bg-[hsla(211,96%,56%,.16)] px-2 py-0.5 text-[11px] font-bold text-[hsl(211,96%,80%)]">🤖 Automated</span>;
 
 export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { open: boolean; onOpenChange: (o: boolean) => void; startAt?: number; phoneType: PhoneType }) {
   const [i, setI] = useState(startAt);
@@ -435,14 +397,6 @@ export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { 
   useEffect(() => { if (open) { setI(startAt); setAdv(false); } }, [open, startAt]);
   const all = steps(phoneType);
   const s = all[Math.min(i, all.length - 1)];
-  const isWho = i === GUIDE.who;
-  const manual = s.lines.filter((l) => l.m), auto = s.lines.filter((l) => !l.m);
-  const row = (l: Line, k: number) => <li key={k} className="flex items-start">{badge(l.m)}<span>{l.t}</span></li>;
-  let n = 0;
-  const flowRow = (l: Line, k: number) => l.h
-    ? (s.restart && (n = 0), <li key={k} className="mt-2 border-b border-white/15 pb-1 text-[12.5px] font-bold uppercase tracking-wide text-white/85 first:mt-0">{l.t}</li>)
-    : l.p ? <li key={k} className="flex items-start gap-2"><span className="w-6 shrink-0 text-right text-white/60">•</span><span>{l.t}</span></li>
-    : <li key={k} className="flex items-start gap-2"><span className="w-6 shrink-0 text-right font-mono text-[12px] text-white/60">{++n}.</span>{badge(l.m)}<span>{l.t}</span></li>;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-[640px] overflow-y-auto">
@@ -451,36 +405,14 @@ export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { 
           <DialogTitle className="text-xl">{s.title}</DialogTitle>
         </DialogHeader>
         <p className="text-[14.5px] leading-relaxed">{s.app}</p>
-        {!isWho ? (
-          <div className="rounded-xl border border-white/[0.14] bg-white/[0.04] p-3">
-            <div className="mb-2 text-[13px] font-semibold">🤖 = the app does it · ✋ = the rep does it</div>
-            <ul className="grid gap-1.5 text-[14px] leading-snug">
-              {s.lines.map((l, k) => l.h
-                ? <li key={k} className="mt-3 text-[15px] font-bold first:mt-0">{l.t}</li>
-                : <li key={k} className="flex items-start gap-2"><span className="shrink-0">{l.p ? "•" : l.m ? "✋" : "🤖"}</span><span>{l.t}</span></li>)}
-            </ul>
-          </div>
-        ) : s.flow ? (
-          <div className="rounded-xl border border-white/[0.14] bg-white/[0.04] p-3">
-            <ul className="grid gap-2 text-[14px] leading-snug">{s.lines.map((l, k) => flowRow(l, k))}</ul>
-          </div>
-        ) : isWho ? (
-          <div className="grid gap-3">
-            <div className="rounded-xl border border-[hsl(38,95%,58%)]/40 bg-[hsla(38,95%,58%,.06)] p-3">
-              <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide">✋ The rep does it</div>
-              <ul className="grid gap-1.5 text-[14px] leading-snug">{manual.map((l, k) => <li key={k}>• {l.t}</li>)}</ul>
-            </div>
-            <div className="rounded-xl border border-[hsl(211,96%,62%)]/40 bg-[hsla(211,96%,56%,.07)] p-3">
-              <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide">🤖 The app does it</div>
-              <ul className="grid gap-1.5 text-[14px] leading-snug">{auto.map((l, k) => <li key={k}>• {l.t}</li>)}</ul>
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-white/[0.14] bg-white/[0.04] p-3">
-            <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide opacity-70">Click by click</div>
-            <ul className="grid gap-2 text-[14px] leading-snug">{s.lines.map((l, k) => row(l, k))}</ul>
-          </div>
-        )}
+        <div className="rounded-xl border border-white/[0.14] bg-white/[0.04] p-3">
+          <div className="mb-2 text-[13px] font-semibold">🤖 = the app does it · ✋ = the rep does it</div>
+          <ul className="grid gap-1.5 text-[14px] leading-snug">
+            {s.lines.map((l, k) => l.h
+              ? <li key={k} className="mt-3 text-[15px] font-bold first:mt-0">{l.t}</li>
+              : <li key={k} className="flex items-start gap-2"><span className="shrink-0">{l.p ? "•" : l.m ? "✋" : "🤖"}</span><span>{l.t}</span></li>)}
+          </ul>
+        </div>
         {s.links && (
           <div className="flex flex-wrap gap-2">
             {s.links.map((x) => <Link key={x.to} to={x.to} onClick={() => onOpenChange(false)} className="inline-flex min-h-[34px] items-center rounded-lg border border-[hsl(211,96%,56%)] bg-[hsla(211,96%,56%,.18)] px-3 text-[13px] font-semibold">{x.label}</Link>)}
