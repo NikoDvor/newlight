@@ -28,7 +28,6 @@ const MIN_SAMPLE = 10;
 const rateOf = (t: Tpl) => (t.sent ? Math.round(((t.replied || 0) / t.sent) * 100) : 0);
 const convOf = (t: Tpl) => (t.sent ? ((t.booked || 0) / t.sent) * 100 : 0);
 const pct = (n: number) => (n >= 10 ? Math.round(n) : Math.round(n * 10) / 10);
-const tplLabel = (t: Tpl, bestId?: string) => !t.sent ? `${t.name} · no sends yet` : `${t.id === bestId ? "★ " : ""}${t.name} · ${t.sent} sent · ${rateOf(t)}% replied · ${pct(convOf(t))}% booked`;
 interface Send { channel: string; sent_at: string }
 type Channel = "text" | "linkedin";
 
@@ -361,15 +360,26 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
 
       {todo && tpl && (
         <>
+          <div className={"grid grid-cols-4 gap-1.5"} role="group" aria-label="Pick a message">
+            {options.map((t) => {
+              const on = t.id === tpl.id;
+              return (
+                <button key={t.id} type="button" aria-pressed={on} onClick={() => { setTplId(t.id); setEdit(null); }}
+                  className={"flex min-h-[58px] flex-col items-center justify-center rounded-xl border px-1 py-1.5 leading-tight " + (on ? accent : quiet)}>
+                  <span className="text-[17px] font-extrabold">{t.id === bestId ? "★ " : ""}{(t.name.match(/^[A-Z]/) || ["?"])[0]}</span>
+                  <span className="text-[11px] text-white/85">{t.sent ? `${t.sent} sent` : "0 sent"}</span>
+                  <span className="text-[11px] font-semibold">{t.sent ? `${rateOf(t)}%` : "—"}</span>
+                </button>
+              );
+            })}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
-            <select value={tpl.id} onChange={(e) => { setTplId(e.target.value); setEdit(null); }} className="rounded-lg border border-white/[0.16] bg-[hsl(220,35%,12%)] px-2 py-1 text-[12.5px]" aria-label="Template">
-              {options.map((t) => <option key={t.id} value={t.id}>{tplLabel(t, bestId)}</option>)}
-            </select>
+            <span className="text-[13px] font-semibold">{tpl.name}</span>
             {!isText && <span className="text-[12.5px] font-semibold text-white/75">{ch === "li_connect" ? "Step 1: connection request" : "Step 2: message"}</span>}
             {edit !== null && <button type="button" className="text-[12.5px] text-white/60 underline" onClick={() => setEdit(null)}>Reset to template</button>}
           </div>
           <div className="text-[12px] text-white/70">
-            {!tpl.sent ? "No sends yet for this message." : <>This message: <b className="text-white">{tpl.sent}</b> sent, <b className="text-white">{rateOf(tpl)}%</b> replied, <b className="text-white">{pct(convOf(tpl))}%</b> booked{(tpl.sent || 0) < MIN_SAMPLE ? " (too early to trust)" : ""}.</>}
+            {!tpl.sent ? "No sends yet for this message. Each box shows sent and reply %." : <>This message: <b className="text-white">{tpl.sent}</b> sent, <b className="text-white">{rateOf(tpl)}%</b> replied, <b className="text-white">{pct(convOf(tpl))}%</b> booked{(tpl.sent || 0) < MIN_SAMPLE ? " (too early to trust)" : ""}.</>}
             {bestId && <> ★ = best conversion (most booked per send, at least {MIN_SAMPLE} sent).</>}
           </div>
           <textarea value={body} onChange={(e) => setEdit(e.target.value)} rows={3}
