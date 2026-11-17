@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
-import { Loader2, MessageSquare, Plus, Save } from "lucide-react";
+import { Loader2, MessageSquare, Plus, Save, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -21,6 +22,7 @@ export default function AdminOutreachStats() {
   const [nw, setNw] = useState({ channel: "text", name: "", body: "" });
   const [open, setOpen] = useState<string | null>(null);
   const [chan, setChan] = useState("all");
+  const [ask, setAsk] = useState<{ kind: "reset" | "delete"; t: Tpl } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -36,11 +38,21 @@ export default function AdminOutreachStats() {
   }, [days]);
   useEffect(() => { load(); }, [load]);
 
-  const save = async (t: Tpl) => {
+  const doSave = async (t: Tpl) => {
     const d = draft[t.id] || t;
-    const { error } = await (supabase as any).from("nl_text_templates").update({ name: d.name, body: d.body, active: d.active }).eq("id", t.id);
+    const { data, error } = await (supabase as any).rpc("nl_text_template_save", { _id: t.id, _name: d.name, _body: d.body, _active: d.active });
     if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Template saved" }); load();
+    toast({ title: data ? "Saved. Stats reset to zero." : "Template saved" }); load();
+  };
+  // Changing the wording wipes that template's numbers, so ask first. Name or on/off changes keep them.
+  const save = (t: Tpl) => {
+    const d = draft[t.id] || t;
+    if (d.body.trim() !== t.body.trim()) setAsk({ kind: "reset", t }); else doSave(t);
+  };
+  const doDelete = async (t: Tpl) => {
+    const { error } = await (supabase as any).rpc("nl_text_template_delete", { _id: t.id });
+    if (error) { toast({ title: "Couldn't delete", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Template deleted, its stats are gone" }); load();
   };
   const add = async () => {
     if (!nw.name.trim() || !nw.body.trim()) { toast({ title: "Add a name and the message", variant: "destructive" }); return; }
@@ -117,7 +129,7 @@ export default function AdminOutreachStats() {
 
           <section className={card + " grid gap-3"}>
             <h2 className="font-bold">Templates</h2>
-            <p className="text-xs text-muted-foreground">Use {"{first}"} for their first name, {"{rep}"} for the rep's name, {"{firm}"} for the firm and {"{city}"} for the city. Reps get the active templates, split evenly across leads, so turning one off stops it going out.</p>
+            <p className="text-xs text-muted-foreground">Use {"{first}"} for their first name, {"{rep}"} for the rep's name, {"{firm}"} for the firm and {"{city}"} for the city. Reps get the active templates, split evenly across leads, so turning one off stops it going out (its numbers stay). Changing the wording or deleting a template removes its numbers, and the new wording starts fresh at zero.</p>
             {tpls.map((t) => {
               const d = draft[t.id] || t;
               return (
@@ -125,6 +137,7 @@ export default function AdminOutreachStats() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-semibold text-muted-foreground">{CH[t.channel]}</span>
                     <input value={d.name} onChange={(e) => setDraft({ ...draft, [t.id]: { ...d, name: e.target.value } })} className={inp + " flex-1"} aria-label="Template name" />
+                    <button type="button" onClick={() => setAsk({ kind: "delete", t })} className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground" aria-label="Delete template"><Trash2 className="h-3.5 w-3.5" />Delete</button>
                     <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={d.active} onChange={(e) => setDraft({ ...draft, [t.id]: { ...d, active: e.target.checked } })} />Active</label>
                   </div>
                   <textarea value={d.body} rows={2} onChange={(e) => setDraft({ ...draft, [t.id]: { ...d, body: e.target.value } })} className={inp} aria-label="Template message" />
@@ -144,6 +157,21 @@ export default function AdminOutreachStats() {
           </section>
         </>
       )}
+      <AlertDialog open={!!ask} onOpenChange={(o) => { if (!o) setAsk(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ask?.kind === "delete" ? `Delete "${ask?.t.name}"?` : `Change the wording of "${ask?.t.name}"?`}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ask?.kind === "delete" ? "This removes the template and all its numbers (sent, replies, outcomes, win rate). " : "This resets the template's numbers to zero, and the new wording starts fresh. "}
+              The messages reps already sent stay counted in their daily totals and rep stats. Removed template numbers can't be recovered.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { const a = ask; setAsk(null); if (a) (a.kind === "delete" ? doDelete(a.t) : doSave(a.t)); }}>{ask?.kind === "delete" ? "Delete" : "Change and reset"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
