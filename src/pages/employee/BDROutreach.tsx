@@ -23,10 +23,12 @@ interface OLead {
   text_status: "new" | "sent"; text_sent_at: string | null; li_status: "new" | "requested" | "accepted" | "sent"; li_sent_at: string | null;
   result: string | null; outcome: string | null; outcome_channel: string | null;
 }
-interface Tpl { id: string; channel: "text" | "li_connect" | "li_message"; name: string; body: string; position: number; sent?: number; replied?: number }
+interface Tpl { id: string; channel: "text" | "li_connect" | "li_message"; name: string; body: string; position: number; sent?: number; replied?: number; booked?: number }
 const MIN_SAMPLE = 10;
 const rateOf = (t: Tpl) => (t.sent ? Math.round(((t.replied || 0) / t.sent) * 100) : 0);
-const tplLabel = (t: Tpl, bestId?: string) => !t.sent ? `${t.name} · no sends yet` : `${t.id === bestId ? "★ " : ""}${t.name} · ${t.sent} sent · ${rateOf(t)}% replied`;
+const convOf = (t: Tpl) => (t.sent ? ((t.booked || 0) / t.sent) * 100 : 0);
+const pct = (n: number) => (n >= 10 ? Math.round(n) : Math.round(n * 10) / 10);
+const tplLabel = (t: Tpl, bestId?: string) => !t.sent ? `${t.name} · no sends yet` : `${t.id === bestId ? "★ " : ""}${t.name} · ${t.sent} sent · ${rateOf(t)}% replied · ${pct(convOf(t))}% booked`;
 interface Send { channel: string; sent_at: string }
 type Channel = "text" | "linkedin";
 
@@ -95,7 +97,7 @@ export default function BDROutreach() {
       db.from("nl_text_settings").select("phone_type").eq("user_id", uid).maybeSingle(),
       db.rpc("nl_template_rates"),
     ]);
-    const rmap = new Map<string, { sent: number; replied: number }>(((rates.data as any[]) || []).map((r) => [r.template_id, { sent: Number(r.sent), replied: Number(r.replied) }]));
+    const rmap = new Map<string, { sent: number; replied: number; booked: number }>(((rates.data as any[]) || []).map((r) => [r.template_id, { sent: Number(r.sent), replied: Number(r.replied), booked: Number(r.booked) }]));
     if (l.error) toast({ title: "Couldn't load leads", description: l.error.message, variant: "destructive" });
     setLeads((l.data as OLead[]) || []); setSends((s.data as Send[]) || []); setTpls(((t.data as Tpl[]) || []).map((x) => ({ ...x, ...(rmap.get(x.id) || {}) })));
     if (st.data?.phone_type) setPhoneType(st.data.phone_type);
@@ -321,7 +323,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
   const options = tpls.filter((t) => t.channel === ch);
   const [tplId, setTplId] = useState<string>(() => options.length ? options[hash(l.id) % options.length].id : "");
   const tpl = options.find((t) => t.id === tplId) || options[0];
-  const bestId = options.filter((t) => (t.sent || 0) >= MIN_SAMPLE).sort((a, b) => rateOf(b) - rateOf(a))[0]?.id;
+  const bestId = options.filter((t) => (t.sent || 0) >= MIN_SAMPLE).filter((t) => (t.booked || 0) > 0).sort((a, b) => convOf(b) - convOf(a) || rateOf(b) - rateOf(a))[0]?.id;
   const vars = { first: firstNameOf(l.first_name, l.contact_name), rep, firm: shortFirm(l.firm_name), city: l.city ? l.city.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : "" };
   const filled = useMemo(() => (tpl ? fillTemplate(tpl.body, vars) : ""), [tpl, vars.first, vars.rep, vars.firm, vars.city]); // eslint-disable-line react-hooks/exhaustive-deps
   const [edit, setEdit] = useState<string | null>(null);
@@ -367,8 +369,8 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
             {edit !== null && <button type="button" className="text-[12.5px] text-white/60 underline" onClick={() => setEdit(null)}>Reset to template</button>}
           </div>
           <div className="text-[12px] text-white/70">
-            {!tpl.sent ? "No sends yet for this message." : <>This message: <b className="text-white">{tpl.sent}</b> sent, <b className="text-white">{rateOf(tpl)}%</b> replied{(tpl.sent || 0) < MIN_SAMPLE ? " (too early to trust)" : ""}.</>}
-            {bestId && <> ★ = best so far (at least {MIN_SAMPLE} sent).</>}
+            {!tpl.sent ? "No sends yet for this message." : <>This message: <b className="text-white">{tpl.sent}</b> sent, <b className="text-white">{rateOf(tpl)}%</b> replied, <b className="text-white">{pct(convOf(tpl))}%</b> booked{(tpl.sent || 0) < MIN_SAMPLE ? " (too early to trust)" : ""}.</>}
+            {bestId && <> ★ = best conversion (most booked per send, at least {MIN_SAMPLE} sent).</>}
           </div>
           <textarea value={body} onChange={(e) => setEdit(e.target.value)} rows={3}
             className="w-full resize-y rounded-lg border border-white/[0.14] bg-white/[0.03] px-3 py-2 text-[14px] leading-snug" aria-label="Message" />
