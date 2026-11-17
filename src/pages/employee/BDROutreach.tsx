@@ -27,10 +27,10 @@ interface Tpl { id: string; channel: "text" | "li_connect" | "li_message"; name:
 interface Send { channel: string; sent_at: string }
 type Channel = "text" | "linkedin";
 
-const surface = "rounded-2xl border border-white/[0.14] bg-[hsla(220,40%,9%,.78)]";
+const surface = "rounded-2xl border border-white/[0.2] bg-[hsla(220,40%,9%,.94)]";
 const btn = "inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold disabled:opacity-50";
-const accent = "border-[hsl(211,96%,56%)] bg-[hsla(211,96%,56%,.18)] text-[hsl(211,96%,80%)]";
-const quiet = "border-white/[0.16] text-white/85 hover:bg-white/[0.06]";
+const accent = "border-[hsl(211,96%,62%)] bg-[hsl(211,75%,24%)] text-white";
+const quiet = "border-white/30 bg-[hsl(220,40%,13%)] text-white hover:bg-[hsl(220,40%,19%)]";
 
 const copy = (t: string, what = "Message") => {
   try { navigator.clipboard.writeText(t).then(() => toast({ title: `${what} copied` }), () => toast({ title: "Couldn't copy", variant: "destructive" })); }
@@ -230,15 +230,16 @@ export default function BDROutreach() {
         {stat(`Texts scheduled, next ${PLAN_DAYS} days`, counts.textNext3, textCap * PLAN_DAYS)}
       </div>
 
+      <div className={surface + " grid gap-3 p-3"}>
       <div className="flex flex-wrap items-center gap-2">
         {([["text", "Text", MessageSquare], ["linkedin", "LinkedIn", Linkedin]] as const).map(([k, l, Icon]) => (
           <button key={k} type="button" onClick={() => setChannel(k)} aria-pressed={channel === k} className={btn + " " + (channel === k ? accent : quiet)}><Icon className="h-4 w-4" />{l}</button>
         ))}
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <input type="number" min={1} max={150} value={pullN} onChange={(e) => setPullN(Math.max(1, Math.min(150, Number(e.target.value) || 1)))}
-            className="w-20 rounded-lg border border-white/[0.16] bg-transparent px-2 py-1.5 text-[13px]" aria-label="How many leads to pull" />
+            className="w-20 rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white" aria-label="How many leads to pull" />
           <input value={pullState} onChange={(e) => setPullState(e.target.value.toUpperCase().slice(0, 2))} placeholder="State"
-            className="w-16 rounded-lg border border-white/[0.16] bg-transparent px-2 py-1.5 text-[13px]" aria-label="State (optional)" />
+            className="w-16 rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white placeholder:text-white/70" aria-label="State (optional)" />
           <button type="button" onClick={pull} disabled={pulling} className={btn + " " + accent}>{pulling && <Loader2 className="h-4 w-4 animate-spin" />}Pull leads</button>
           <InfoBtn onClick={() => setGuideAt(GUIDE.pull)} />
           {!isText && <button type="button" onClick={() => setImportOpen(true)} className={btn + " " + quiet}><Upload className="h-4 w-4" />Import LinkedIn leads</button>}
@@ -249,9 +250,10 @@ export default function BDROutreach() {
         {TABS.map((t) => (
           <button key={t.k} type="button" onClick={() => { setTab(t.k); setShown(25); }} aria-pressed={cur.k === t.k}
             className={"min-h-[34px] rounded-full border px-3.5 text-[13px] font-semibold " + (cur.k === t.k ? accent : quiet)}>
-            {t.l} <span className="opacity-70">{leads.filter((l) => t.match(l)).length}</span>
+            {t.l} <span className="opacity-90">{leads.filter((l) => t.match(l)).length}</span>
           </button>
         ))}
+      </div>
       </div>
 
       {loading ? <div className="py-10 text-center text-white/60"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>
@@ -380,7 +382,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
 
 function InfoBtn({ onClick, label = "More info" }: { onClick: () => void; label?: string }) {
   return (
-    <button type="button" onClick={onClick} className="inline-flex min-h-[28px] items-center gap-1 rounded-full border border-white/[0.16] px-2.5 text-[12px] font-semibold text-white/75 hover:bg-white/[0.06]">
+    <button type="button" onClick={onClick} className="inline-flex min-h-[28px] items-center gap-1 rounded-full border border-white/30 bg-[hsl(220,40%,13%)] px-2.5 text-[12px] font-semibold text-white hover:bg-[hsl(220,40%,19%)]">
       <HelpCircle className="h-3.5 w-3.5" />{label}
     </button>
   );
