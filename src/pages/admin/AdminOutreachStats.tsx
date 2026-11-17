@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { Loader2, MessageSquare, Plus, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 /** Admin: text + LinkedIn outreach results per rep and per template, and the template editor. */
-interface RepRow { rep_user_id: string; name: string; texts: number; li_requests: number; li_messages: number; scheduled: number; replied: number; interested: number; booked: number; leads_touched: number }
-interface TplRow { id: string; name: string; channel: string; active: boolean; sent: number; replied: number; interested: number; booked: number }
+interface RepRow { rep_user_id: string; name: string; texts: number; li_requests: number; li_messages: number; scheduled: number; replied: number; interested: number; booked: number; won: number; leads_touched: number }
+interface TplRow { id: string; name: string; channel: string; active: boolean; sent: number; replied: number; interested: number; booked: number; won: number; outcomes: Record<string, number> }
 interface Tpl { id: string; channel: string; name: string; body: string; active: boolean; position: number }
 const CH: Record<string, string> = { text: "Text", li_connect: "LinkedIn connect note", li_message: "LinkedIn message" };
 const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)}%` : "—");
@@ -19,6 +19,8 @@ export default function AdminOutreachStats() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Record<string, Tpl>>({});
   const [nw, setNw] = useState({ channel: "text", name: "", body: "" });
+  const [open, setOpen] = useState<string | null>(null);
+  const [chan, setChan] = useState("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,25 +74,43 @@ export default function AdminOutreachStats() {
           <section className={card + " overflow-x-auto"}>
             <h2 className="mb-2 font-bold">By rep</h2>
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground"><tr><th className="py-1">Rep</th><th>Texts</th><th>LI req.</th><th>LI msgs</th><th>Scheduled</th><th>Replied</th><th>Response</th><th>Interested</th><th>Booked</th></tr></thead>
+              <thead className="text-left text-xs text-muted-foreground"><tr><th className="py-1">Rep</th><th>Texts</th><th>LI req.</th><th>LI msgs</th><th>Scheduled</th><th>Replied</th><th>Response</th><th>Interested</th><th>Booked</th><th>Won</th></tr></thead>
               <tbody>
-                {reps.length === 0 && <tr><td colSpan={9} className="py-3 text-muted-foreground">No sends in this range yet.</td></tr>}
+                {reps.length === 0 && <tr><td colSpan={10} className="py-3 text-muted-foreground">No sends in this range yet.</td></tr>}
                 {reps.map((r) => (
                   <tr key={r.rep_user_id} className="border-t border-border"><td className="py-1.5 font-medium">{r.name}</td><td>{r.texts}</td><td>{r.li_requests}</td><td>{r.li_messages}</td><td>{r.scheduled}</td>
-                    <td>{r.replied}</td><td>{pct(r.replied, r.leads_touched)}</td><td>{r.interested}</td><td>{r.booked}</td></tr>
+                    <td>{r.replied}</td><td>{pct(r.replied, r.leads_touched)}</td><td>{r.interested}</td><td>{r.booked}</td><td>{r.won}</td></tr>
                 ))}
               </tbody>
             </table>
           </section>
 
           <section className={card + " overflow-x-auto"}>
-            <h2 className="mb-2 font-bold">By template</h2>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-bold">By template</h2>
+              <select value={chan} onChange={(e) => setChan(e.target.value)} className={inp} aria-label="Channel"><option value="all">All channels</option>{Object.entries(CH).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            </div>
+            <p className="mb-2 text-xs text-muted-foreground">Tap a row to see every outcome for that template. Won = the lead reached Won in the pipeline. Turning a template off keeps all its history.</p>
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground"><tr><th className="py-1">Template</th><th>Channel</th><th>Sent</th><th>Replied</th><th>Response</th><th>Interested</th><th>Booked</th></tr></thead>
+              <thead className="text-left text-xs text-muted-foreground"><tr><th className="py-1">Template</th><th>Channel</th><th>Sent</th><th>Replied</th><th>Response</th><th>Interested</th><th>Booked</th><th>Won</th><th>Win rate</th></tr></thead>
               <tbody>
-                {(stats?.templates || []).map((t) => (
-                  <tr key={t.id} className="border-t border-border"><td className="py-1.5 font-medium">{t.name}{!t.active && <span className="ml-1 text-xs text-muted-foreground">(off)</span>}</td><td>{CH[t.channel]}</td><td>{t.sent}</td><td>{t.replied}</td><td>{pct(t.replied, t.sent)}</td><td>{t.interested}</td><td>{t.booked}</td></tr>
-                ))}
+                {(stats?.templates || []).filter((t) => chan === "all" || t.channel === chan).map((t) => {
+                  const oc = Object.entries(t.outcomes || {}).sort((a, b) => b[1] - a[1]);
+                  return (
+                    <Fragment key={t.id}>
+                      <tr className="cursor-pointer border-t border-border hover:bg-muted/40" onClick={() => setOpen(open === t.id ? null : t.id)}>
+                        <td className="py-1.5 font-medium">{t.name}{!t.active && <span className="ml-1 text-xs text-muted-foreground">(off)</span>}</td><td>{CH[t.channel]}</td><td>{t.sent}</td><td>{t.replied}</td><td>{pct(t.replied, t.sent)}</td><td>{t.interested}</td><td>{t.booked}</td><td>{t.won}</td><td>{pct(t.won, t.sent)}</td>
+                      </tr>
+                      {open === t.id && (
+                        <tr className="bg-muted/30"><td colSpan={9} className="px-2 py-2">
+                          {oc.length === 0 ? <span className="text-xs text-muted-foreground">No logged outcomes yet.</span> : (
+                            <div className="flex flex-wrap gap-1.5">{oc.map(([o, n]) => <span key={o} className="rounded-full border border-border px-2 py-0.5 text-xs">{o}: <b>{n}</b> <span className="text-muted-foreground">({pct(n, t.sent)})</span></span>)}</div>
+                          )}
+                        </td></tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </section>
