@@ -187,6 +187,8 @@ export default function BDRDialer() {
     { title: string; description: string; confirmLabel: string; resolve: (v: boolean) => void } | null
   >(null);
   const [detailsByLead, setDetailsByLead] = useState<Record<string, DialerLeadDetails>>({});
+  // Firms a teammate (or I) already texted / messaged on LinkedIn — shown as a flag so nobody calls them cold.
+  const [textFlags, setTextFlags] = useState<Record<string, { rep: string; mine: boolean; result: string | null }>>({});
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   // Do-not-call numbers among the rep's own (non-pool) leads, as 10-digit strings.
   const [dncDigits, setDncDigits] = useState<Set<string>>(new Set());
@@ -263,6 +265,15 @@ export default function BDRDialer() {
         }
       }
       // Batch-load pool-lead details (decision makers, firm intel, call history) in one RPC.
+      const firmIds = Array.from(new Set((leadRows || []).map((l: any) => l.pool_firm_id).filter(Boolean))) as string[];
+      (async () => {
+        const merged: Record<string, any> = {};
+        for (let i = 0; i < firmIds.length; i += 400) {
+          const { data } = await (supabase as any).rpc("nl_text_flags", { _firm_ids: firmIds.slice(i, i + 400) });
+          if (data) Object.assign(merged, data);
+        }
+        setTextFlags(merged);
+      })().catch(() => {});
       const poolIds = (leadRows || []).filter((l: any) => l.pool_firm_id).map((l: any) => l.id);
       if (poolIds.length) fetchDetails(poolIds);
       setLoading(false);
@@ -995,6 +1006,14 @@ export default function BDRDialer() {
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug min-w-[200px]" style={{ background: "hsl(215,35%,8%)" }}>
                       {lead.business_name}
+                      {lead.pool_firm_id && textFlags[lead.pool_firm_id] && (
+                        <div className="mt-1">
+                          <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(38,95%,58%,.16)", color: "hsl(38,95%,70%)" }}
+                            title="This firm was already messaged by text or LinkedIn">
+                            Texted by {textFlags[lead.pool_firm_id].mine ? "you" : textFlags[lead.pool_firm_id].rep}
+                          </span>
+                        </div>
+                      )}
                       {lead.niche && (
                         <div className="mt-1">
                           <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}>{lead.niche}</span>

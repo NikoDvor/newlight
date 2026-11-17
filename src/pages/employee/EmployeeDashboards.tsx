@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { GenericPipelineDashboard } from "@/components/employee/GenericPipelineDashboard";
+import { OutreachDashboardCard } from "@/components/employee/OutreachDashboardCard";
 import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
 
@@ -120,6 +121,7 @@ export function BDRDashboard() {
   return (
     <div className="space-y-6">
       <Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} />
+      <OutreachDashboardCard />
       <GenericPipelineDashboard />
     </div>
   );
