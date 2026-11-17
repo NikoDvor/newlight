@@ -215,7 +215,7 @@ export default function BDROutreach() {
           <div>
             <div className="mb-1 font-semibold">How it works</div>
             <ol className="ml-5 list-decimal space-y-1 text-white/85">
-              <li>Pull leads. Each lead is yours once pulled, and no one else can text them.</li>
+              <li>Pull leads. A lead you pull is yours for texting only, so no other rep texts them. It stays in the Dialer and can still be called.</li>
               <li>Pick a template. Name, firm and your name fill in. Edit it if you want.</li>
               <li>Tap <b>Text</b> (opens Messages) or <b>Copy + open profile</b> (LinkedIn), then send it yourself.</li>
               <li>Tap <b>Sent</b> in the app. It counts toward your daily limit.</li>
