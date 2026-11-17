@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SCHEDULE_HELP, type PhoneType } from "@/lib/outreach";
@@ -7,10 +8,10 @@ import { SCHEDULE_HELP, type PhoneType } from "@/lib/outreach";
  * Click-by-click walkthrough for the Text & LinkedIn module. Written for someone who has never seen it.
  * Every line is tagged: ✋ (the rep does it) or 🤖 (the app does it). "Advanced" shows the technical detail.
  */
-export const GUIDE = { big: 0, phone: 1, pull: 2, card: 3, text: 4, schedule: 5, landline: 6, liConnect: 7, liMessage: 8, import: 9, limits: 10, outcome: 11, book: 12, home: 13, textFlow: 14, liFlow: 15, who: 16 } as const;
+export const GUIDE = { big: 0, phone: 1, pull: 2, card: 3, text: 4, schedule: 5, landline: 6, liConnect: 7, liMessage: 8, import: 9, limits: 10, outcome: 11, book: 12, home: 13, textFlow: 14, liFlow: 15, second: 16, who: 17 } as const;
 
 interface Line { t: string; m: boolean; h?: boolean; p?: boolean }
-interface Step { title: string; app: string; lines: Line[]; remember?: string; adv?: string[]; flow?: boolean; restart?: boolean; list?: boolean }
+interface Step { title: string; app: string; lines: Line[]; remember?: string; adv?: string[]; flow?: boolean; restart?: boolean; list?: boolean; links?: { label: string; to: string }[] }
 
 const M = (t: string): Line => ({ t, m: true });
 const A = (t: string): Line => ({ t, m: false });
@@ -361,6 +362,34 @@ function steps(phone: PhoneType): Step[] {
       ],
     },
     {
+      title: "Second message: your reply",
+      flow: true,
+      list: true,
+      app: "The first message is a template. Your second message, the reply after they answer, can't have a complete guide, because every reply is different. Use the BDR Script as inspiration, not word for word.",
+      links: [
+        { label: "Open the BDR Script", to: "/employee/training/m/6/c/2" },
+        { label: "Open Objection Handling", to: "/employee/training/m/7" },
+      ],
+      lines: [
+        H("How to look at it"),
+        P("You are the front desk, not the doctor."),
+        P("When someone walks into a doctor's office, the front desk person does not pretend to be the doctor. They don't diagnose or explain the treatment. They welcome the person and set up the appointment with the doctor."),
+        P("You do the same. You are not here to explain everything, sell, or answer every question. Your job is to guide them to the owner and set up the meeting for them. The owner is the doctor."),
+        H("What to do"),
+        M("Read their reply and answer it in one or two sentences."),
+        M("Open the BDR Script for ideas on how to get them to say yes to a meeting. Take the idea, then say it your own way."),
+        M("If they push back, open the matching chapter in Objection Handling."),
+        M("Offer a time for a meeting with the owner, like \"Would tomorrow or Thursday work?\""),
+        M("When they agree, tap Book in the app."),
+        H("What not to do"),
+        P("Don't copy the call script into a text word for word. It is too long."),
+        P("Don't go deep on pricing or how it all works. Say the owner will cover it on the call."),
+        H("What the app does"),
+        A("Nothing for this step. The app can't write your second message. It keeps track once you log the outcome and tap Book."),
+      ],
+      adv: ["Training links: Module 6 (The Sales System), chapter 2 is the BDR Script. Module 7 is Objection Handling. The text and LinkedIn replies are not tracked by template, only the outcome you log."],
+    },
+    {
       title: "Who does what",
       app: "Here is everything in one place. ✋ means you do it. 🤖 means the app does it.",
       lines: [
@@ -450,6 +479,11 @@ export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { 
           <div className="rounded-xl border border-white/[0.14] bg-white/[0.04] p-3">
             <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide opacity-70">Click by click</div>
             <ul className="grid gap-2 text-[14px] leading-snug">{s.lines.map((l, k) => row(l, k))}</ul>
+          </div>
+        )}
+        {s.links && (
+          <div className="flex flex-wrap gap-2">
+            {s.links.map((x) => <Link key={x.to} to={x.to} onClick={() => onOpenChange(false)} className="inline-flex min-h-[34px] items-center rounded-lg border border-[hsl(211,96%,56%)] bg-[hsla(211,96%,56%,.18)] px-3 text-[13px] font-semibold">{x.label}</Link>)}
           </div>
         )}
         {s.remember && <p className="rounded-xl border border-[hsl(38,95%,58%)]/40 bg-[hsla(38,95%,58%,.08)] p-3 text-[13.5px]"><b>Remember: </b>{s.remember}</p>}

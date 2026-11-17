@@ -412,6 +412,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
             {OUTREACH_OUTCOMES.map((g) => <optgroup key={g.group} label={g.group}>{g.items.map((o) => <option key={o} value={o}>{o}</option>)}</optgroup>)}
           </select>
           <InfoBtn onClick={() => info(GUIDE.outcome)} />
+          {(tab === "wait" || tab === "replied") && <button type="button" onClick={() => info(GUIDE.second)} className={btn + " " + quiet}><HelpCircle className="h-4 w-4" />Second message guide</button>}
           {!isText && tab === "req" && <button type="button" disabled={busy} className={btn + " " + accent} title="They accepted my request" onClick={() => onAccept(l)}><Check className="h-4 w-4" />Accepted</button>}
           {!isText && tab === "req" && <InfoBtn onClick={() => info(GUIDE.liMessage)} label="What is Accepted?" />}
           {(l.result === "replied" || l.result === "booked") && <button type="button" disabled={busy} className={btn + " " + accent} onClick={() => onBook(l)}>{l.lead_id ? "Open in pipeline" : "Book"}</button>}
