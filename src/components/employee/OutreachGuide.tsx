@@ -5,7 +5,7 @@ import { SCHEDULE_HELP, type PhoneType } from "@/lib/outreach";
 
 /**
  * Click-by-click walkthrough for the Text & LinkedIn module. Written for someone who has never seen it.
- * Every line is tagged: 🖐️ Manual (you do it) or 🤖 Automated (the app does it). "Advanced" shows the technical detail.
+ * Every line is tagged: ✋ (the rep does it) or 🤖 (the app does it). "Advanced" shows the technical detail.
  */
 export const GUIDE = { big: 0, phone: 1, pull: 2, card: 3, text: 4, schedule: 5, landline: 6, liConnect: 7, liMessage: 8, import: 9, limits: 10, outcome: 11, book: 12, home: 13, textFlow: 14, liFlow: 15, who: 16 } as const;
 
@@ -26,14 +26,14 @@ function steps(phone: PhoneType): Step[] {
       restart: true,
       app: "This page helps you text and LinkedIn-message advisors. You send every message yourself from your own phone and LinkedIn. The app gets everything ready, keeps count, and tracks what works. Nothing here is a robot.",
       lines: [
-        H("What you do (🖐️ Manual)"),
+        H("What you do ✋"),
         M("Pull a list of people."),
         M("Tap Text (or Copy + open profile on LinkedIn)."),
         M("Press send in Messages or LinkedIn."),
         M("Tap Sent in the app so it knows."),
         M("When someone writes back, tap what happened."),
         M("If they want a meeting, tap Book."),
-        H("What the app does for you (🤖 Automated)"),
+        H("What the app does for you 🤖"),
         A("Picks the right people and skips anyone who said stop."),
         A("Writes the message with their name filled in."),
         A("Opens Messages or LinkedIn and copies the message."),
@@ -362,7 +362,7 @@ function steps(phone: PhoneType): Step[] {
     },
     {
       title: "Who does what",
-      app: "Here is everything in one place. 🖐️ Manual means you do it. 🤖 Automated means the app does it.",
+      app: "Here is everything in one place. ✋ means you do it. 🤖 means the app does it.",
       lines: [
         M("Pick your phone type."),
         M("Choose how many leads and tap Pull leads."),
@@ -422,14 +422,13 @@ export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { 
           <DialogTitle className="text-xl">{s.title}</DialogTitle>
         </DialogHeader>
         <p className="text-[14.5px] leading-relaxed">{s.app}</p>
-        {!s.list && <div className="flex flex-wrap items-center gap-2 text-[12px]">{badge(true)}<span className="opacity-80">you do it</span>{badge(false)}<span className="opacity-80">the app does it</span></div>}
-        {s.list ? (
+        {!isWho ? (
           <div className="rounded-xl border border-white/[0.14] bg-white/[0.04] p-3">
             <div className="mb-2 text-[13px] font-semibold">🤖 = the app does it · ✋ = the rep does it</div>
             <ul className="grid gap-1.5 text-[14px] leading-snug">
               {s.lines.map((l, k) => l.h
                 ? <li key={k} className="mt-3 text-[15px] font-bold first:mt-0">{l.t}</li>
-                : <li key={k} className="flex items-start gap-2"><span className="shrink-0">{l.m ? "✋" : "🤖"}</span><span>{l.t}</span></li>)}
+                : <li key={k} className="flex items-start gap-2"><span className="shrink-0">{l.p ? "•" : l.m ? "✋" : "🤖"}</span><span>{l.t}</span></li>)}
             </ul>
           </div>
         ) : s.flow ? (
@@ -439,11 +438,11 @@ export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { 
         ) : isWho ? (
           <div className="grid gap-3">
             <div className="rounded-xl border border-[hsl(38,95%,58%)]/40 bg-[hsla(38,95%,58%,.06)] p-3">
-              <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide">🖐️ Manual: you</div>
+              <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide">✋ The rep does it</div>
               <ul className="grid gap-1.5 text-[14px] leading-snug">{manual.map((l, k) => <li key={k}>• {l.t}</li>)}</ul>
             </div>
             <div className="rounded-xl border border-[hsl(211,96%,62%)]/40 bg-[hsla(211,96%,56%,.07)] p-3">
-              <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide">🤖 Automated: the app</div>
+              <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide">🤖 The app does it</div>
               <ul className="grid gap-1.5 text-[14px] leading-snug">{auto.map((l, k) => <li key={k}>• {l.t}</li>)}</ul>
             </div>
           </div>
