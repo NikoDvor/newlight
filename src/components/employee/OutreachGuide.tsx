@@ -73,7 +73,7 @@ function steps(phone: PhoneType): Step[] {
     },
     {
       title: sched.title,
-      app: "You can have your phone send the text later. Plan 3 days at a time. Schedule Monday to Wednesday by Monday at 7:30am, so do it Sunday or early Monday. Schedule Thursday and Friday by Thursday at 7:30am, so do it Wednesday. The app reminds you on your home page. It also suggests times: weekdays, 9 to 11:30 and 1 to 3:30 where the person lives, about 6 minutes apart.",
+      app: "You can have your phone send the text later. Plan 3 days at a time. Schedule Monday to Wednesday by Monday at 7:30am, so do it Sunday or early Monday. Schedule Thursday and Friday by Wednesday at 7:30am. You can do it Tuesday or early Wednesday. The app reminds you on your home page. It also suggests times: Monday to Friday, 9 to 11:30 and 1 to 3:30 where the person lives, about 6 minutes apart.",
       clicks: [...sched.steps.map((s, i) => `${i + 1}. ${s}`)],
       remember: sched.note,
     },
@@ -167,7 +167,7 @@ function steps(phone: PhoneType): Step[] {
         "1. Open the home page when you log in.",
         "2. Find the Text & LinkedIn today box.",
         "3. It shows each goal and how many are left. A green check means you hit it.",
-        "4. From Sunday to Tuesday a yellow reminder says to schedule Monday to Wednesday texts by Monday 7:30am. From Wednesday to Friday it says to schedule Thursday and Friday texts by Thursday 7:30am. It says Overdue if the time passed. It goes away when you've planned enough.",
+        "4. On Sunday and Monday a yellow reminder says to schedule Monday to Wednesday texts by Monday 7:30am. From Tuesday on it says to schedule Thursday and Friday texts by Wednesday 7:30am. It says Overdue if the time passed. It goes away when you've planned enough.",
         "5. Tap Open outreach to jump back here.",
       ],
     },

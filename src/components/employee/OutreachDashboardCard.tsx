@@ -7,7 +7,7 @@ import { DEFAULT_CAPS, canSchedule, capForPhone, laDay, type PhoneType } from "@
 
 /**
  * Rep dashboard card: today's marks for texts + LinkedIn, and the Monday / Wednesday "schedule your texts" reminder.
- * Mon–Wed texts are due scheduled by Monday 7:30am (shown Sun–Tue); Thu–Fri texts by Thursday 7:30am (shown Wed–Fri). In-app only (no push yet).
+ * Mon–Wed texts are scheduled by Monday 7:30am; Thu–Fri texts by Wednesday 7:30am. In-app only (no push yet).
  */
 const PT = "America/Los_Angeles";
 const dow = (d: Date) => new Intl.DateTimeFormat("en-US", { timeZone: PT, weekday: "short" }).format(d);
@@ -42,23 +42,25 @@ export function OutreachDashboardCard() {
     { label: "LinkedIn messages", used: sentToday("li_message"), cap: DEFAULT_CAPS.li_message },
   ];
 
-  // Planning deadlines (Pacific): Mon–Wed texts scheduled by Monday 7:30am; Thu–Fri texts scheduled by Thursday 7:30am.
+  // Planning deadlines (Pacific): Mon–Wed texts scheduled by Monday 7:30am; Thu–Fri texts scheduled by Wednesday 7:30am.
   const la = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: PT, weekday: "short", hour: "numeric", minute: "numeric", hour12: false }).formatToParts(now).map((p) => [p.type, p.value]));
   const dayIdx = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(la.weekday);
   const mins = (Number(la.hour) % 24) * 60 + Number(la.minute);
   const dayOf = (offset: number) => laDay(new Date(now.getTime() + offset * 86400000));
-  let plan: { label: string; planned: number; target: number; deadline: string; overdue: boolean } | null = null;
+  type Plan = { label: string; planned: number; target: number; deadline: string; overdue: boolean };
+  const mk = (label: string, offsets: number[], deadline: string, overdue: boolean): Plan => {
+    const days = offsets.map((o) => dayOf(o));
+    return { label, planned: data.sends.filter((x) => x.channel === "text" && days.includes(laDay(x.sent_at))).length, target: offsets.length * textCap, deadline, overdue };
+  };
+  let plan: Plan | null = null;
   if (canSchedule(data.phone)) {
-    // Plan A shows Sun → Tue; Plan B shows Wed → Thu (and Fri if still not done).
-    const mk = (label: string, offsets: number[], deadline: string, overdue: boolean) => {
-      const days = offsets.map((o) => dayOf(o));
-      plan = { label, planned: data.sends.filter((x) => x.channel === "text" && days.includes(laDay(x.sent_at))).length, target: offsets.length * textCap, deadline, overdue };
-    };
+    // Plan A (Mon–Wed) shows Sun, Mon, and Tue if unfinished. Plan B (Thu–Fri) shows Tue, Wed, Thu, and Fri if unfinished.
     const monOff = 1 - dayIdx, thuOff = 4 - dayIdx;
-    if (dayIdx === 0 || dayIdx === 1 || dayIdx === 2) mk("Schedule Mon–Wed texts", [monOff, monOff + 1, monOff + 2], "Monday 7:30am", dayIdx === 2 || (dayIdx === 1 && mins >= 450));
-    else if (dayIdx === 3 || dayIdx === 4 || dayIdx === 5) mk("Schedule Thu–Fri texts", [thuOff, thuOff + 1], "Thursday 7:30am", dayIdx === 5 || (dayIdx === 4 && mins >= 450));
+    const A = dayIdx <= 2 ? mk("Schedule Mon–Wed texts", [monOff, monOff + 1, monOff + 2], "Monday 7:30am", dayIdx === 2 || (dayIdx === 1 && mins >= 450)) : null;
+    const B = dayIdx >= 2 && dayIdx <= 5 ? mk("Schedule Thu–Fri texts", [thuOff, thuOff + 1], "Wednesday 7:30am", dayIdx >= 4 || (dayIdx === 3 && mins >= 450)) : null;
+    plan = A && A.planned < A.target ? A : B ?? A;
   }
-  const planDone = plan ? (plan as any).planned >= (plan as any).target : true;
+  const planDone = plan ? plan.planned >= plan.target : true;
 
   return (
     <section className="rounded-2xl border border-white/[0.14] bg-[hsla(220,40%,9%,.78)] p-4 text-white">
