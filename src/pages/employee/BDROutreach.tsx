@@ -235,7 +235,7 @@ export default function BDROutreach() {
         <h1 className="flex items-center gap-2 text-xl font-extrabold"><MessageSquare className="h-5 w-5 text-[hsl(211,96%,62%)]" />Outreach</h1>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => setGuideAt(GUIDE.big)} className={btn + " " + accent}><HelpCircle className="h-4 w-4" />How it works</button>
-          <button type="button" onClick={() => setGuideAt(isText ? GUIDE.textFlow : GUIDE.liFlow)} className={btn + " " + quiet}>{isText ? "Text" : "LinkedIn"}: all steps</button>
+          <button type="button" onClick={() => setGuideAt(isText ? GUIDE.textFlow : GUIDE.liFlow)} className={btn + " " + quiet}>{isText ? "Text" : "LinkedIn"}: step by step</button>
         </div>
       </header>
 
