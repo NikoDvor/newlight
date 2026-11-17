@@ -225,64 +225,70 @@ export default function BDROutreach() {
 
   return (
     <div className="mx-auto grid max-w-[1000px] gap-4 pb-20 text-white">
-      <header className={surface + " grid gap-1.5 px-5 py-4"}>
-        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">Text &amp; LinkedIn outreach</span>
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold"><MessageSquare className="h-6 w-6 text-[hsl(211,96%,62%)]" />Outreach</h1>
-        <p className="max-w-[70ch] text-[14.5px] text-white/85">Pull leads, tap <b>Text</b> or <b>Copy + open profile</b>, send it yourself from your own phone or LinkedIn, then log how they reply. The app never sends anything for you.</p>
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          <label className="text-[13px] text-white/70" htmlFor="phoneType">My phone</label>
-          <select id="phoneType" value={phoneType} onChange={(e) => savePhone(e.target.value as PhoneType)}
-            className="rounded-lg border border-white/[0.16] bg-[hsl(220,35%,12%)] px-2.5 py-1.5 text-[13px] text-white">
-            {PHONE_TYPES.map((p) => <option key={p.k} value={p.k}>{p.label}</option>)}
-          </select>
-          <InfoBtn onClick={() => setGuideAt(GUIDE.phone)} />
-          <button type="button" onClick={() => setGuideAt(GUIDE.big)} className={btn + " " + accent}><HelpCircle className="h-4 w-4" />More information: step by step</button>
+      <header className={surface + " flex flex-wrap items-center justify-between gap-2 px-4 py-3"}>
+        <h1 className="flex items-center gap-2 text-xl font-extrabold"><MessageSquare className="h-5 w-5 text-[hsl(211,96%,62%)]" />Outreach</h1>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setGuideAt(GUIDE.big)} className={btn + " " + accent}><HelpCircle className="h-4 w-4" />How it works</button>
         </div>
       </header>
 
-
-      <div className="-mb-2 flex justify-end"><InfoBtn onClick={() => setGuideAt(GUIDE.limits)} label="What are these numbers?" /></div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {stat("Texts sent today", counts.text, textCap)}
-        {stat("LinkedIn requests today", counts.li_connect, DEFAULT_CAPS.li_connect)}
-        {stat("LinkedIn messages today", counts.li_message, DEFAULT_CAPS.li_message)}
-        {stat(`Texts scheduled, next ${PLAN_DAYS} days`, counts.textNext3, textCap * PLAN_DAYS)}
-      </div>
-
       <div className={surface + " grid gap-3 p-3"}>
-      <div className="flex flex-wrap items-center gap-2">
-        {([["text", "Text", MessageSquare], ["linkedin", "LinkedIn", Linkedin]] as const).map(([k, l, Icon]) => (
-          <button key={k} type="button" onClick={() => setChannel(k)} aria-pressed={channel === k} className={btn + " " + (channel === k ? accent : quiet)}><Icon className="h-4 w-4" />{l}</button>
-        ))}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <input type="number" min={1} max={150} value={pullN} onChange={(e) => setPullN(Math.max(1, Math.min(150, Number(e.target.value) || 1)))}
-            className="w-20 rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white" aria-label="How many leads to pull" />
-          <input value={pullState} onChange={(e) => setPullState(e.target.value.toUpperCase().slice(0, 2))} placeholder="State"
-            className="w-16 rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white placeholder:text-white/70" aria-label="State (optional)" />
-          <button type="button" onClick={pull} disabled={pulling} className={btn + " " + accent}>{pulling && <Loader2 className="h-4 w-4 animate-spin" />}Pull leads</button>
-          <InfoBtn onClick={() => setGuideAt(GUIDE.pull)} />
-          {!isText && <button type="button" onClick={() => setImportOpen(true)} className={btn + " " + quiet}><Upload className="h-4 w-4" />Import LinkedIn leads</button>}
+        <div className="grid grid-cols-2 gap-2">
+          {([["text", "Text", MessageSquare], ["linkedin", "LinkedIn", Linkedin]] as const).map(([k, l, Icon]) => (
+            <button key={k} type="button" onClick={() => setChannel(k)} aria-pressed={channel === k} className={btn + " min-h-[42px] text-[15px] " + (channel === k ? accent : quiet)}><Icon className="h-4 w-4" />{l}</button>
+          ))}
         </div>
-      </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {TABS.map((t) => (
-          <button key={t.k} type="button" onClick={() => { setTab(t.k); setShown(25); }} aria-pressed={cur.k === t.k}
-            className={"min-h-[34px] rounded-full border px-3.5 text-[13px] font-semibold " + (cur.k === t.k ? accent : quiet)}>
-            {t.l} <span className="opacity-90">{leads.filter((l) => t.match(l)).length}</span>
-          </button>
-        ))}
-      </div>
-      <div className="flex flex-wrap items-center gap-2 text-[13px] text-white/85">
-        <span>{TAB_HELP[channel][cur.k]}</span>
-        <InfoBtn onClick={() => setGuideAt(cur.k === "sched" ? GUIDE.schedule : cur.k === "msg" || cur.k === "req" ? GUIDE.liMessage : cur.k === "replied" ? GUIDE.book : cur.k === "wait" || cur.k === "done" ? GUIDE.outcome : cur.k === "nourl" ? GUIDE.liConnect : GUIDE.card)} label="Explain this tab" />
-      </div>
+        <div className="grid gap-2" style={{ gridTemplateColumns: isText ? "1fr" : "1fr 1fr" }}>
+          {isText ? stat("Texts sent today", counts.text, textCap) : <>
+            {stat("Requests today", counts.li_connect, DEFAULT_CAPS.li_connect)}
+            {stat("Messages today", counts.li_message, DEFAULT_CAPS.li_message)}
+          </>}
+        </div>
+        {isText && <div className="flex items-center justify-between text-[12.5px] text-white/75"><span>Scheduled, next {PLAN_DAYS} days: <b className="text-white">{counts.textNext3} / {textCap * PLAN_DAYS}</b></span><InfoBtn onClick={() => setGuideAt(GUIDE.limits)} label="What are these numbers?" /></div>}
+        {!isText && <div className="flex justify-end"><InfoBtn onClick={() => setGuideAt(GUIDE.limits)} label="What are these numbers?" /></div>}
+
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" style={{ scrollbarWidth: "none" }}>
+          {TABS.map((t) => (
+            <button key={t.k} type="button" onClick={() => { setTab(t.k); setShown(25); }} aria-pressed={cur.k === t.k}
+              className={"min-h-[36px] shrink-0 whitespace-nowrap rounded-full border px-3.5 text-[13px] font-semibold " + (cur.k === t.k ? accent : quiet)}>
+              {t.l} <span className="opacity-90">{leads.filter((l) => t.match(l)).length}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex items-start gap-2 text-[13px] text-white/85">
+          <span className="flex-1">{TAB_HELP[channel][cur.k]}</span>
+          <InfoBtn onClick={() => setGuideAt(cur.k === "sched" ? GUIDE.schedule : cur.k === "msg" || cur.k === "req" ? GUIDE.liMessage : cur.k === "replied" ? GUIDE.book : cur.k === "wait" || cur.k === "done" ? GUIDE.outcome : cur.k === "nourl" ? GUIDE.liConnect : GUIDE.card)} label="Explain this tab" />
+        </div>
+
+        <details key={String(!loading && leads.filter(mine).length === 0)} open={!loading && leads.filter(mine).length === 0} className="rounded-xl border border-white/[0.16] bg-[hsl(220,40%,12%)] open:pb-3">
+          <summary className="flex min-h-[40px] cursor-pointer list-none items-center justify-between px-3 text-[13.5px] font-semibold">Get more leads &amp; settings<span className="text-white/60">▾</span></summary>
+          <div className="grid gap-3 px-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input type="number" min={1} max={150} value={pullN} onChange={(e) => setPullN(Math.max(1, Math.min(150, Number(e.target.value) || 1)))}
+                className="w-20 rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white" aria-label="How many leads to pull" />
+              <input value={pullState} onChange={(e) => setPullState(e.target.value.toUpperCase().slice(0, 2))} placeholder="State"
+                className="w-16 rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white placeholder:text-white/70" aria-label="State (optional)" />
+              <button type="button" onClick={pull} disabled={pulling} className={btn + " " + accent}>{pulling && <Loader2 className="h-4 w-4 animate-spin" />}Pull leads</button>
+              <InfoBtn onClick={() => setGuideAt(GUIDE.pull)} label="About pulling leads" />
+            </div>
+            {!isText && <button type="button" onClick={() => setImportOpen(true)} className={btn + " " + quiet + " justify-self-start"}><Upload className="h-4 w-4" />Import LinkedIn leads</button>}
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-[13px] text-white/70" htmlFor="phoneType">My phone</label>
+              <select id="phoneType" value={phoneType} onChange={(e) => savePhone(e.target.value as PhoneType)}
+                className="rounded-lg border border-white/[0.16] bg-[hsl(220,35%,12%)] px-2.5 py-1.5 text-[13px] text-white">
+                {PHONE_TYPES.map((p) => <option key={p.k} value={p.k}>{p.label}</option>)}
+              </select>
+              <InfoBtn onClick={() => setGuideAt(GUIDE.phone)} label="About phone type" />
+            </div>
+          </div>
+        </details>
       </div>
 
       {loading ? <div className="py-10 text-center text-white/60"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>
         : rows.length === 0 ? (
           <div className={surface + " px-5 py-8 text-center text-[14px] text-white/75"}>
-            {leads.filter(mine).length === 0 ? <>No leads yet. Set how many you want and tap <b>Pull leads</b>.</> : <>Nothing here{cur.k === "todo" && todoCount === 0 ? ". Pull more leads to keep going" : ""}.</>}
+            {leads.filter(mine).length === 0 ? <>No leads yet. Open <b>Get more leads</b> above and tap <b>Pull leads</b>.</> : <>Nothing here{cur.k === "todo" && todoCount === 0 ? ". Pull more leads to keep going" : ""}.</>}
           </div>
         ) : (
           <div className="grid gap-3">
@@ -408,8 +414,8 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
 
 function InfoBtn({ onClick, label = "More info" }: { onClick: () => void; label?: string }) {
   return (
-    <button type="button" onClick={onClick} className="inline-flex min-h-[28px] items-center gap-1 rounded-full border border-white/30 bg-[hsl(220,40%,13%)] px-2.5 text-[12px] font-semibold text-white hover:bg-[hsl(220,40%,19%)]">
-      <HelpCircle className="h-3.5 w-3.5" />{label}
+    <button type="button" onClick={onClick} aria-label={label} title={label} className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/30 bg-[hsl(220,40%,13%)] text-white hover:bg-[hsl(220,40%,19%)]">
+      <HelpCircle className="h-4 w-4" />
     </button>
   );
 }
