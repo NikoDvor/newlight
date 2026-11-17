@@ -7,13 +7,14 @@ import { SCHEDULE_HELP, type PhoneType } from "@/lib/outreach";
  * Click-by-click walkthrough for the Text & LinkedIn module. Written for someone who has never seen it.
  * Every line is tagged: 🖐️ Manual (you do it) or 🤖 Automated (the app does it). "Advanced" shows the technical detail.
  */
-export const GUIDE = { big: 0, phone: 1, pull: 2, card: 3, text: 4, schedule: 5, landline: 6, liConnect: 7, liMessage: 8, import: 9, limits: 10, outcome: 11, book: 12, home: 13, who: 14 } as const;
+export const GUIDE = { big: 0, phone: 1, pull: 2, card: 3, text: 4, schedule: 5, landline: 6, liConnect: 7, liMessage: 8, import: 9, limits: 10, outcome: 11, book: 12, home: 13, textFlow: 14, liFlow: 15, who: 16 } as const;
 
-interface Line { t: string; m: boolean }
-interface Step { title: string; app: string; lines: Line[]; remember?: string; adv?: string[] }
+interface Line { t: string; m: boolean; h?: boolean }
+interface Step { title: string; app: string; lines: Line[]; remember?: string; adv?: string[]; flow?: boolean }
 
 const M = (t: string): Line => ({ t, m: true });
 const A = (t: string): Line => ({ t, m: false });
+const H = (t: string): Line => ({ t, m: true, h: true });
 
 function steps(phone: PhoneType): Step[] {
   const sched = SCHEDULE_HELP[phone];
@@ -246,6 +247,103 @@ function steps(phone: PhoneType): Step[] {
       adv: ["The reminder is only on screen. There are no phone push notifications yet."],
     },
     {
+      title: "Text: every step in order",
+      flow: true,
+      app: "This is the whole text journey from the first tap to the booked meeting, in the order it happens.",
+      lines: [
+        H("Set up (one time)"),
+        M("Pick your phone type under Get more leads & settings."),
+        A("The app saves it and sets your daily limit (40 on iPhone, 25 on Android)."),
+        H("Get leads (every day)"),
+        M("Open Outreach and tap the Text button."),
+        M("Open Get more leads & settings, type how many (40), leave State empty or type two letters, and tap Pull leads."),
+        A("The app picks one person per firm with a phone number, owner first. It skips Stop numbers, repeats and Won or Lost firms."),
+        A("The cards appear in To text with the message already filled in."),
+        M("Read the card. Pick a different template or change any words if you want."),
+        H("Send it now"),
+        M("Tap the blue Text button."),
+        A("Messages opens with the number and message filled in, and the message is copied."),
+        M("Tap the send arrow in Messages."),
+        M("Go back and tap Sent."),
+        A("The app checks it is 8am to 8pm where they live, you are under your limit, and the firm has not been texted today."),
+        A("The app counts it and moves the card to Awaiting reply."),
+        H("Or send it later (plan Sunday or Monday, and Tuesday or Wednesday)"),
+        M("Tap Text."),
+        A("Messages opens with the number and message filled in."),
+        M("Schedule it on your phone: Send Later on iPhone iOS 18+, or hold the send arrow in Google Messages. Pick the time and confirm."),
+        A("The app suggests send times, 9 to 11:30 and 1 to 3:30 where they live, about 6 minutes apart."),
+        M("Back in the app, pick the same time under Schedule and tap Scheduled."),
+        A("The app counts it under Texts scheduled and moves the card to Scheduled."),
+        A("Your home page shows a yellow reminder until you have planned enough: Monday to Wednesday by Monday 7:30am, Thursday and Friday by Wednesday 7:30am."),
+        A("When the time passes, the card moves to Awaiting reply by itself."),
+        H("If the number doesn't work"),
+        M("Tap Landline."),
+        A("The app removes the send, counts it toward nothing and moves the lead to Done."),
+        H("When someone replies"),
+        M("Read the reply in Messages and answer it there."),
+        M("In the app, open Awaiting reply and tap Log outcome for that person."),
+        A("The app saves it and updates your numbers and that message's win rate."),
+        A("If you pick Stop, the number goes on Do Not Call for everyone."),
+        M("No answer after a few days? Pick No Reply."),
+        H("Book it"),
+        M("When they want to talk, tap Book and fill in the first form."),
+        A("The app creates the lead in your pipeline, or uses your existing Dialer lead."),
+        A("If the lead is later Won or Lost, it leaves every other rep's list."),
+        H("End of day"),
+        A("Your bar turns green when you hit 40 (25 on Android). Everything resets at midnight Pacific."),
+      ],
+      adv: [
+        "Pull: nl_text_pull('text'). Send: nl_text_send. Outcome: nl_text_outcome. Book: nl_text_book. All run in the database as you, after a rep check.",
+        "Scheduling lives on the phone. The app only stores the time you picked so it can count and remind you.",
+        "The app cannot see replies. Reply rate comes only from the outcomes you log.",
+      ],
+    },
+    {
+      title: "LinkedIn: every step in order",
+      flow: true,
+      app: "This is the whole LinkedIn journey from the first tap to the booked meeting, in the order it happens. LinkedIn cannot be scheduled, so you do all of it the same day.",
+      lines: [
+        H("Get leads (every day)"),
+        M("Open Outreach and tap the LinkedIn button."),
+        M("Open Get more leads & settings, type how many, and tap Pull leads. Or tap Import LinkedIn leads and choose your CSV file."),
+        A("The app picks one person per firm who has a LinkedIn link. It skips repeats and Won or Lost firms."),
+        A("On an import, the app reads the file, shows a preview, adds the cards and skips repeats and bad links."),
+        A("The cards appear in To connect with the short note already filled in."),
+        H("Step 1: ask to connect (goal 20 a day)"),
+        M("On a card, tap Copy + open profile."),
+        A("The app copies the note and opens their LinkedIn profile."),
+        M("On LinkedIn, tap Connect, then Add a note, then paste, then Send."),
+        M("Go back and tap Request sent."),
+        A("The app counts it and moves the card to Requested."),
+        H("Wait for them to accept"),
+        M("Check LinkedIn notifications or My Network for accepted requests."),
+        M("In the app, open Requested and tap Accepted for each one."),
+        A("The app moves them to To message. It cannot see accepts on its own."),
+        H("Step 2: send the message (goal 40 a day)"),
+        M("On a To message card, tap Copy + open profile."),
+        A("The app copies the message and opens the profile."),
+        M("On LinkedIn, tap Message, paste, and send."),
+        M("Go back and tap Message sent."),
+        A("The app counts it and moves them to Awaiting reply."),
+        H("When someone replies"),
+        M("Read the reply on LinkedIn and answer it there."),
+        M("In the app, open Awaiting reply and tap Log outcome for that person."),
+        A("The app saves it and updates your numbers and that message's win rate."),
+        M("No answer after a few days? Pick No Reply."),
+        H("Book it"),
+        M("When they want to talk, tap Book and fill in the first form."),
+        A("The app creates the lead in your pipeline."),
+        A("If the lead is later Won or Lost, it leaves every other rep's list."),
+        H("End of day"),
+        A("Your bars turn green at 20 requests and 40 messages. Everything resets at midnight Pacific."),
+      ],
+      adv: [
+        "Pull: nl_text_pull('linkedin'). Requests and messages are separate sends (li_connect cap 20, li_message cap 40).",
+        "The app has no LinkedIn connection. It cannot send, schedule, or see accepts and replies. Every LinkedIn status change is a rep tap.",
+        "Import is read in the browser and deduped on the LinkedIn URL. Up to 500 rows at a time.",
+      ],
+    },
+    {
       title: "Who does what",
       app: "Here is everything in one place. 🖐️ Manual means you do it. 🤖 Automated means the app does it.",
       lines: [
@@ -291,9 +389,13 @@ export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { 
   useEffect(() => { if (open) { setI(startAt); setAdv(false); } }, [open, startAt]);
   const all = steps(phoneType);
   const s = all[Math.min(i, all.length - 1)];
-  const isWho = i === all.length - 1;
+  const isWho = i === GUIDE.who;
   const manual = s.lines.filter((l) => l.m), auto = s.lines.filter((l) => !l.m);
   const row = (l: Line, k: number) => <li key={k} className="flex items-start">{badge(l.m)}<span>{l.t}</span></li>;
+  let n = 0;
+  const flowRow = (l: Line, k: number) => l.h
+    ? <li key={k} className="mt-2 border-b border-white/15 pb-1 text-[12.5px] font-bold uppercase tracking-wide text-white/85 first:mt-0">{l.t}</li>
+    : <li key={k} className="flex items-start gap-2"><span className="w-6 shrink-0 text-right font-mono text-[12px] text-white/60">{++n}.</span>{badge(l.m)}<span>{l.t}</span></li>;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-[640px] overflow-y-auto">
@@ -303,7 +405,11 @@ export function OutreachGuide({ open, onOpenChange, startAt = 0, phoneType }: { 
         </DialogHeader>
         <p className="text-[14.5px] leading-relaxed">{s.app}</p>
         <div className="flex flex-wrap items-center gap-2 text-[12px]">{badge(true)}<span className="opacity-80">you do it</span>{badge(false)}<span className="opacity-80">the app does it</span></div>
-        {isWho ? (
+        {s.flow ? (
+          <div className="rounded-xl border border-white/[0.14] bg-white/[0.04] p-3">
+            <ul className="grid gap-2 text-[14px] leading-snug">{s.lines.map((l, k) => flowRow(l, k))}</ul>
+          </div>
+        ) : isWho ? (
           <div className="grid gap-3">
             <div className="rounded-xl border border-[hsl(38,95%,58%)]/40 bg-[hsla(38,95%,58%,.06)] p-3">
               <div className="mb-1.5 text-[12px] font-bold uppercase tracking-wide">🖐️ Manual: you</div>
