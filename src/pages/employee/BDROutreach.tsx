@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarClock, Check, Copy, ExternalLink, HelpCircle, Linkedin, Loader2, MessageSquare, Undo2 } from "lucide-react";
+import { CalendarClock, Check, Copy, ExternalLink, HelpCircle, Linkedin, Loader2, MessageSquare, PhoneOff, Undo2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "@/hooks/use-toast";
@@ -147,6 +147,14 @@ export default function BDROutreach() {
     if (error) { toast({ title: "Couldn't book", description: error.message, variant: "destructive" }); return; }
     navigate(`/employee/close-prep/${data}`);
   };
+  const landline = async (l: OLead) => {
+    setBusy(l.id);
+    const { error } = await (supabase as any).rpc("nl_text_landline", { _id: l.id });
+    setBusy(null);
+    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Marked landline", description: "It doesn't count toward your texts or stats." });
+    load();
+  };
   const setUrl = async (l: OLead, url: string) => {
     const { error } = await (supabase as any).rpc("nl_text_set_linkedin", { _id: l.id, _url: url });
     if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
@@ -163,13 +171,13 @@ export default function BDROutreach() {
     { k: "sched", l: "Scheduled", match: (l) => l.text_status === "sent" && !sentNow(l) },
     { k: "wait", l: "Awaiting reply", match: (l) => sentNow(l) && !l.result },
     { k: "replied", l: "Replied", match: (l) => touched(l) && (l.result === "replied" || l.result === "booked") },
-    { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply"].includes(l.result || "") },
+    { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply", "landline"].includes(l.result || "") },
   ] : [
     { k: "todo", l: "To connect", match: (l) => l.li_status === "new" && !l.result && !!l.linkedin_url },
     { k: "req", l: "Requested", match: (l) => l.li_status === "requested" && !l.result },
     { k: "wait", l: "Awaiting reply", match: (l) => l.li_status === "sent" && !l.result },
     { k: "replied", l: "Replied", match: (l) => touched(l) && (l.result === "replied" || l.result === "booked") },
-    { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply"].includes(l.result || "") },
+    { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply", "landline"].includes(l.result || "") },
     { k: "nourl", l: "No LinkedIn", match: (l) => !l.linkedin_url && l.li_status === "new" && !l.result },
   ];
   const cur = TABS.find((t) => t.k === tab) || TABS[0];
@@ -262,7 +270,7 @@ export default function BDROutreach() {
           <div className="grid gap-3">
             {rows.slice(0, shown).map((l) => (
               <LeadCard key={l.id + cur.k} l={l} tab={cur.k} channel={channel} rep={rep} tpls={tpls} phoneType={phoneType} busy={busy === l.id}
-                lastText={counts.lastText} onSend={send} onUnsend={unsend} onOutcome={outcome} onBook={book} onUrl={setUrl} sentAt={sentAt(l)} />
+                lastText={counts.lastText} onSend={send} onUnsend={unsend} onOutcome={outcome} onBook={book} onUrl={setUrl} onLandline={landline} sentAt={sentAt(l)} />
             ))}
             {rows.length > shown && <button type="button" className={btn + " " + quiet} onClick={() => setShown((n) => n + 25)}>Show more ({rows.length - shown} left)</button>}
           </div>
@@ -271,10 +279,10 @@ export default function BDROutreach() {
   );
 }
 
-function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSend, onUnsend, onOutcome, onBook, onUrl, sentAt }: {
+function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSend, onUnsend, onOutcome, onBook, onUrl, onLandline, sentAt }: {
   l: OLead; tab: string; channel: Channel; rep: string; tpls: Tpl[]; phoneType: PhoneType; busy: boolean; lastText: number;
   onSend: (l: OLead, ch: "text" | "li_connect" | "li_message", tpl: Tpl | undefined, body: string, when?: Date) => void;
-  onUnsend: (l: OLead, ch: string) => void; onOutcome: (l: OLead, o: string) => void; onBook: (l: OLead) => void; onUrl: (l: OLead, u: string) => void;
+  onUnsend: (l: OLead, ch: string) => void; onOutcome: (l: OLead, o: string) => void; onBook: (l: OLead) => void; onUrl: (l: OLead, u: string) => void; onLandline: (l: OLead) => void;
   sentAt: string | null;
 }) {
   const isText = channel === "text";
@@ -335,6 +343,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
                 <a href={smsHref(l.phone, body, phoneType)} onClick={() => { try { navigator.clipboard.writeText(body); } catch { /* ignore */ } }} className={btn + " " + accent}><MessageSquare className="h-4 w-4" />Text</a>
                 <button type="button" className={btn + " " + quiet} onClick={() => copy(body)}><Copy className="h-4 w-4" />Copy</button>
                 <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onSend(l, "text", tpl, body)}><Check className="h-4 w-4" />Sent</button>
+                <button type="button" disabled={busy} className={btn + " " + quiet} title="Can't text this number. Doesn't count toward anything." onClick={() => onLandline(l)}><PhoneOff className="h-4 w-4" />Landline</button>
                 {canSchedule(phoneType) && (
                   <span className="flex flex-wrap items-center gap-1.5">
                     <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className="rounded-lg border border-white/[0.16] bg-transparent px-2 py-1 text-[12.5px]" aria-label="Schedule time" />
@@ -360,6 +369,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
             {OUTREACH_OUTCOMES.map((g) => <optgroup key={g.group} label={g.group}>{g.items.map((o) => <option key={o} value={o}>{o}</option>)}</optgroup>)}
           </select>
           {(l.result === "replied" || l.result === "booked") && <button type="button" disabled={busy} className={btn + " " + accent} onClick={() => onBook(l)}>{l.lead_id ? "Open in pipeline" : "Book"}</button>}
+          {isText && tab !== "done" && <button type="button" disabled={busy} className={btn + " " + quiet} title="Can't text this number. Removes the send so it doesn't count." onClick={() => onLandline(l)}><PhoneOff className="h-4 w-4" />Landline</button>}
           {tab !== "done" && <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onUnsend(l, isText ? "text" : l.li_status === "sent" ? "li_message" : "li_connect")}><Undo2 className="h-4 w-4" />Undo send</button>}
         </div>
       )}
