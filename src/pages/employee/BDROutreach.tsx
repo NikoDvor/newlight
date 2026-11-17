@@ -208,7 +208,6 @@ export default function BDROutreach() {
     { k: "wait", l: "Awaiting reply", match: (l) => l.li_status === "sent" && !l.result },
     { k: "replied", l: "Replied", match: (l) => touched(l) && (l.result === "replied" || l.result === "booked") },
     { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply", "landline", "closed"].includes(l.result || "") },
-    { k: "nourl", l: "No LinkedIn", match: (l) => !l.linkedin_url && l.li_status === "new" && !l.result },
   ];
   const cur = TABS.find((t) => t.k === tab) || TABS[0];
   const rows = leads.filter((l) => cur.match(l));
