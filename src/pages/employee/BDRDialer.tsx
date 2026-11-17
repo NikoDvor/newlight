@@ -53,6 +53,7 @@ interface Lead {
   self_booking_widget_non_owner: boolean | null;
   dialer_bookable: boolean | null;
   pipeline_stage: string | null;
+  closed_out_at?: string | null;
   crm_deal_id: string | null;
   pool_firm_id?: string | null;
   _claimConflict?: boolean;
@@ -226,7 +227,7 @@ export default function BDRDialer() {
       const db = supabase as any;
       const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }, { data: meetRows }] = await Promise.all([
         fetchAllRows((from, to) => db.from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, state, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id, pool_firm_id")
+          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, state, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id, pool_firm_id, closed_out_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }).order("id").range(from, to)),
         fetchAllRows((from, to) => db.from("bdr_call_outcomes")
@@ -284,6 +285,8 @@ export default function BDRDialer() {
   // Show Dialed filter: OFF = not yet dialed, ON = dialed but not won. Won leads never show here.
   const modeLeads = useMemo(() => leads.filter(l => {
     if (l.pipeline_stage === "won") return false;
+    // Won or Lost on another list (Dialer or texting) takes the firm off this list too.
+    if (l.closed_out_at) return false;
     return showDialed ? !!l.called : (!l.called || stickyDialed.has(l.id));
   }), [leads, showDialed, stickyDialed]);
 

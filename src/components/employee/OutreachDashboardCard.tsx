@@ -69,6 +69,7 @@ export function OutreachDashboardCard() {
         <Link to="/employee/outreach" className="rounded-lg border border-[hsl(211,96%,56%)] bg-[hsla(211,96%,56%,.18)] px-3 py-1 text-[13px] font-semibold text-[hsl(211,96%,80%)]">
           {data.ready ? "Open outreach" : "Pull your first leads"}
         </Link>
+        <Link to="/employee/outreach?guide=home" className="rounded-lg border border-white/30 px-3 py-1 text-[13px] font-semibold text-white/90">More info</Link>
       </div>
       {plan && !planDone && (
         <div className="mb-3 flex items-start gap-2 rounded-xl border border-[hsl(38,95%,58%)]/50 bg-[hsla(38,95%,58%,.1)] px-3 py-2 text-[13.5px]">

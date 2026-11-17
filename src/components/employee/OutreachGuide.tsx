@@ -45,7 +45,7 @@ function steps(phone: PhoneType): Step[] {
         "4. Tap Pull leads.",
         "5. A message pops up that says how many were added. They show up in the To text list (or To connect list on LinkedIn).",
       ],
-      remember: "A lead you pull is yours for texting only. It stays in the Dialer, and anyone can still call it.",
+      remember: "A lead you pull is yours for texting only. If it is also on someone's Dialer list, you can still text it and they can still call it. When a lead is Won or Lost (in the Dialer or by text), it leaves everyone else's lists.",
     },
     {
       title: "Read a lead card",

@@ -32,6 +32,24 @@ const btn = "inline-flex min-h-[34px] items-center justify-center gap-1.5 rounde
 const accent = "border-[hsl(211,96%,62%)] bg-[hsl(211,75%,24%)] text-white";
 const quiet = "border-white/30 bg-[hsl(220,40%,13%)] text-white hover:bg-[hsl(220,40%,19%)]";
 
+const TAB_HELP: Record<Channel, Record<string, string>> = {
+  text: {
+    todo: "People you haven't texted yet. Tap Text, send it in Messages, then tap Sent (or schedule it).",
+    sched: "Texts you scheduled in Messages. After the time passes they move to Awaiting reply by themselves.",
+    wait: "Texts that went out and haven't had a logged reply. Log the outcome when someone answers.",
+    replied: "People who replied and are still alive. Tap Book when they want a meeting.",
+    done: "Finished leads: lost, stop, wrong number, landline, no reply, or closed (won or lost on another list).",
+  },
+  linkedin: {
+    todo: "People you haven't asked to connect with. Tap Copy + open profile, send the note, then tap Request sent.",
+    req: "Requests sent. When someone accepts on LinkedIn, tap Accepted so they move to To message.",
+    msg: "People who accepted. Message them, then tap Message sent.",
+    wait: "Messages sent with no logged reply yet. Log the outcome when someone answers.",
+    replied: "People who replied and are still alive. Tap Book when they want a meeting.",
+    done: "Finished leads: lost, stop, no reply, or closed (won or lost on another list).",
+    nourl: "Leads with no LinkedIn link yet. Paste the profile link to move them to To connect.",
+  },
+};
 const copy = (t: string, what = "Message") => {
   try { navigator.clipboard.writeText(t).then(() => toast({ title: `${what} copied` }), () => toast({ title: "Couldn't copy", variant: "destructive" })); }
   catch { toast({ title: "Couldn't copy", variant: "destructive" }); }
@@ -59,6 +77,7 @@ export default function BDROutreach() {
   const [pullState, setPullState] = useState("");
   const [pulling, setPulling] = useState(false);
   const [guideAt, setGuideAt] = useState<number | null>(null);
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("guide") === "home") setGuideAt(GUIDE.home); }, []);
   const [importOpen, setImportOpen] = useState(false);
   const [shown, setShown] = useState(25);
 
@@ -181,14 +200,14 @@ export default function BDROutreach() {
     { k: "sched", l: "Scheduled", match: (l) => l.text_status === "sent" && !sentNow(l) },
     { k: "wait", l: "Awaiting reply", match: (l) => sentNow(l) && !l.result },
     { k: "replied", l: "Replied", match: (l) => touched(l) && (l.result === "replied" || l.result === "booked") },
-    { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply", "landline"].includes(l.result || "") },
+    { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply", "landline", "closed"].includes(l.result || "") },
   ] : [
     { k: "todo", l: "To connect", match: (l) => l.li_status === "new" && !l.result && !!l.linkedin_url },
     { k: "req", l: "Requested", match: (l) => l.li_status === "requested" && !l.result },
     { k: "msg", l: "To message", match: (l) => l.li_status === "accepted" && !l.result },
     { k: "wait", l: "Awaiting reply", match: (l) => l.li_status === "sent" && !l.result },
     { k: "replied", l: "Replied", match: (l) => touched(l) && (l.result === "replied" || l.result === "booked") },
-    { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply", "landline"].includes(l.result || "") },
+    { k: "done", l: "Done", match: (l) => touched(l) && ["lost", "stop", "wrong_number", "no_reply", "landline", "closed"].includes(l.result || "") },
     { k: "nourl", l: "No LinkedIn", match: (l) => !l.linkedin_url && l.li_status === "new" && !l.result },
   ];
   const cur = TABS.find((t) => t.k === tab) || TABS[0];
@@ -254,6 +273,10 @@ export default function BDROutreach() {
           </button>
         ))}
       </div>
+      <div className="flex flex-wrap items-center gap-2 text-[13px] text-white/85">
+        <span>{TAB_HELP[channel][cur.k]}</span>
+        <InfoBtn onClick={() => setGuideAt(cur.k === "sched" ? GUIDE.schedule : cur.k === "msg" || cur.k === "req" ? GUIDE.liMessage : cur.k === "replied" ? GUIDE.book : cur.k === "wait" || cur.k === "done" ? GUIDE.outcome : cur.k === "nourl" ? GUIDE.liConnect : GUIDE.card)} label="Explain this tab" />
+      </div>
       </div>
 
       {loading ? <div className="py-10 text-center text-white/60"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>
@@ -271,7 +294,7 @@ export default function BDROutreach() {
           </div>
         )}
       <OutreachGuide open={guideAt !== null} onOpenChange={(o) => { if (!o) setGuideAt(null); }} startAt={guideAt ?? 0} phoneType={phoneType} />
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} onDone={load} />
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} onDone={load} onInfo={() => { setImportOpen(false); setGuideAt(GUIDE.import); }} />
     </div>
   );
 }
@@ -341,6 +364,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
                 <button type="button" className={btn + " " + quiet} onClick={() => copy(body)}><Copy className="h-4 w-4" />Copy</button>
                 <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onSend(l, "text", tpl, body)}><Check className="h-4 w-4" />Sent</button>
                 <button type="button" disabled={busy} className={btn + " " + quiet} title="Can't text this number. Doesn't count toward anything." onClick={() => onLandline(l)}><PhoneOff className="h-4 w-4" />Landline</button>
+                <InfoBtn onClick={() => info(GUIDE.landline)} label="What is Landline?" />
                 <InfoBtn onClick={() => info(GUIDE.text)} />
                 {canSchedule(phoneType) && (
                   <span className="flex flex-wrap items-center gap-1.5">
@@ -371,7 +395,9 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
           </select>
           <InfoBtn onClick={() => info(GUIDE.outcome)} />
           {!isText && tab === "req" && <button type="button" disabled={busy} className={btn + " " + accent} title="They accepted my request" onClick={() => onAccept(l)}><Check className="h-4 w-4" />Accepted</button>}
+          {!isText && tab === "req" && <InfoBtn onClick={() => info(GUIDE.liMessage)} label="What is Accepted?" />}
           {(l.result === "replied" || l.result === "booked") && <button type="button" disabled={busy} className={btn + " " + accent} onClick={() => onBook(l)}>{l.lead_id ? "Open in pipeline" : "Book"}</button>}
+          {(l.result === "replied" || l.result === "booked") && <InfoBtn onClick={() => info(GUIDE.book)} label="What does Book do?" />}
           {isText && tab !== "done" && <button type="button" disabled={busy} className={btn + " " + quiet} title="Can't text this number. Removes the send so it doesn't count." onClick={() => onLandline(l)}><PhoneOff className="h-4 w-4" />Landline</button>}
           {tab !== "done" && <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onUnsend(l, isText ? "text" : l.li_status === "sent" ? "li_message" : "li_connect")}><Undo2 className="h-4 w-4" />Undo send</button>}
         </div>
@@ -388,7 +414,7 @@ function InfoBtn({ onClick, label = "More info" }: { onClick: () => void; label?
   );
 }
 
-function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void }) {
+function ImportDialog({ open, onOpenChange, onDone, onInfo }: { open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void; onInfo: () => void }) {
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [fileName, setFileName] = useState("");
   const [err, setErr] = useState("");
@@ -427,6 +453,7 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
         </DialogHeader>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={download} className={btn + " " + quiet}>Download example</button>
+          <InfoBtn onClick={onInfo} label="Step by step" />
           <label className={btn + " " + accent + " cursor-pointer"}>
             <Upload className="h-4 w-4" />Choose file
             <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
