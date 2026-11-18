@@ -80,6 +80,8 @@ export default function BDROutreach() {
   const [pullN, setPullN] = useState(40);
   const [pullState, setPullState] = useState("");
   const [pulling, setPulling] = useState(false);
+  const [pullSource, setPullSource] = useState<"pool" | "dialer">("pool");
+  const [pullBoth, setPullBoth] = useState(false);
   const [guideAt, setGuideAt] = useState<number | null>(null);
   useEffect(() => { if (new URLSearchParams(window.location.search).get("guide") === "home") setGuideAt(GUIDE.home); }, []);
   const [importOpen, setImportOpen] = useState(false);
@@ -131,12 +133,25 @@ export default function BDROutreach() {
 
   const pull = async () => {
     setPulling(true);
-    const { data, error } = await (supabase as any).rpc("nl_text_pull", { _count: pullN, _state: pullState.trim() || null, _channel: channel === "linkedin" ? "linkedin" : "text" });
+    const ch = pullBoth ? "both" : channel === "linkedin" ? "linkedin" : "text";
+    const { data, error } = await (supabase as any).rpc("nl_text_pull", { _count: pullN, _state: pullState.trim() || null, _channel: ch, _source: pullSource });
     setPulling(false);
     if (error) { toast({ title: "Couldn't pull leads", description: error.message, variant: "destructive" }); return; }
-    toast({ title: `Pulled ${data} new lead${data === 1 ? "" : "s"}`, description: data === 0 ? "Nothing left that fits. Try a different state." : undefined });
+    const short = Number(data) < pullN;
+    toast({
+      title: `Pulled ${data} new lead${data === 1 ? "" : "s"}`,
+      description: data === 0 ? `Nothing left that fits${pullBoth ? " with both a phone and LinkedIn" : ""}. Try ${pullSource === "dialer" ? "the pool" : "a different state"}.`
+        : short ? `You asked for ${pullN}, but only ${data} ${pullBoth ? "had both a phone and LinkedIn" : "fit"} and weren't already pulled.` : undefined,
+    });
     load();
   };
+  const giveBack = async (ids?: string[]) => {
+    const { data, error } = await (supabase as any).rpc("nl_text_return", { _ids: ids ?? null });
+    if (error) { toast({ title: "Couldn't return", description: error.message, variant: "destructive" }); return; }
+    toast({ title: `Returned ${data} lead${data === 1 ? "" : "s"} to the pool`, description: Number(data) === 0 ? "Only untouched leads can go back." : undefined });
+    load();
+  };
+  const untouched = (l: OLead) => !!(l as any).contact_id && l.text_status === "new" && (l as any).li_status === "new" && !l.result && !(l as any).outcome;
 
   const send = async (l: OLead, ch: "text" | "li_connect" | "li_message", tpl: Tpl | undefined, body: string, when?: Date) => {
     if (!when && !inWindow(new Date(), l.state)) {
@@ -275,9 +290,18 @@ export default function BDROutreach() {
                 className="w-20 rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white" aria-label="How many leads to pull" />
               <input value={pullState} onChange={(e) => setPullState(e.target.value.toUpperCase().slice(0, 2))} placeholder="State"
                 className="w-16 rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white placeholder:text-white/70" aria-label="State (optional)" />
+              <select value={pullSource} onChange={(e) => setPullSource(e.target.value as "pool" | "dialer")} aria-label="Where to pull from"
+                className="rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1.5 text-[13px] text-white">
+                <option value="pool">From the pool</option>
+                <option value="dialer">From my Dialer list</option>
+              </select>
+              <label className="flex items-center gap-1.5 text-[13px] text-white/85">
+                <input type="checkbox" checked={pullBoth} onChange={(e) => setPullBoth(e.target.checked)} />Both Text + LinkedIn
+              </label>
               <button type="button" onClick={pull} disabled={pulling} className={btn + " " + accent}>{pulling && <Loader2 className="h-4 w-4 animate-spin" />}Pull leads</button>
               <InfoBtn onClick={() => setGuideAt(GUIDE.pull)} label="About pulling leads" />
             </div>
+            {leads.some(untouched) && <button type="button" onClick={() => { if (window.confirm("Send every untouched lead back to the pool?")) giveBack(); }} className={btn + " " + quiet + " justify-self-start"}>Return all untouched to pool ({leads.filter(untouched).length})</button>}
             {!isText && <button type="button" onClick={() => setImportOpen(true)} className={btn + " " + quiet + " justify-self-start"}><Upload className="h-4 w-4" />Import LinkedIn leads</button>}
             <div className="flex flex-wrap items-center gap-2">
               <label className="text-[13px] text-white/70" htmlFor="phoneType">My phone</label>
@@ -299,8 +323,11 @@ export default function BDROutreach() {
         ) : (
           <div className="grid gap-3">
             {rows.slice(0, shown).map((l) => (
-              <LeadCard key={l.id + cur.k} l={l} tab={cur.k} channel={channel} rep={rep} tpls={tpls} phoneType={phoneType} busy={busy === l.id}
+              <div key={l.id + cur.k} className="grid gap-1">
+              <LeadCard l={l} tab={cur.k} channel={channel} rep={rep} tpls={tpls} phoneType={phoneType} busy={busy === l.id}
                 lastText={counts.lastText} onSend={send} onUnsend={unsend} onOutcome={outcome} onBook={book} onUrl={setUrl} onLandline={landline} onAccept={accept} info={setGuideAt} sentAt={sentAt(l)} />
+              {untouched(l) && <button type="button" onClick={() => giveBack([l.id])} className="justify-self-end px-2 text-[12px] font-semibold text-white/70 underline">Back to pool</button>}
+              </div>
             ))}
             {rows.length > shown && <button type="button" className={btn + " " + quiet} onClick={() => setShown((n) => n + 25)}>Show more ({rows.length - shown} left)</button>}
           </div>

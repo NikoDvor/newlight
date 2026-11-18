@@ -1063,6 +1063,26 @@ export default function BDRDialer() {
                           </span>
                         </div>
                       )}
+                      {lead.pool_firm_id && !textFlags[lead.pool_firm_id] && (
+                        <div className="mt-1">
+                          <button type="button" className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] font-semibold text-white/80 hover:bg-white/10"
+                            title="Add this firm to your Text + LinkedIn lists (it stays here too)"
+                            onClick={async () => {
+                              let n = 0, err: any = null;
+                              for (const ch of ["both", "text", "linkedin"]) {
+                                const { data, error } = await (supabase as any).rpc("nl_text_pull", { _count: 1, _state: null, _channel: ch, _source: "dialer", _lead_id: lead.id });
+                                if (error) { err = error; break; }
+                                if (Number(data) > 0) { n = Number(data); break; }
+                              }
+                              if (err) { toast({ title: "Couldn't add", description: err.message, variant: "destructive" }); return; }
+                              if (!n) { toast({ title: "Not added", description: "No usable phone or LinkedIn, or already texted / closed." }); return; }
+                              setTextFlags((f) => ({ ...f, [lead.pool_firm_id as string]: { rep: "you", mine: true, result: null } }));
+                              toast({ title: "Added to Text + LinkedIn", description: "It stays in your Dialer too." });
+                            }}>
+                            + Text / LinkedIn
+                          </button>
+                        </div>
+                      )}
                       {lead.niche && (
                         <div className="mt-1">
                           <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}>{lead.niche}</span>
