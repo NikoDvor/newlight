@@ -408,7 +408,7 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
                   <ExternalLink className="h-4 w-4" />Copy + open profile</button>
                 <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onSend(l, ch, tpl, body)}><Check className="h-4 w-4" />{ch === "li_connect" ? "Request sent" : "Message sent"}</button>
                 {ch === "li_message" && <button type="button" disabled={busy} className={btn + " " + quiet} onClick={() => onAccept(l, true)}>Not accepted yet</button>}
-                <InfoBtn onClick={() => info(ch === "li_connect" ? GUIDE.liConnect : GUIDE.liMessage)} />
+                <InfoBtn onClick={() => info(GUIDE.liButtons)} label="Which LinkedIn button?" />
               </>
             )}
           </div>
