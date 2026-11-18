@@ -103,8 +103,13 @@ function steps(phone: PhoneType): Step[] {
     },
     {
       title: "LinkedIn: step by step",
-      app: "LinkedIn has two steps. First you ask to connect. After they say yes, you message them. Do it once a day, Monday to Friday, in this order. It takes about an hour.",
+      app: "LinkedIn has two steps. First you send an invitation. After they accept, you message them. Do it once a day, Monday to Friday, in this order.",
       lines: [
+        H("The one rule"),
+        P("You can only message someone after they accept your invitation. There is no way around it on a free LinkedIn account."),
+        P("Your goal each day: send 20 invitations. The people who accept become your list to message."),
+        P("Two different things get tracked. Accepted means they said yes to your invitation. Replied means they answered your message."),
+        P("You will usually have only a few people to message each day, because only some people accept. That is normal. Message everyone who accepted. 40 is just the most you can send in a day."),
         H("1. Check who said yes (5 minutes)"),
         M("On LinkedIn, tap My Network, then Manage my network, then Connections. The newest people are at the top."),
         M("In our app, tap LinkedIn, then Requested. Tap Accepted on each person who said yes."),
