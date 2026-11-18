@@ -159,6 +159,11 @@ export default function BDRDialer() {
   const [userId, setUserId] = useState<string | null>(null);
   const [clientId, setClientId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<string>(ALL_LIST);
+  // Area/town order = the salesman's city queue (Territories). Lists show in the order they're worked,
+  // and leads inside an area list are sorted town by town.
+  const [listOrder, setListOrder] = useState<Record<string, number>>({});
+  const [townOrder, setTownOrder] = useState<Record<string, number>>({});
+  const autoPicked = useRef(false);
   const [showDialed, setShowDialed] = useState(false);
   // Firm-size sort: off = default order, asc = smallest firms (0 / unknown AUM) first, desc = biggest first.
   const [aumSort, setAumSort] = useState<"off" | "asc" | "desc">("off");
@@ -220,6 +225,20 @@ export default function BDRDialer() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
       setUserId(user.id);
+      (supabase as any).from("nl_lead_territories").select("city, state, area, position, created_at")
+        .eq("rep_user_id", user.id).eq("active", true).not("city", "is", null)
+        .order("position", { ascending: true, nullsFirst: false }).order("created_at")
+        .then(({ data }: { data: { city: string; state: string; area: string | null }[] | null }) => {
+          const lists: Record<string, number> = {}; const towns: Record<string, number> = {};
+          (data || []).forEach((t, i) => {
+            const st = String(t.state).toUpperCase();
+            const listKey = `${t.area || t.city}, ${st}`.toLowerCase();
+            if (!(listKey in lists)) lists[listKey] = i;
+            const townKey = `${t.city}, ${st}`.toLowerCase();
+            if (!(townKey in towns)) towns[townKey] = i;
+          });
+          setListOrder(lists); setTownOrder(towns);
+        });
       const cid = activeClientId || await resolveEmployeeClientId(user.id);
       setClientId(cid);
       // Supabase returns at most 1000 rows per request. With 150 new leads a day the Dialer passes that within a week,
@@ -300,13 +319,29 @@ export default function BDRDialer() {
       const name = l.list_name || "Uncategorized";
       map.set(name, (map.get(name) || 0) + 1);
     });
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [leads, modeLeads]);
+    // Areas with leads left first, in the order they're worked; finished areas and other lists after.
+    const rank = (n: string) => listOrder[n.toLowerCase()] ?? Number.MAX_SAFE_INTEGER;
+    return Array.from(map.entries()).sort((a, b) =>
+      (a[1] > 0 ? 0 : 1) - (b[1] > 0 ? 0 : 1) || rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0]));
+  }, [leads, modeLeads, listOrder]);
+  const isArea = useCallback((n: string) => n.toLowerCase() in listOrder, [listOrder]);
+  // Open on the first area that still has leads to call, instead of everything mixed together.
+  useEffect(() => {
+    if (autoPicked.current || loading || !Object.keys(listOrder).length) return;
+    autoPicked.current = true;
+    const first = lists.find(([n, c]) => c > 0 && isArea(n));
+    if (first && activeList === ALL_LIST) setActiveList(first[0]);
+  }, [loading, listOrder, lists, isArea, activeList]);
+  const nextArea = lists.find(([n, c]) => c > 0 && isArea(n) && n !== activeList)?.[0] ?? null;
+  const activeAreaDone = activeList !== ALL_LIST && isArea(activeList) && (lists.find(([n]) => n === activeList)?.[1] ?? 0) === 0;
+  const townRank = useCallback((l: Lead) => townOrder[`${l.city || ""}, ${String(l.state || "").toUpperCase()}`.toLowerCase()] ?? Number.MAX_SAFE_INTEGER, [townOrder]);
 
   // Each filter's counts respect the OTHER filters, so a number always equals what tapping it shows.
-  const listLeads = useMemo(() => activeList === ALL_LIST
-    ? modeLeads
-    : modeLeads.filter(l => (l.list_name || "Uncategorized") === activeList), [modeLeads, activeList]);
+  const listLeads = useMemo(() => {
+    const rows = activeList === ALL_LIST ? modeLeads : modeLeads.filter(l => (l.list_name || "Uncategorized") === activeList);
+    // Town by town (queue order); stable, so the existing order is kept within a town.
+    return rows.map((l, i) => [l, i] as const).sort((a, b) => townRank(a[0]) - townRank(b[0]) || a[1] - b[1]).map(([l]) => l);
+  }, [modeLeads, activeList, townRank]);
   const okNiche = useCallback((l: Lead) => activeNiche === ALL_NICHES || nicheOf(l) === activeNiche, [activeNiche]);
   const okState = useCallback((l: Lead) => activeState === ALL_STATES || stateOf(l) === activeState, [activeState]);
   const okCity = useCallback((l: Lead) => activeCity === ALL_CITIES || cityOf(l) === activeCity, [activeCity]);
@@ -911,6 +946,17 @@ export default function BDRDialer() {
           </div>
         ))}
       </div>
+
+      {activeAreaDone && !showDialed && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[hsla(152,62%,52%,.4)] bg-[hsla(152,62%,40%,.12)] px-4 py-3 text-sm text-white">
+          <span><b>{activeList}</b> is done. Every lead in this area has been dialed.</span>
+          {nextArea && (
+            <button type="button" onClick={() => setActiveList(nextArea)} className="rounded-lg bg-[hsla(152,62%,45%,.25)] px-3 py-1.5 text-xs font-semibold text-[hsl(152,70%,75%)]">
+              Next area: {nextArea} →
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Filters — firm type, state and city all combine, on top of the list tab */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
