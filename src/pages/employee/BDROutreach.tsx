@@ -198,6 +198,13 @@ export default function BDROutreach() {
     toast({ title: "Marked landline", description: "It doesn't count toward your texts or stats." });
     load();
   };
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const acceptMany = async () => {
+    const { data, error } = await (supabase as any).rpc("nl_text_li_accept_many", { _ids: [...sel] });
+    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
+    toast({ title: `${data} marked Accepted`, description: "They're now in To message." });
+    setSel(new Set()); load();
+  };
   const accept = async (l: OLead, undo = false) => {
     setBusy(l.id);
     const { error } = await (supabase as any).rpc("nl_text_li_accept", { _id: l.id, _undo: undo });
@@ -277,6 +284,12 @@ export default function BDROutreach() {
             </button>
           ))}
         </div>
+        {channel === "linkedin" && cur.k === "req" && rows.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className={btn + " " + quiet} onClick={() => setSel(sel.size === rows.length ? new Set() : new Set(rows.map((r) => r.id)))}>{sel.size === rows.length ? "Clear" : "Select all"}</button>
+            {sel.size > 0 && <button type="button" className={btn + " " + accent} onClick={acceptMany}>Mark {sel.size} Accepted</button>}
+          </div>
+        )}
         <div className="flex items-start gap-2 text-[13px] text-white/85">
           <span className="flex-1">{TAB_HELP[channel][cur.k]}</span>
           <InfoBtn onClick={() => setGuideAt(cur.k === "sched" ? GUIDE.schedule : cur.k === "msg" || cur.k === "req" ? GUIDE.liMessage : cur.k === "replied" ? GUIDE.book : cur.k === "wait" || cur.k === "done" ? GUIDE.outcome : cur.k === "nourl" ? GUIDE.liConnect : GUIDE.card)} label="Explain this tab" />
@@ -324,6 +337,12 @@ export default function BDROutreach() {
           <div className="grid gap-3">
             {rows.slice(0, shown).map((l) => (
               <div key={l.id + cur.k} className="grid gap-1">
+              {channel === "linkedin" && cur.k === "req" && (
+                <div className="flex items-center justify-between gap-2 px-1 text-[12.5px]">
+                  <label className="flex items-center gap-1.5 text-white/85"><input type="checkbox" checked={sel.has(l.id)} onChange={(e) => setSel((p) => { const n = new Set(p); e.target.checked ? n.add(l.id) : n.delete(l.id); return n; })} />Select</label>
+                  {l.li_sent_at && Date.now() - new Date(l.li_sent_at).getTime() > 21 * 86400000 && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 font-semibold text-amber-300" title="Requested over 3 weeks ago. Likely never accepted. Mark Done / No reply.">Waiting 3+ weeks</span>}
+                </div>
+              )}
               <LeadCard l={l} tab={cur.k} channel={channel} rep={rep} tpls={tpls} phoneType={phoneType} busy={busy === l.id}
                 lastText={counts.lastText} onSend={send} onUnsend={unsend} onOutcome={outcome} onBook={book} onUrl={setUrl} onLandline={landline} onAccept={accept} info={setGuideAt} sentAt={sentAt(l)} />
               {untouched(l) && <button type="button" onClick={() => giveBack([l.id])} className="justify-self-end px-2 text-[12px] font-semibold text-white/70 underline">Back to pool</button>}

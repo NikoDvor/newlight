@@ -115,7 +115,7 @@ function steps(phone: PhoneType): Step[] {
         P("You will usually have only a few people to message each day, because only some people accept. That is normal. Message everyone who accepted. 40 is just the most you can send in a day."),
         H("1. Check who said yes (5 minutes)"),
         M("On LinkedIn, tap My Network, then Manage my network, then Connections. The newest people are at the top."),
-        M("In our app, tap LinkedIn, then Requested. Tap Accepted on each person who said yes."),
+        M("In our app, tap LinkedIn, then Requested. Tap Accepted on each person who said yes, or tick several and tap Mark Accepted. Requests older than 3 weeks get a flag (they likely never accepted)."),
         A("The app moves them to To message. It can't see accepts, so this tap is how it knows."),
         H("2. Send your messages (up to 40)"),
         M("Open To message. On a card, tap a letter, A to H, to pick the message."),

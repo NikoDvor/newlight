@@ -173,7 +173,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
       supabase.from("crm_deals").select("id, pricing_model, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, billing_cadence, next_charge_at, pay_sign_status, assigned_user, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("document_envelopes").select("id, status, completed_at, sent_at, viewed_at, attorney_reviewed, legal_review_note, share_token, title, document_envelope_items(id, document_name, document_url)").eq("provisioned_client_id", clientId).eq("envelope_type", "service_agreement" as any).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("invoices").select("id, invoice_number, invoice_type, total_amount, invoice_status, paid_at, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(20),
-      supabase.from("nl_bdr_leads" as any).select("id, lead_source, source_type, crd, notes, created_at, business_name").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("nl_bdr_leads" as any).select("id, lead_source, outreach_channel, source_type, crd, notes, created_at, business_name").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("client_legal_documents" as any).select("id, document_type, document_name, file_url, notes, created_at").eq("client_id", clientId).order("created_at", { ascending: false }).limit(50),
     ]);
     setSetupItems((setupRes.data || []) as any[]);
@@ -438,7 +438,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
               {loadingDetail ? <LoadingSkeleton /> : lead ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-3">
-                    <SummaryItem label="Lead Source" value={lead.lead_source || "—"} raw />
+                    <SummaryItem label="Lead Source" value={(lead as any).outreach_channel ? `${(lead as any).outreach_channel === "text" ? "Text" : "LinkedIn"} outreach · ${lead.lead_source || ""}` : (lead.lead_source || "—")} raw />
                     <SummaryItem label="Source Type" value={lead.source_type || "—"} raw />
                     <SummaryItem label="CRD" value={lead.crd || "—"} raw />
                     <SummaryItem label="First Booked" value={discoveryAt ? new Date(discoveryAt).toLocaleString() : "No meeting booked"} raw />
