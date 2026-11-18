@@ -360,9 +360,10 @@ function LeadCard({ l, tab, channel, rep, tpls, phoneType, busy, lastText, onSen
 
       {todo && tpl && (
         <>
+          <div className="text-[12px] font-bold uppercase tracking-wide text-[hsl(211,96%,80%)]">Pick a message</div>
           <div className="flex flex-wrap items-center gap-2">
             <select value={tpl.id} onChange={(e) => { setTplId(e.target.value); setEdit(null); }} aria-label="Pick a message, A to H"
-              className="rounded-lg border border-white/30 bg-[hsl(220,40%,13%)] px-2 py-1 text-[13px] font-semibold text-white">
+              className="min-h-[42px] rounded-xl border-2 border-[hsl(211,96%,62%)] bg-[hsl(211,75%,24%)] px-3 py-1.5 text-[15px] font-bold text-white shadow-[0_0_0_3px_hsla(211,96%,56%,.18)]">
               {options.map((t) => <option key={t.id} value={t.id}>{`${t.id === bestId ? "★ " : ""}${(t.name.match(/^[A-Z]/) || ["?"])[0]} · ${t.sent || 0} sent · ${t.sent ? rateOf(t) + "%" : "—"}`}</option>)}
             </select>
             <span className="text-[13px] font-semibold">{tpl.name}</span>
