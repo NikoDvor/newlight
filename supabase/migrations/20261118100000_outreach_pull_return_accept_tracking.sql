@@ -93,6 +93,7 @@ begin
         and not exists (select 1 from nl_text_leads t where t.pool_firm_id = f.id and (t.result = 'closed' or t.outcome in ('Won','Lost')))
         and not exists (select 1 from nl_bdr_leads l where l.pool_firm_id = f.id and (l.pipeline_stage = 'won' or l.closed_out_at is not null))
         and not exists (select 1 from nl_bdr_leads l join bdr_call_outcomes o on o.lead_id = l.id where l.pool_firm_id = f.id and o.outcome in ('Won','Lost'))
+        and not exists (select 1 from nl_bdr_leads l join bdr_calendar_events e on e.lead_id = l.id where l.pool_firm_id = f.id and e.meeting_kind is not null and coalesce(e.attendance,'pending') in ('pending','attended'))
         and (_source <> 'dialer' or exists (select 1 from nl_bdr_leads l where l.pool_firm_id = f.id and l.user_id = _uid))
         and (_lead_id is null or exists (select 1 from nl_bdr_leads l where l.id = _lead_id and l.pool_firm_id = f.id and l.user_id = _uid))
       order by f.id, c.is_owner desc nulls last, c.rank, c.created_at
@@ -151,6 +152,7 @@ begin
   if not found then raise exception 'Not your lead'; end if;
   if _channel not in ('text','li_connect','li_message') then raise exception 'Bad channel'; end if;
   if t.result = 'closed' then raise exception 'This firm was already closed (won or lost) on another lead'; end if;
+  if t.pool_firm_id is not null and exists (select 1 from nl_bdr_leads l join bdr_calendar_events e on e.lead_id = l.id where l.pool_firm_id = t.pool_firm_id and e.meeting_kind is not null and coalesce(e.attendance,'pending') in ('pending','attended')) then raise exception 'This firm already has a meeting booked'; end if;
   if t.result in ('stop','wrong_number') and _channel = 'text' then raise exception 'This lead asked to stop or has a wrong number'; end if;
   select * into caps from nl_text_caps(_uid);
   cap := case _channel when 'text' then caps.text_cap when 'li_connect' then caps.li_request_cap else caps.li_message_cap end;
