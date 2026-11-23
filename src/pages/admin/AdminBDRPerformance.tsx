@@ -320,7 +320,7 @@ export default function AdminBDRPerformance() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <Link to="/admin/pipeline/results" className="text-xs font-medium text-primary hover:underline">
+          <Link to="/admin/results" className="text-xs font-medium text-primary hover:underline">
             Sales team results →
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Dialer Activity</h1>

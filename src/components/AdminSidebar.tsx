@@ -36,7 +36,7 @@ const adminGroups: NavGroup[] = [
     ungrouped: true,
     items: [
       { title: "Pipeline", description: "Revenue opportunity, board, meetings and team results. Switch with the tabs at the top.", url: "/admin", icon: LayoutDashboard },
-      { title: "Rep Scorecard", description: "Every salesman side by side — dials, meetings, show rate, closes — and coaching notes.", url: "/admin/rep-scorecard", icon: BarChart3 },
+      { title: "Results", description: "Team results and the rep scorecard: close rates, losses, effort, and every salesman side by side.", url: "/admin/results", icon: BarChart3 },
       { title: "Revenue & Cash", description: "MRR, cash collected, overdue, open pipeline and rep payments.", url: "/admin/revenue-cash", icon: DollarSign },
       { title: "Recordings", description: "Every salesman's recorded meetings — watch, listen, read the transcript.", url: "/admin/recordings", icon: Film },
     ],

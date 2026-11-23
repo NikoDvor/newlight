@@ -86,6 +86,7 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminMonitoring = lazy(() => import("./pages/admin/AdminMonitoring"));
 const AdminTeam = lazy(() => import("./pages/admin/AdminTeam"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
+const AdminResults = lazy(() => import("./pages/admin/AdminResults"));
 const AdminPipelineInsights = lazy(() => import("./pages/admin/AdminPipelineInsights"));
 const AdminGrowthAdvisor = lazy(() => import("./pages/admin/AdminGrowthAdvisor"));
 const AdminClientSetup = lazy(() => import("./pages/admin/AdminClientSetup"));
@@ -214,7 +215,6 @@ const SellGate = lazy(() => import("./components/employee/SellGate"));
 const BDRBookingPublic = lazy(() => import("./pages/BDRBookingPublic"));
 const AdminBDRPerformance = lazy(() => import("./pages/admin/AdminBDRPerformance"));
 const AdminOutreachStats = lazy(() => import("./pages/admin/AdminOutreachStats"));
-const AdminRepScorecard = lazy(() => import("./pages/admin/AdminRepScorecard"));
 const AdminRevenueCash = lazy(() => import("./pages/admin/AdminRevenueCash"));
 const AdminTerritories = lazy(() => import("./pages/admin/AdminTerritories"));
 const AdminLeadImport = lazy(() => import("./pages/admin/AdminLeadImport"));
@@ -378,9 +378,11 @@ const App = () => {
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
                 <Route path="outreach-stats" element={<AdminOutreachStats />} />
-                <Route path="rep-scorecard" element={<AdminRepScorecard />} />
+                <Route path="results" element={<AdminResults />} />
+                <Route path="results/:tab" element={<AdminResults />} />
+                <Route path="rep-scorecard" element={<Navigate to="/admin/results/scorecard" replace />} />
                 <Route path="revenue-cash" element={<AdminRevenueCash />} />
-                <Route path="bdr-meeting-analytics" element={<Navigate to="/admin/pipeline/results" replace />} />
+                <Route path="bdr-meeting-analytics" element={<Navigate to="/admin/results" replace />} />
                 <Route path="territories" element={<AdminTerritories />} />
                 <Route path="lead-import" element={<AdminLeadImport />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />

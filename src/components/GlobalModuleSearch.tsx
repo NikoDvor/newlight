@@ -45,7 +45,8 @@ const ADMIN_NAV: NavEntry[] = [
   { title: "Clients Overview", url: "/admin/clients-overview", icon: LayoutDashboard, groupLabel: "Clients" },
   { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle, groupLabel: "General" },
   // Sales
-  { title: "Sales Team Results", url: "/admin/pipeline/results", icon: BarChart3, groupLabel: "Pipeline" },
+  { title: "Results — Team Results", url: "/admin/results", icon: BarChart3, groupLabel: "Pipeline" },
+  { title: "Results — Rep Scorecard", url: "/admin/results/scorecard", icon: BarChart3, groupLabel: "Pipeline" },
   { title: "Dialer Activity", url: "/admin/bdr-performance", icon: TrendingUp, groupLabel: "Sales" },
   { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard, groupLabel: "Sales" },
   { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature, groupLabel: "Sales" },

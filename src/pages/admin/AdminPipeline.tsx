@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useParams } from "react-router-dom";
+import { NavLink, Navigate, useParams } from "react-router-dom";
 import { NewLightHero } from "@/components/admin/NewLightHero";
 import { supabase } from "@/integrations/supabase/client";
 import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
@@ -7,7 +7,6 @@ import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenu
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import TodayStrip from "@/components/pipeline/TodayStrip";
 import AdminPipelineMeetings from "@/components/admin/AdminPipelineMeetings";
-import AdminBdrMeetingAnalytics from "@/pages/admin/AdminBdrMeetingAnalytics";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
 import { RANGE_OPTIONS, rangeStart, type RangeKey } from "@/components/insights/PipelineInsightsView";
 
@@ -26,13 +25,12 @@ function loadFilter(): { rep: string; range: RangeKey } {
  *   Overview — revenue opportunity panel + won revenue by period
  *   Board    — every lead by stage
  *   Meetings — meetings needing an outcome + upcoming
- *   Results  — Sales Team Results (close rates, losses, effort, discovery numbers)
+ *   (Results and the Rep Scorecard now live together in the Results module: /admin/results)
  */
 const TABS = [
   { key: "overview", label: "Overview", to: "/admin" },
   { key: "board", label: "Board", to: "/admin/pipeline/board" },
   { key: "meetings", label: "Meetings", to: "/admin/pipeline/meetings" },
-  { key: "results", label: "Results", to: "/admin/pipeline/results" },
 ] as const;
 
 export default function AdminPipeline() {
@@ -54,14 +52,14 @@ export default function AdminPipeline() {
     })();
   }, []);
 
-  const dateApplies = tab === "meetings" || tab === "results";
+  const dateApplies = tab === "meetings";
   const since = useMemo(() => rangeStart(range), [range]);
+
+  if (tab === "results") return <Navigate to="/admin/results" replace />;
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      {tab !== "results" && (
-        <NewLightHero title="Pipeline" subtitle="Every lead, meeting and form across your salesmen — Cold → Warm → Hot → Won" />
-      )}
+      <NewLightHero title="Pipeline" subtitle="Every lead, meeting and form across your salesmen — Cold → Warm → Hot → Won" />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-xl p-1 bg-white/[0.04] border border-white/10">
@@ -86,7 +84,7 @@ export default function AdminPipeline() {
         </div>
       </div>
 
-      {tab !== "results" && <TodayStrip scope="team" repUserId={rep || undefined} />}
+      <TodayStrip scope="team" repUserId={rep || undefined} />
 
       {tab === "overview" && (
         <>
@@ -97,7 +95,6 @@ export default function AdminPipeline() {
       )}
       {tab === "board" && <PipelineBoard scope="team" repUserId={rep || undefined} />}
       {tab === "meetings" && <AdminPipelineMeetings repUserId={rep || undefined} since={since} />}
-      {tab === "results" && <AdminBdrMeetingAnalytics embedded range={range} repUserId={rep} onRepChange={setRep} />}
     </div>
   );
 }
