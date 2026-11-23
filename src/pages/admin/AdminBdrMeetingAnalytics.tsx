@@ -303,9 +303,12 @@ function KindBlock({ title, stats, progressionLabel }: { title: string; stats: K
  */
 export default function AdminBdrMeetingAnalytics(props: {
   embedded?: boolean; range?: RangeKey; repUserId?: string; onRepChange?: (id: string) => void;
+  section?: "summary" | "meetings" | "losses" | "reps";
 } = {}) {
   const [rangeState, setRange] = useState<RangeKey>("90");
   const [repState, setRepState] = useState<string>("all");
+  const section = props.section;
+  const show = (k: string) => !section || section === k;
   const range = props.embedded && props.range ? props.range : rangeState;
   const repFilter = props.embedded ? (props.repUserId || "all") : repState;
   const setRepFilter = (v: string | ((prev: string) => string)) => {
@@ -531,10 +534,10 @@ export default function AdminBdrMeetingAnalytics(props: {
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">Sales Team Results</h1>
-          <p className="text-xs text-white/40 mt-0.5">
+          {!props.embedded && <h1 className="text-xl font-bold text-white">Sales Team Results</h1>}
+          {!props.embedded && <p className="text-xs text-white/40 mt-0.5">
             Sales-side pipeline only (leads, discovery & closing meetings) — separate from client-facing Pipeline Insights.
-          </p>
+          </p>}
           {repFilter !== "all" && (
             <p className="text-xs text-amber-300/80 mt-1">
               Showing: {reps.find(r => r.id === repFilter)?.name || "selected rep"} only — the per-rep table below still shows all reps.
@@ -567,14 +570,15 @@ export default function AdminBdrMeetingAnalytics(props: {
       </div>
 
       <MeetingOutcomeAnalytics
+        section={section}
         range={range}
         repFilter={repFilter}
         reps={reps.map(r => ({ id: r.id, name: r.name }))}
         onRepSelect={setRepFilter}
       />
 
-      <MeetingEffortCard range={range} repUserId={repFilter && repFilter !== "all" ? repFilter : undefined} title="Meeting effort by salesman" />
-      <DiscoveryNumbersCard repUserId={repFilter && repFilter !== "all" ? repFilter : undefined} />
+      {show("reps") && <MeetingEffortCard range={range} repUserId={repFilter && repFilter !== "all" ? repFilter : undefined} title="Meeting effort by salesman" />}
+      {show("reps") && <DiscoveryNumbersCard repUserId={repFilter && repFilter !== "all" ? repFilter : undefined} />}
 
 
 
@@ -583,7 +587,7 @@ export default function AdminBdrMeetingAnalytics(props: {
       ) : (
         <>
           {/* 1-4: per meeting type */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {show("meetings") && <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <KindBlock
               title="Discovery Meeting (Form 1)"
               stats={discovery}
@@ -594,9 +598,10 @@ export default function AdminBdrMeetingAnalytics(props: {
               stats={closing}
               progressionLabel={`${closing.progressed} attended closings reached paid & signed`}
             />
-          </div>
+          </div>}
 
           {/* 5: funnel + bottleneck */}
+          {show("summary") && (<>
           {bottleneck === null ? (
             <Card className="border border-white/10 bg-white/[0.04]">
               <CardContent className="p-4 flex items-center gap-3">
@@ -690,7 +695,9 @@ export default function AdminBdrMeetingAnalytics(props: {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          </>)}
+
+          {show("summary") && <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* 6: meetings to close */}
             <Card className="border-0 bg-white/[0.04]">
               <CardHeader className="pb-2"><CardTitle className="text-sm text-white">Meetings to Close</CardTitle></CardHeader>
@@ -733,10 +740,10 @@ export default function AdminBdrMeetingAnalytics(props: {
                 )}
               </CardContent>
             </Card>
-          </div>
+          </div>}
 
           {/* 7: objections + outcomes */}
-          <Card className="border-0 bg-white/[0.04]">
+          {show("losses") && <Card className="border-0 bg-white/[0.04]">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-white">Objections &amp; Outcomes</CardTitle>
             </CardHeader>
@@ -784,11 +791,11 @@ export default function AdminBdrMeetingAnalytics(props: {
                 )}
               </div>
             </CardContent>
-          </Card>
+          </Card>}
 
 
           {/* 9: per-rep */}
-          <Card className="border-0 bg-white/[0.04]">
+          {show("reps") && <Card className="border-0 bg-white/[0.04]">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-white flex items-center gap-2">
                 <Users className="h-4 w-4 text-white/40" /> Per-Rep Meeting Performance
@@ -833,7 +840,7 @@ export default function AdminBdrMeetingAnalytics(props: {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card>}
         </>
       )}
     </div>

@@ -16,16 +16,22 @@ function loadFilter(): { rep: string; range: RangeKey } {
 
 /**
  * Results: the sales team's numbers in one module, in pages.
- *   Team Results   — close rates, losses, meeting effort, discovery numbers (team or one salesman)
+ *   Summary        — close rates, journey funnel, bottleneck, time to close
+ *   Meetings       — how leads move between Form 1, 2 and 3, extra meetings, show-up and reschedule rates
+ *   Losses         — where, on which meeting, and why leads are lost; objections
+ *   By Salesman    — meeting effort, discovery numbers, per-rep performance, lead journeys
  *   Rep Scorecard  — every salesman side by side, with coaching notes
  */
 const TABS = [
-  { key: "team", label: "Team Results", to: "/admin/results" },
+  { key: "summary", label: "Summary", to: "/admin/results" },
+  { key: "meetings", label: "Meetings", to: "/admin/results/meetings" },
+  { key: "losses", label: "Losses", to: "/admin/results/losses" },
+  { key: "reps", label: "By Salesman", to: "/admin/results/reps" },
   { key: "scorecard", label: "Rep Scorecard", to: "/admin/results/scorecard" },
 ] as const;
 
 export default function AdminResults() {
-  const { tab = "team" } = useParams<{ tab?: string }>();
+  const { tab = "summary" } = useParams<{ tab?: string }>();
   const [reps, setReps] = useState<{ user_id: string; full_name: string }[]>([]);
   const [rep, setRep] = useState<string>(() => loadFilter().rep);
   const [range, setRange] = useState<RangeKey>(() => loadFilter().range);
@@ -42,20 +48,20 @@ export default function AdminResults() {
     })();
   }, []);
   const known = useMemo(() => TABS.some((t) => t.key === tab), [tab]);
-  if (!known) return <Navigate to="/admin/results" replace />;
+  if (!known) return <Navigate to="/admin/results" replace />; // old /admin/results/team links land on Summary
 
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-xl p-1 bg-white/[0.04] border border-white/10">
+        <div className="inline-flex max-w-full overflow-x-auto rounded-xl p-1 bg-white/[0.04] border border-white/10">
           {TABS.map((t) => (
             <NavLink key={t.key} to={t.to} end
-              className={() => `px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${tab === t.key ? "bg-[hsla(211,96%,60%,.2)] text-white" : "text-white/55 hover:text-white"}`}>
+              className={() => `whitespace-nowrap px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${tab === t.key ? "bg-[hsla(211,96%,60%,.2)] text-white" : "text-white/55 hover:text-white"}`}>
               {t.label}
             </NavLink>
           ))}
         </div>
-        {tab === "team" && (
+        {tab !== "scorecard" && (
           <div className="flex items-center gap-2">
             <select value={rep} onChange={(e) => setRep(e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white">
               <option value="" className="bg-[hsl(215,35%,12%)]">All salesmen</option>
@@ -68,7 +74,7 @@ export default function AdminResults() {
         )}
       </div>
 
-      {tab === "team" && <AdminBdrMeetingAnalytics embedded range={range} repUserId={rep} onRepChange={setRep} />}
+      {tab !== "scorecard" && <AdminBdrMeetingAnalytics key={tab} embedded section={tab as "summary" | "meetings" | "losses" | "reps"} range={range} repUserId={rep} onRepChange={setRep} />}
       {tab === "scorecard" && <AdminRepScorecard />}
     </div>
   );

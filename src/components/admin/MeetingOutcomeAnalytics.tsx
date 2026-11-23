@@ -30,6 +30,8 @@ export interface MeetingOutcomeAnalyticsProps {
   onRepSelect: (repId: string) => void;
   /** When set, force-filter to this rep and hide the by-salesman table. */
   repUserId?: string;
+  /** Show only one part of the analytics (used by the Results pages). Omit for everything. */
+  section?: "summary" | "meetings" | "losses" | "reps";
 }
 
 const SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", pay_sign: "Pay & Sign" };
@@ -142,7 +144,8 @@ function computeMetrics(events: Ev[], outs: Out[], leads: Map<string, Lead>, dea
 }
 
 /* ─── component ─── */
-export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterProp, reps, onRepSelect, repUserId }: MeetingOutcomeAnalyticsProps) {
+export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterProp, reps, onRepSelect, repUserId, section }: MeetingOutcomeAnalyticsProps) {
+  const show = (s: string) => !section || section === s;
   const repFilter = repUserId || repFilterProp;
   const [events, setEvents] = useState<Ev[]>([]);
   const [outs, setOuts] = useState<Out[]>([]);
@@ -499,7 +502,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
     <Card className="border-0 bg-white/[0.03]">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm text-white flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: NEON }} /> Meeting Outcomes
+          <span className="h-2 w-2 rounded-full" style={{ background: NEON }} /> {section === "meetings" ? "Between the forms" : section === "losses" ? "Where and why leads are lost" : section === "reps" ? "By salesman" : "Meeting Outcomes"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -507,6 +510,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
           <div className="py-10 text-center text-sm text-white/40">Loading outcomes…</div>
         ) : (
           <>
+            {show("summary") && (<>
             {/* 1. Close rates */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {tiles.map((t) => (
@@ -531,7 +535,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 </div>
               ))}
             </div>
+            </>)}
 
+            {show("summary") && (<>
             {/* 1b. Journey tiles */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {jx.tiles.map((t: any) => {
@@ -546,7 +552,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 );
               })}
             </div>
+            </>)}
 
+            {show("summary") && (<>
             {/* 1c. Journey funnel */}
             <div>
               <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Lead journey funnel</p>
@@ -566,7 +574,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 </div>
               )}
             </div>
+            </>)}
 
+            {show("meetings") && (<>
             {/* 1c. Between the forms */}
             <div className="space-y-4">
               <div>
@@ -635,7 +645,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 </div>
               ))}
             </div>
+            </>)}
 
+            {show("meetings") && (<>
             {/* 1d. Every meeting step */}
             <div className="space-y-4">
               <div>
@@ -715,7 +727,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
               ))}
               <p className="text-[11px] text-white/35">"Moved forward" = discovery → Form 2, closing → Pay &amp; Sign sent. Percentages are of logged outcomes for that meeting.</p>
             </div>
+            </>)}
 
+            {show("losses") && (<>
             {/* 2. Where lost */}
             <div>
               <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Where leads are lost</p>
@@ -735,7 +749,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 </div>
               )}
             </div>
+            </>)}
 
+            {show("losses") && (<>
             {/* 2b. Lost on which meeting */}
             <div>
               <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Lost on which meeting</p>
@@ -764,7 +780,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 </div>
               )}
             </div>
+            </>)}
 
+            {show("losses") && (<>
             {/* 3. Why lost */}
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -811,7 +829,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 </table>
               </div>
             </div>
+            </>)}
 
+            {show("reps") && (<>
             {/* 4. By salesman */}
             {!repUserId && <div>
               <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">By salesman</p>
@@ -851,7 +871,9 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 </table>
               </div>
             </div>}
+            </>)}
 
+            {show("reps") && (<>
             {/* 4b. Lead journeys */}
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -884,6 +906,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterPro
                 </table>
               </div>
             </div>
+            </>)}
           </>
         )}
       </CardContent>
