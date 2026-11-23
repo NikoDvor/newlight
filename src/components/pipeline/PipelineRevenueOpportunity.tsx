@@ -8,7 +8,7 @@ import { ResponsiveContainer, AreaChart, Area, Tooltip as RTooltip } from "recha
 import { Slider } from "@/components/ui/slider";
 import { usePipelineRevenue } from "@/hooks/usePipelineRevenue";
 import { useBdrPipelineRevenue } from "@/hooks/useBdrPipelineRevenue";
-import type { StageCloseRate } from "@/lib/bdrPipelineRevenue";
+import { PIPELINE_LEAD_VALUE, type StageCloseRate } from "@/lib/bdrPipelineRevenue";
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -254,6 +254,17 @@ export function PipelineRevenueOpportunity({
                     filter: "drop-shadow(0 2px 18px hsla(211,96%,60%,.35))",
                   }}
                 >
+                  {source === "bdr" ? (
+                    <motion.span
+                      key={`open-${Math.round(model.openValue)}`}
+                      initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, ease, delay: 0.15 }}
+                    >
+                      {fmtMoney(model.openValue)}
+                    </motion.span>
+                  ) : (
+                    <>
                   <motion.span
                     key={`lo-${Math.round(weighted.low)}`}
                     initial={{ opacity: 0, y: reduced ? 0 : 8 }}
@@ -277,14 +288,22 @@ export function PipelineRevenueOpportunity({
                   >
                     {fmtMoney(weighted.high)}
                   </motion.span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
+            {source === "bdr" ? (
+              <p className="text-[11px] text-white/45 mt-1.5">
+                {(bucket("warm").count + bucket("hot").count)} leads in Warm + Hot × {fmtMoney(PIPELINE_LEAD_VALUE)} each
+              </p>
+            ) : (
             <p className="text-[11px] text-white/45 mt-1.5">
               Weighted pipeline value · {fmtMoney(model.openValue)} open across{" "}
               {buckets.filter((b) => b.stage !== "won" && b.stage !== "lost").reduce((s, b) => s + b.count, 0)}{" "}
               live deals · range reflects sample size, not a guess
             </p>
+            )}
           </div>
 
           <div className="flex items-stretch gap-2.5">

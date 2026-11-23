@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   computeBdrPipelineRevenue,
   computeBdrStageCloseRates,
+  isLiveMeeting,
   type BdrEventRow,
   type BdrLeadRow,
   type BdrLinkedDealRow,
@@ -44,14 +45,26 @@ export function useBdrPipelineRevenue(
       setLoading(true);
 
       const [leadRes, evtRes, clientRes, staffRes] = await Promise.all([
-        (supabase as any)
-          .from("nl_bdr_leads")
-          .select(
-            "id,user_id,business_name,pipeline_stage,status,called,meeting_booked,objection_category,crm_deal_id,estimated_annual_value,created_at,updated_at",
-          ),
+        // Fetch every lead in pages (the API caps one request at 1000 rows).
+        (async () => {
+          const out: any[] = [];
+          for (let from = 0; ; from += 1000) {
+            const { data, error } = await (supabase as any)
+              .from("nl_bdr_leads")
+              .select(
+                "id,user_id,business_name,pipeline_stage,status,called,meeting_booked,objection_category,crm_deal_id,estimated_annual_value,created_at,updated_at",
+              )
+              .order("id")
+              .range(from, from + 999);
+            if (error || !data) break;
+            out.push(...data);
+            if (data.length < 1000) break;
+          }
+          return { data: out };
+        })(),
         (supabase as any)
           .from("bdr_calendar_events")
-          .select("id,lead_id,user_id,source,attendance,starts_at"),
+          .select("id,lead_id,user_id,source,attendance,starts_at,meeting_kind"),
         clientId
           ? (supabase as any)
               .from("clients")
@@ -68,7 +81,7 @@ export function useBdrPipelineRevenue(
 
       const leadRows = (leadRes?.data ?? []) as BdrLeadRow[];
       setLeads(leadRows);
-      setEvents((evtRes?.data ?? []) as BdrEventRow[]);
+      setEvents(((evtRes?.data ?? []) as BdrEventRow[]).filter(isLiveMeeting));
       setRevenueTarget(
         clientRes?.data?.revenue_target != null ? Number(clientRes.data.revenue_target) : null,
       );

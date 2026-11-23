@@ -64,6 +64,18 @@ export interface BdrEventRow {
   source: string | null;
   attendance: string | null;
   starts_at: string | null;
+  meeting_kind?: string | null;
+}
+
+/** Every Warm or Hot lead counts as this much pipeline, flat. Cold counts as $0. */
+export const PIPELINE_LEAD_VALUE = 50000;
+
+/**
+ * A real, live meeting: a calendar event with a meeting_kind that isn't cancelled or rescheduled.
+ * Dialer call-log entries (source 'dialer', no meeting_kind) are never meetings, so they never make a lead Warm.
+ */
+export function isLiveMeeting(e: BdrEventRow): boolean {
+  return !!e.meeting_kind && e.source !== "dialer" && !["cancelled", "rescheduled"].includes(e.attendance ?? "");
 }
 
 const num = (v: unknown) => Number(v) || 0;
@@ -148,8 +160,7 @@ export interface BdrPipelineResult {
  * sub-account dashboards. Valuation rules:
  *  - cold leads contribute $0 — no meeting booked means no pipeline value;
  *  - won leads use the real linked deal (initial fee + 12× recurring);
- *  - warm/hot leads without a deal yet use their own Form-1
- *    `estimated_annual_value` (the $34,997 baseline captured at booking).
+ *  - every warm or hot lead is a flat $50,000 (PIPELINE_LEAD_VALUE).
  */
 export function computeBdrPipelineRevenue(input: BdrComputeInput): BdrPipelineResult {
   const dealById = new Map(input.deals.map((d) => [d.id, d]));
@@ -174,10 +185,8 @@ export function computeBdrPipelineRevenue(input: BdrComputeInput): BdrPipelineRe
         ? 0
         : stage === "won"
           ? known
-          : // Warm/hot without a linked deal: use the lead's own Form-1
-            // estimate. The 34,997 literal is a legacy safety net for rows
-            // booked before estimated_annual_value existed.
-            known || num(lead.estimated_annual_value) || 34997;
+          : // Warm and Hot: every lead is a flat $50,000 of pipeline.
+            PIPELINE_LEAD_VALUE;
     return {
       id: lead.id,
       client_id: null,
