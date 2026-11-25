@@ -227,7 +227,7 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
                 <Phone className="h-3.5 w-3.5" /> Dialer
               </Link>
             ) : (
-              <Link to="/admin/territories" className="text-xs text-primary hover:underline">Territories →</Link>
+              <Link to="/admin/lead-organization/territories" className="text-xs text-primary hover:underline">Territories →</Link>
             )}
           </div>
         </div>

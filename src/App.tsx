@@ -216,8 +216,7 @@ const BDRBookingPublic = lazy(() => import("./pages/BDRBookingPublic"));
 const AdminBDRPerformance = lazy(() => import("./pages/admin/AdminBDRPerformance"));
 const AdminOutreachStats = lazy(() => import("./pages/admin/AdminOutreachStats"));
 const AdminRevenueCash = lazy(() => import("./pages/admin/AdminRevenueCash"));
-const AdminTerritories = lazy(() => import("./pages/admin/AdminTerritories"));
-const AdminLeadImport = lazy(() => import("./pages/admin/AdminLeadImport"));
+const AdminLeadOrganization = lazy(() => import("./pages/admin/AdminLeadOrganization"));
 const AdminBDRCalendars = lazy(() => import("./pages/admin/AdminBDRCalendars"));
 const AdminCompanyCalendar = lazy(() => import("./pages/admin/AdminCompanyCalendar"));
 const AdminStaffCalendars = lazy(() => import("./pages/admin/AdminStaffCalendars"));
@@ -383,8 +382,10 @@ const App = () => {
                 <Route path="rep-scorecard" element={<Navigate to="/admin/results/scorecard" replace />} />
                 <Route path="revenue-cash" element={<AdminRevenueCash />} />
                 <Route path="bdr-meeting-analytics" element={<Navigate to="/admin/results" replace />} />
-                <Route path="territories" element={<AdminTerritories />} />
-                <Route path="lead-import" element={<AdminLeadImport />} />
+                <Route path="lead-organization" element={<AdminLeadOrganization />} />
+                <Route path="lead-organization/:tab" element={<AdminLeadOrganization />} />
+                <Route path="territories" element={<Navigate to="/admin/lead-organization/territories" replace />} />
+                <Route path="lead-import" element={<Navigate to="/admin/lead-organization/import" replace />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
                 <Route path="calendars" element={<Navigate to="/admin/staff-calendars" replace />} />
                 <Route path="websites" element={<AdminWebsites />} />

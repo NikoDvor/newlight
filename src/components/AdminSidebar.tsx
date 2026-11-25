@@ -44,8 +44,7 @@ const adminGroups: NavGroup[] = [
   {
     label: "Lead Supply",
     items: [
-      { title: "Territories", description: "Assign rep territories and push leads from the pool.", url: "/admin/territories", icon: Globe },
-      { title: "Lead Import", description: "Upload firm and people exports into the lead pool.", url: "/admin/lead-import", icon: Upload },
+      { title: "Lead Organization", description: "Every lead by rep and stage, move leads between reps, territories and imports.", url: "/admin/lead-organization", icon: Globe },
       { title: "Dialer Activity", description: "Call volume, connects, and call outcomes across the team.", url: "/admin/bdr-performance", icon: TrendingUp },
       { title: "Text & LinkedIn", description: "Texts and LinkedIn messages sent, response rates by rep and template, and the message templates.", url: "/admin/outreach-stats", icon: MessageSquare },
     ],
