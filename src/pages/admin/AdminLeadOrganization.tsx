@@ -53,7 +53,8 @@ function Organize() {
   const [rows, setRows] = useState<Row[]>([]);
   const [reps, setReps] = useState<{ id: string; name: string }[]>([]);
   const [pool, setPool] = useState(0);
-  const [view, setView] = useState<"auto" | "table" | "cards">("auto");
+  const [view, setView] = useState<"auto" | "board" | "table" | "cards">("auto");
+  const [more, setMore] = useState<Record<string, number>>({});
   const [fRep, setFRep] = useState("all");
   const [fStage, setFStage] = useState("all");
   const [fUp, setFUp] = useState(false);
@@ -110,19 +111,12 @@ function Organize() {
   const repName = useMemo(() => Object.fromEntries(reps.map(r => [r.id, r.name])), [reps]);
   const open = useMemo(() => rows.filter(r => !r.closed_out_at), [rows]);
 
-  // Big visual: reps × stage
-  const grid = useMemo(() => {
-    const m = new Map<string, Record<string, number> & { upcoming: number; total: number }>();
-    open.forEach(r => {
-      const k = r.user_id || "none";
-      const g = m.get(k) || { cold: 0, warm: 0, hot: 0, won: 0, lost: 0, upcoming: 0, total: 0 } as any;
-      g[r.stage]++; g.total++; if (r.next) g.upcoming++;
-      m.set(k, g);
-    });
+  const hue = (id: string) => id === "none" ? "0 0% 55%" : `${(Math.max(0, reps.findIndex(r => r.id === id)) * 47 + 12) % 360} 65% 48%`;
+  const byStage = useMemo(() => {
+    const m: Record<string, Row[]> = { cold: [], warm: [], hot: [], won: [], lost: [] };
+    open.forEach(r => m[r.stage].push(r));
     return m;
   }, [open]);
-  const gridMax = useMemo(() => Math.max(1, ...Array.from(grid.values()).flatMap(g => STAGES.map(s => g[s]))), [grid]);
-  const gridRepIds = useMemo(() => Array.from(grid.keys()).sort((a, b) => (grid.get(b)!.total - grid.get(a)!.total)), [grid]);
 
   const list = useMemo(() => open.filter(r =>
     (fRep === "all" || (fRep === "none" ? !r.user_id : r.user_id === fRep)) &&
@@ -131,8 +125,7 @@ function Organize() {
   ), [open, fRep, fStage, fUp, q]);
   useEffect(() => setPage(0), [fRep, fStage, fUp, q]);
   const shown = list.slice(page * PAGE, page * PAGE + PAGE);
-  const asCards = view === "cards" || (view === "auto" && isMobile);
-
+  
   const toggle = (id: string) => setSel(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const allShown = shown.length > 0 && shown.every(r => sel.has(r.id));
   const ids = Array.from(sel);
@@ -146,74 +139,83 @@ function Organize() {
     toast({ title: ok(Number(data) || 0) });
     load();
   };
-  const cell = (n: number, s: string, onClick: () => void) => (
-    <button onClick={onClick} disabled={!n}
-      className="h-12 w-full rounded text-sm font-medium tabular-nums transition hover:ring-2 hover:ring-primary disabled:opacity-40"
-      style={{ background: n ? `hsl(var(--primary) / ${0.12 + 0.7 * (n / gridMax)})` : "hsl(var(--muted))", color: n / gridMax > 0.5 ? "hsl(var(--primary-foreground))" : undefined }}>
-      {n}
-    </button>
+  const moveOne = async (id: string, to: string) => {
+    const { error } = await (supabase as any).rpc("admin_reassign_leads", { _lead_ids: [id], _new_user: to });
+    if (error) return toast({ title: error.message, variant: "destructive" });
+    toast({ title: `Moved to ${repName[to]}` });
+    load();
+  };
+  const effView = view === "auto" ? (isMobile ? "cards" : "board") : view;
+  const stagesShown = fStage === "all" ? STAGES : [fStage as CanonStage];
+  const repCount = (id: string) => open.filter(r => (fStage === "all" || r.stage === fStage) && (id === "all" || (id === "none" ? !r.user_id : r.user_id === id))).length;
+  const Card = ({ r }: { r: Row }) => (
+    <div className={`rounded-md border bg-card p-2 text-sm ${sel.has(r.id) ? "border-primary bg-primary/5" : "border-border"}`}
+      style={{ borderLeft: `4px solid hsl(${hue(r.user_id || "none")})` }}>
+      <div className="flex gap-2 items-start">
+        <Checkbox checked={sel.has(r.id)} onCheckedChange={() => toggle(r.id)} className="mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <div className="font-medium truncate">{r.business_name || "Unnamed"}</div>
+          <div className="text-[11px] text-muted-foreground truncate">{[r.city, r.state].filter(Boolean).join(", ") || "—"}{r.next && ` · 📅 ${new Date(r.next).toLocaleDateString([], { month: "short", day: "numeric" })}`}</div>
+        </div>
+      </div>
+      <Select value={r.user_id || ""} onValueChange={v => moveOne(r.id, v)}>
+        <SelectTrigger className="h-7 mt-1.5 text-xs"><SelectValue placeholder="Unassigned" /></SelectTrigger>
+        <SelectContent>{reps.map(x => <SelectItem key={x.id} value={x.id}>{x.name}</SelectItem>)}</SelectContent>
+      </Select>
+    </div>
   );
 
   if (loading) return <div className="text-sm text-muted-foreground p-6">Loading every lead…</div>;
 
   return (
     <div className="space-y-4">
-      {/* BIG VISUAL */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
-          <div>
-            <h2 className="font-semibold">Every open lead, by rep and stage</h2>
-            <p className="text-xs text-muted-foreground">{open.length.toLocaleString()} open leads · tap any box to filter the list below.</p>
-          </div>
-          <div className="text-xs text-muted-foreground">Unassigned in the big pool: <b className="text-foreground">{pool.toLocaleString()}</b></div>
-        </div>
-        <div className="overflow-x-auto">
-          <div className="grid gap-1.5 min-w-[560px] items-center" style={{ gridTemplateColumns: "minmax(110px,1.4fr) repeat(5, minmax(60px,1fr)) minmax(70px,1fr) 64px" }}>
-            <div />
-            {STAGES.map(s => <div key={s} className="text-xs text-center text-muted-foreground">{STAGE_NAME[s]}</div>)}
-            <div className="text-xs text-center text-muted-foreground">Meeting soon</div>
-            <div className="text-xs text-right text-muted-foreground">Total</div>
-            {gridRepIds.map(id => {
-              const g = grid.get(id)!;
-              return (
-                <div key={id} className="contents">
-                  <button className="text-sm text-left truncate hover:underline" onClick={() => { setFRep(id); setFStage("all"); setFUp(false); }}>
-                    {id === "none" ? "Unassigned" : repName[id] || "Unknown"}
-                  </button>
-                  {STAGES.map(s => <div key={s}>{cell(g[s], s, () => { setFRep(id); setFStage(s); setFUp(false); })}</div>)}
-                  <div>{cell(g.upcoming, "up", () => { setFRep(id); setFStage("all"); setFUp(true); })}</div>
-                  <div className="text-sm text-right tabular-nums font-medium">{g.total}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-3">Warm and Hot come from booked meetings automatically. Won comes from a paid and signed deal.</p>
+      {/* STAGE STRIP */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        {STAGES.map(st => {
+          const rowsS = byStage[st];
+          const active = fStage === st;
+          return (
+            <button key={st} onClick={() => setFStage(active ? "all" : st)}
+              className={`rounded-lg border p-3 text-left transition ${active ? "border-primary ring-2 ring-primary/40 bg-primary/5" : "border-border bg-card hover:border-primary/50"}`}>
+              <div className="text-xs text-muted-foreground">{STAGE_NAME[st]}</div>
+              <div className="text-3xl font-semibold tabular-nums leading-tight">{rowsS.length.toLocaleString()}</div>
+              <div className="flex h-2 rounded overflow-hidden mt-2 bg-muted">
+                {[...reps.map(r => r.id), "none"].map(id => {
+                  const n = rowsS.filter(x => (x.user_id || "none") === id).length;
+                  return n ? <div key={id} title={`${id === "none" ? "Unassigned" : repName[id]}: ${n}`} style={{ width: `${(n / rowsS.length) * 100}%`, background: `hsl(${hue(id)})` }} /> : null;
+                })}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <div className="text-xs text-muted-foreground -mt-2">
+        {open.length.toLocaleString()} open leads · {pool.toLocaleString()} more unassigned in the big pool · bar under each stage shows who holds them. Warm/Hot come from booked meetings; Won from paid and signed.
+      </div>
+
+      {/* REP CHIPS */}
+      <div className="flex flex-wrap gap-1.5">
+        {[{ id: "all", name: "All reps" }, { id: "none", name: "Unassigned" }, ...reps].map(r => {
+          const on = fRep === r.id;
+          return (
+            <button key={r.id} onClick={() => setFRep(on && r.id !== "all" ? "all" : r.id)}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition ${on ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:border-primary/50"}`}>
+              {r.id !== "all" && <span className="h-2.5 w-2.5 rounded-full" style={{ background: `hsl(${hue(r.id)})` }} />}
+              {r.name}<span className={on ? "opacity-80" : "text-muted-foreground"}>{repCount(r.id)}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* FILTERS */}
       <div className="flex flex-wrap items-center gap-2">
         <Input placeholder="Search business, city, list…" value={q} onChange={e => setQ(e.target.value)} className="w-56 h-9" />
-        <Select value={fRep} onValueChange={setFRep}>
-          <SelectTrigger className="w-44 h-9"><SelectValue placeholder="Rep" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All reps</SelectItem><SelectItem value="none">Unassigned</SelectItem>
-            {reps.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={fStage} onValueChange={setFStage}>
-          <SelectTrigger className="w-32 h-9"><SelectValue placeholder="Stage" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All stages</SelectItem>
-            {STAGES.map(s => <SelectItem key={s} value={s}>{STAGE_NAME[s]}</SelectItem>)}
-          </SelectContent>
-        </Select>
         <label className="flex items-center gap-1.5 text-sm"><Checkbox checked={fUp} onCheckedChange={v => setFUp(!!v)} />Meeting upcoming</label>
         {(fRep !== "all" || fStage !== "all" || fUp || q) && (
           <Button variant="ghost" size="sm" onClick={() => { setFRep("all"); setFStage("all"); setFUp(false); setQ(""); }}>Clear</Button>
         )}
         <div className="ml-auto flex gap-1">
-          {(["auto", "table", "cards"] as const).map(v => (
+          {(["auto", "board", "table", "cards"] as const).map(v => (
             <Button key={v} size="sm" variant={view === v ? "default" : "outline"} onClick={() => setView(v)} className="h-8 capitalize">{v}</Button>
           ))}
         </div>
@@ -238,23 +240,32 @@ function Organize() {
       {/* LIST */}
       <div className="text-xs text-muted-foreground">
         {list.length.toLocaleString()} leads
-        {list.length > shown.length && ` · showing ${page * PAGE + 1}–${page * PAGE + shown.length}`}
+        {effView === "table" && list.length > shown.length && ` · showing ${page * PAGE + 1}–${page * PAGE + shown.length}`}
         {list.length > 0 && (
           <button className="ml-3 underline" onClick={() => setSel(new Set(list.map(r => r.id)))}>Select all {list.length.toLocaleString()}</button>
         )}
       </div>
-      {asCards ? (
-        <div className="space-y-2">
-          {shown.map(r => (
-            <div key={r.id} className="rounded-lg border border-border bg-card p-3 flex gap-3" onClick={() => toggle(r.id)}>
-              <Checkbox checked={sel.has(r.id)} className="mt-1" />
-              <div className="min-w-0 flex-1">
-                <div className="font-medium truncate">{r.business_name || "Unnamed"}</div>
-                <div className="text-xs text-muted-foreground">{[r.city, r.state].filter(Boolean).join(", ") || "—"} · {r.user_id ? repName[r.user_id] || "Unknown" : "Unassigned"}</div>
-                <div className="text-xs mt-1">{STAGE_NAME[r.stage]}{r.next && ` · meeting ${new Date(r.next).toLocaleDateString()}`}</div>
+      {effView === "board" ? (
+        <div className="grid gap-3 items-start" style={{ gridTemplateColumns: `repeat(${stagesShown.length}, minmax(200px, 1fr))` }}>
+          {stagesShown.map(st => {
+            const col = list.filter(r => r.stage === st);
+            const n = more[st] || 25;
+            return (
+              <div key={st} className="rounded-lg bg-muted/40 p-2 space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <b className="text-sm">{STAGE_NAME[st]}</b>
+                  <button className="text-xs text-muted-foreground underline" onClick={() => setSel(s => { const x = new Set(s); col.forEach(r => x.add(r.id)); return x; })}>select {col.length}</button>
+                </div>
+                {col.slice(0, n).map(r => <Card key={r.id} r={r} />)}
+                {col.length > n && <Button variant="ghost" size="sm" className="w-full" onClick={() => setMore(m => ({ ...m, [st]: n + 50 }))}>Show {Math.min(50, col.length - n)} more</Button>}
+                {col.length === 0 && <div className="text-xs text-muted-foreground text-center py-4">None</div>}
               </div>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+      ) : effView === "cards" ? (
+        <div className="space-y-2">
+          {shown.map(r => <Card key={r.id} r={r} />)}
         </div>
       ) : (
         <div className="rounded-lg border border-border overflow-x-auto">
@@ -284,7 +295,7 @@ function Organize() {
           </table>
         </div>
       )}
-      {list.length > PAGE && (
+      {effView === "table" && list.length > PAGE && (
         <div className="flex items-center gap-2 justify-end">
           <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>Prev</Button>
           <Button size="sm" variant="outline" disabled={(page + 1) * PAGE >= list.length} onClick={() => setPage(p => p + 1)}>Next</Button>
