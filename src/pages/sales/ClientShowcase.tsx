@@ -59,7 +59,7 @@ export default function ClientShowcase() {
         <h1 className="text-[clamp(1.9rem,4.4vw,3rem)] font-extrabold leading-[1.05] tracking-tight">Your client pipeline</h1>
         <p className="max-w-[68ch] text-[15.5px] text-white/82">
           {pkg === "growth"
-            ? `How Growth fills a ${NW[niche]}'s calendar: who we reach, the ads, the page they book on, and the reminders that get them to show up.`
+            ? `How Growth gets a ${NW[niche]} found and fills the calendar: the research and visibility, who we reach, the ads, the page they book on, and the reminders that get them to show up.`
             : `Every step from ${pkg === "ent" ? "the first search for the firm" : "the moment a meeting is booked"} to the moment a prospect is ${WON(niche).toLowerCase()} as a client. Who does what, what's automatic, what gets saved, where it shows up and how it's measured.`}
         </p>
       </header>

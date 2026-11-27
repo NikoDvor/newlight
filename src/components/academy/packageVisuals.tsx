@@ -60,7 +60,7 @@ function AvgSlider({ avg, setAvg }: { avg: number; setAvg: (n: number) => void }
 const PKG_INFO: Record<PackageKey, { who: string; get: string[]; guarantee: string; ongoing: string }> = {
   growth: {
     who: "Firms that want more booked meetings and want to pay on results.",
-    get: ["Step 2 · Fill the Calendar — paid campaigns, landing pages, booking forms", "Booked meetings on their calendar", "A simple pipeline to track the clients we bring"],
+    get: ["Steps 1 + 2 · Get Found and Fill the Calendar — research, website and SEO, AI visibility, paid campaigns, landing pages, booking forms", "Booked meetings on their calendar", "A simple pipeline to track the clients we bring"],
     guarantee: "Yes — 90 days",
     ongoing: "½ an average client a month, or commission (25% year one, 10% after)",
   },

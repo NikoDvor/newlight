@@ -4,7 +4,7 @@
  * so the app, Pay & Sign and the billing runner always agree. Keep the two copies identical.
  *
  * Packages (decided Nov 1–2, 2026; monthly re-based on average client value Nov 7, 2026; no price floors):
- *   growth          Step 2.  Setup = 1 × average client value. 90-day guarantee.
+ *   growth          Steps 1+2 (Get Found + Fill the Calendar; changed Nov 27, 2026).  Setup = 1 × average client value. 90-day guarantee.
  *                   Then ½ average client per month (retainer) OR commission 25% yr-1 / 10% after.
  *   command_center  Step 3.  setup = 1 × average client value, monthly = 1 × average client value. No guarantee, no commission.
  *   enterprise      Steps 1+2+3 (+ exclusive metro market + dedicated strategist). setup = 2 × average client value, monthly = 2 × average client value.
@@ -48,7 +48,7 @@ export interface PackageDefaults {
 
 export const DEFAULT_PACKAGES: Record<PackageKey, PackageDefaults> = {
   growth: {
-    key: "growth", label: "Growth", steps: "Step 2 · Fill the Calendar — paid campaigns turned into booked meetings",
+    key: "growth", label: "Growth", steps: "Steps 1 + 2 · Get Found, Fill the Calendar — organic visibility plus paid campaigns turned into booked meetings",
     setup_fee: null, monthly_fee: null, setup_multiplier: 1, monthly_multiplier: 0.5, min_avg_client: 0,
     commission_rate: 25, commission_rate_ongoing: 10, annual_discount_pct: 20, payment_plan_markup_pct: 10,
     discount_approval_pct: 15, guarantee_days: 90, min_ad_budget: null,

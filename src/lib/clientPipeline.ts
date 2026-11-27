@@ -16,8 +16,8 @@ export interface Pkg { k: PkgKey; l: string; steps: number[]; who: string; get: 
 
 export const NICHES: { k: Niche; l: string }[] = [{ k: "advisor", l: "Financial advisor" }, { k: "ria", l: "RIA" }, { k: "hybrid", l: "Hybrid" }, { k: "insurance", l: "Insurance" }];
 export const PKGS: Pkg[] = [
-  { k: "growth", l: "Growth", pricingKey: "growth", steps: [2], who: "For firms that want more qualified meetings on the calendar.",
-    get: ["Step 2 · Fill the Calendar", "Paid campaigns aimed at their ideal client", "Landing page, booking form and qualifying questions", "Confirmations and reminders so people show up", "90-day guarantee: if the setup isn't made back, we keep working at no extra charge until it is"] },
+  { k: "growth", l: "Growth", pricingKey: "growth", steps: [1, 2], who: "For firms that want to be found online and get more qualified meetings on the calendar.",
+    get: ["Steps 1 + 2 · Get Found, Fill the Calendar", "Market research, website and SEO, AI visibility, content and social", "Paid campaigns aimed at their ideal client", "Landing page, booking form and qualifying questions", "Confirmations and reminders so people show up", "90-day guarantee: if the setup isn't made back, we keep working at no extra charge until it is"] },
   { k: "cc", l: "Command Center", pricingKey: "command_center", steps: [3], who: "For firms that already get meetings but lose too many of them.",
     get: ["Step 3 · Win the Client", "Their own branded Command Center app", "A client pipeline from booked meeting to won client", "Every meeting outcome logged, leaks and objections flagged", "Strategy adjusted from what the data shows"] },
   { k: "ent", l: "Enterprise", pricingKey: "enterprise", steps: [1, 2, 3], who: "For firms that want the whole system and to own their market.",
@@ -265,7 +265,7 @@ const S3 = (n: Niche, fromAds: boolean): Station[] => {
 };
 
 export function stationsFor(n: Niche, p: PkgKey): Station[] {
-  if (p === "growth") return S2(n, true);
+  if (p === "growth") return [...S1(n), ...S2(n, true)];
   if (p === "cc") return S3(n, false);
   return [...S1(n), ...S2(n, false), ...S3(n, true)];
 }

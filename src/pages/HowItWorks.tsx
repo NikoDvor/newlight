@@ -342,7 +342,7 @@ export default function HowItWorks() {
           </div>
         ))}
       </div>
-      <p className="mt-2 text-xs text-white/65">Growth = Step 2 · Command Center = Step 3 · Enterprise = all three steps. The tools below are the parts of the app that make it work.</p>
+      <p className="mt-2 text-xs text-white/65">Growth = Steps 1 + 2 · Command Center = Step 3 · Enterprise = all three steps. The tools below are the parts of the app that make it work.</p>
 
       {/* Category filter */}
       <div className="flex flex-wrap gap-2 mt-4 mb-8">

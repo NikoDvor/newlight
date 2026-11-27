@@ -307,9 +307,9 @@ function between(html: string, startMarker: string, endMarker: string, replaceme
 
 // ─── Schedule A: what each package includes (the three steps) ───────────────
 // Step 1 = Get Found, Step 2 = Fill the Calendar, Step 3 = Win the Client.
-// Growth = Step 2.  Command Center = Step 3.  Enterprise = Steps 1 + 2 + 3 (plus an exclusive market and a dedicated strategist).
+// Growth = Steps 1 + 2 (changed Nov 27, 2026).  Command Center = Step 3.  Enterprise = Steps 1 + 2 + 3 (plus an exclusive market and a dedicated strategist).
 const PKG_STEP_LABEL: Record<AgreementPlan["packageKey"], string> = {
-  growth: "Step 2 · Fill the Calendar",
+  growth: "Steps 1 + 2 · Get Found, Fill the Calendar",
   command_center: "Step 3 · Win the Client",
   enterprise: "Steps 1 + 2 + 3 · Get Found, Fill the Calendar, Win the Client",
 };
@@ -331,7 +331,7 @@ const STEP2_HTML = (growth: boolean, minAdBudget: number | null) => `<h3>Step 2 
     <li><strong>Tracking.</strong> Meetings booked, cost per booked meeting, and show-up rates, tracked through the accounts Client connects.</li>${growth ? `
     <li><strong>Meeting and client tracking.</strong> A simple tracker in the Command Center (or Client's own CRM, as the System of Record) so booked meetings and the clients they become can be counted. Client will record meeting outcomes and new clients accurately and promptly, because Section 3 and any Commission depend on that record.</li>` : ""}
   </ul>${growth ? `
-  <p><strong>Where Growth stops.</strong> Growth services end when the meeting is booked and on Client's calendar. Running the meeting and winning the client are Client's responsibility. Growth does not include the Step 3 client pipeline, Step 1 website, search, or social media work, or any other service not listed in this Schedule A.</p>` : ""}`;
+  <p><strong>Where Growth stops.</strong> Growth services end when the meeting is booked and on Client's calendar. Running the meeting and winning the client are Client's responsibility. Growth does not include the Step 3 client pipeline or any other service not listed in this Schedule A.</p>` : ""}`;
 
 const STEP3_HTML = (standalone: boolean) => `<h3>Step 3 · Win the Client</h3>
   <ul>
@@ -370,11 +370,11 @@ export function scheduleAHtml(p: { packageKey: AgreementPlan["packageKey"]; minA
     `<h2>Schedule A — Services in Your Package</h2>`,
     `<p>This Schedule A is part of the Agreement. It describes the services Agency will provide under the <strong>${k === "growth" ? "Growth" : k === "command_center" ? "Command Center" : "Enterprise"}</strong> package (${PKG_STEP_LABEL[k]}), referred to in the Agreement as the "Services." Agency is not required to provide any other service.</p>`,
   ];
-  if (ent) parts.push(STEP1_HTML);
+  if (growth || ent) parts.push(STEP1_HTML);
   if (growth || ent) parts.push(STEP2_HTML(growth, p.minAdBudget));
   if (cc || ent) parts.push(STEP3_HTML(cc));
   if (ent) parts.push(ENTERPRISE_EXTRAS_HTML);
-  parts.push(GENERAL_TERMS_HTML(growth || ent, cc || ent || growth, ent));
+  parts.push(GENERAL_TERMS_HTML(growth || ent, cc || ent || growth, growth || ent));
   return parts.join("\n  ");
 }
 
